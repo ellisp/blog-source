@@ -1,0 +1,13 @@
+---
+layout: narrow
+title: Post listing by date
+image: /img/general-image.png
+nametype: index
+---
+	<h2>Most recent at the top</h2>
+	<ul class="posts">
+
+	  {% for post in site.posts %}
+	    <li><span>{{ post.date | date_to_string }}</span> » <a href="{{ post.url }}" title="{{ post.description }}">{{ post.title }}</a></li>
+	  {% endfor %}
+	</ul>

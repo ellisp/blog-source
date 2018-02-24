@@ -1,0 +1,32 @@
+---
+layout: default
+title: Voting behaviour posts
+image: /img/0098-vote.png
+nametype: index
+---
+    		
+
+   <h2>Posts that use voting behaviour data</h2>
+   {% for post in site.posts %}
+   {% if post.tags[0] == "VotingBehaviour" or post.tags[1] == "VotingBehaviour" or post.tags[2] == "VotingBehaviour" or post.tags[3] == "VotingBehaviour" or post.tags[4] == "VotingBehaviour" or post.tags[5] == "VotingBehaviour"%}
+	   <hr> </hr>
+	   <div class ="row">
+		  <div class="col-md-8">
+			 <a href="{{ post.url }}">
+				<h3>{{ post.title }}</h3>
+				<h4>{{ post.date | date_to_long_string }}</h4>
+			 </a>
+			 <p>{{ post.description }}</p>
+		  </div>
+		  <div class = "col-md-4">
+			 <a href="{{ post.url }}"><img src = {{ post.image }} height = "150"></a>
+		  </div>
+		 </div>
+	{% endif %}
+
+   {% endfor %}
+</div>   
+<div class = "container">
+   <hr> </hr>
+</div>
+

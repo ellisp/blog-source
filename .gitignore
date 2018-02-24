@@ -1,0 +1,48 @@
+_site/
+
+*Thumbs.db
+.DS_Store
+
+.Rproj.user
+.Rhistory
+
+*.dcf
+*.svg
+*.giv
+*.gif
+*.png
+
+!0013-data-types-1.PNG
+!*screenshot*
+
+_working/tmp.rda
+_working/fort.6*
+_working/_output/0015-silver-sankey/
+_working/_output/0026_random_forest/
+*wdi.rda
+_working/*.RData
+_working/enron*
+
+# gEcon crap
+*SW_03*
+!0031-shiny/*
+
+# Google Analytics API key
+MonitorBlog-*.json
+
+!*screenshot*
+img/Thumbs.db
+
+
+_working/docword*
+_working/IVS*
+
+# stan compiled objects
+*.rds
+
+# things associated with the "most popular pages" analysis
+.httr-oauth
+# this page is machine generated when .rprofile is run:
+_includes/most-popular.html 
+
+twitter-auth.R

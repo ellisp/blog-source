@@ -1,0 +1,57 @@
+---
+layout: default
+title: Peter's stats stuff
+image: /img/general-image.png
+nametype: index
+---
+    		
+    <div class="jumbotron">
+      <div class="container">
+        <h1>{{page.title}}</h1>
+        <p>Applying statistics and data science 'in the wild'</p>
+        
+      </div>
+    </div>
+
+    
+    <div class = "container">       
+       <div class ="row">
+         
+         
+         <div class="post-summary">
+             <p>{{ site.description }}</p>
+         </div>
+         <div>
+            <center><p><a class="btn btn-primary btn-lg" href={{ site.posts.first.url }} role="button">Latest post &raquo;</a> </p></center>
+         </div>	
+         
+      </div>
+   </div>
+
+<div><gcse:search></gcse:search></div>
+         
+<div class ="container">
+
+   <h2>Recent posts</h2>
+   {% for post in site.posts limit: 10 %}
+   <hr> </hr>
+   <div class ="row">
+      <div class="col-md-8">
+         <a href="{{ post.url }}">
+            <h3>{{ post.title }}</h3>
+            <h4>{{ post.date | date_to_long_string }}</h4>
+         </a>
+         <p>{{ post.description }}</p>
+      </div>
+      <div class = "col-md-4">
+         <a href="{{ post.url }}"><img src = {{ post.image }} height = "150"></a>
+      </div>
+     </div>
+
+
+   {% endfor %}
+</div>   
+<div class = "container">
+   <hr> </hr>
+</div>
+
