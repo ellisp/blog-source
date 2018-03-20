@@ -5,6 +5,7 @@ date: 2017-07-09
 tag: 
    - VotingBehaviour
    - R
+   - Stan
    - RobustMethods
 description: I revisit the state space model of Labor party vote leading up to the 2007 Australian election; and a re-think about total survey error in the context of polling data leads to a more stable, less wiggly underlying state of voting intention.  Also, vectorization in Stan leads to much faster estimation.
 image: /img/0102a-all-polls-inflator-2.svg

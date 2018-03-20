@@ -47,4 +47,6 @@ _includes/most-popular.html
 
 twitter-auth.R
 
+data/*
 img/*
+*.csv

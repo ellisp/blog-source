@@ -6,6 +6,7 @@ tag:
    - VotingBehaviour
    - R
    - Timeseries
+   - Stan
    - Reproducibility
 description: As part of familiarising myself with the Stan probabilistic programming language, I replicate Simon Jackman's state space modelling with house effects of the 2007 Australian federal election.
 image: /img/0102-all-polls.svg

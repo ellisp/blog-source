@@ -223,7 +223,7 @@ follow_data_comb <- rbind(follow_data_proc, follow_data_proc_2) %>%
 follow_data_trans <- follow_data_comb %>%
   mutate(number_followers_l = log10(number_followers + 1),
          number_following_l = log10(number_following + 1),
-         trmean_ff_l = log10(trmean_ff + 1)) %>%
+         trmean_ff_l = log10(median_ff + 1)) %>%
   select(number_followers_l, number_following_l, trmean_ff_l, sampling_method) 
 
 png("../img/0118-pairs.png", 6000, 6000, res = 600)
@@ -231,13 +231,13 @@ png("../img/0118-pairs.png", 6000, 6000, res = 600)
 dev.off()
 
 
-svg("../img/0118-main-scatter.svg", 10, 5)
+svg("../img/0118-main-scatter-median.svg", 10, 5)
 ggplot(follow_data_comb, aes(x = number_followers, y = trmean_ff)) + 
   facet_wrap(~sampling_method) +
   geom_point(aes(fill = many_following), pch = 21) +
   geom_smooth(method = "loess") +
   scale_x_log10("Number of followers, of this person", label = comma) +
-  scale_y_log10("Trimmed mean number of followers,\nof the people this person follows", label = comma) +
+  scale_y_log10("Median number of followers,\nof the people this person follows", label = comma) +
   ggtitle("Do people with more followers follow people with more followers?",
           "Apparently 'it depends'.") +
   scale_fill_brewer("Following how\nmany people:", palette = "Spectral",
@@ -258,7 +258,7 @@ mod_full <- gam(trmean_ff_l ~ s(number_followers_l, number_following_l), data = 
 mod_simp <- gam(trmean_ff_l ~ s(number_followers_l) + s(number_following_l), data = follow_data_trans)
 anova(mod_full, mod_simp, test = "F")
 
-svg("../img/0118-simple.svg", 8, 4)
+svg("../img/0118-simple-median.svg", 8, 4)
 par(family = "myfont", bty = "l", font.main = 1)
 plot(mod_simp, pages = 1, main = "No-interaction model")  
 dev.off()  
@@ -269,10 +269,10 @@ par(family = "myfont", bty = "l", font.main = 1)
 plot(mod_full, pages = 1, scheme = 1, main = ("Impact on the trimmed mean number\nof followers of people that are followed"))
 dev.off()
 
-svg("../img/0118-heatmap.svg", 8, 7)
+svg("../img/0118-heatmap-median.svg", 8, 7)
 par(family = "myfont", bty = "l", font.main = 1)
 plot(mod_full, pages = 1, scheme = 2, hcolors = topo.colors(50),
-     main = ("Impact on the trimmed mean number\nof followers of people that are followed"),
+     main = ("Impact on the median number\nof followers of people that are followed"),
      xlab = "Logarithm of number of followers",
      ylab = "Logarithm of number people following")
 legend("topleft", legend = c("low", "medium", "high"), fill = topo.colors(3), bty = "n", cex = 1.2)
