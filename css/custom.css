@@ -5,17 +5,17 @@ body {
 }
 
 h1 {
-	font-family: 'Sarala'; 
+	font-family: 'Prosto One';
 }
 
 .navbar-brand {
-	font-family: 'Sarala'; 
-	font-size :23px;
+	font-family: 'Prosto One'; 
+	font-size :22px;
 	text-decoration: none !important;
 }
 
 h2, h3, h4, h5, h6 {
-	font-family: 'Roboto';
+	font-family: 'Sarala';
 }
 
 .theme-dropdown .dropdown-menu {
@@ -41,9 +41,11 @@ h2, h3, h4, h5, h6 {
     background-color: #6279A9;
     color: white;
     background-repeat: no-repeat;
-	font-family: 'Sarala'; font-size: 22px;
 }
 
+.jumbotron h1 {
+	font-size: 57px !important;
+}
 
 
 
@@ -136,10 +138,13 @@ code {
     color: #333333;
     background-color: #f2f2f2;
     border-radius: 4px;
+	font-family: "Ubuntu Mono";
+	
 }
 
 pre code{
   white-space: pre;
+  font-family: "Ubuntu Mono";
 }
 
 

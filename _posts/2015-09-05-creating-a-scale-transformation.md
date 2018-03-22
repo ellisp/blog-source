@@ -16,7 +16,7 @@ category: R
 ## A better transformation than my better transformation
 In [an earlier post](/blog/2015/08/21/visualising-distributions.html) I put forward the idea of a modulus power transform - basically the square root (or other similar power transformation) of the absolute value of a variable like income, followed by restoring the sign to it.  The idea is to avoid throwing away values of zero or less, which happens with the logarithm transform that is most commonly used for this sort of data.  In a tweet, Hadley Wickham pointed out the 1980 article in the Journal of the Royal Statistical Society [An Alternative Family of Transformations by J. A. John and N. R. Draper](http://t.co/vC5b8d4OUh) (behind the paywall but a guest logon is available) in which they proposed a very similar idea:
 
-![journal-excerpt](/img/0006-john-draper-snip.PNG)
+<img src="/img/0006-john-draper-snip.PNG" width = "100%">
 
 I hope I'm not breaching copyright by posting that snippet; I'll certainly take it down if anyone complains.  I agree with Wickham that this useful piece of work should be much more widely known (and am sheepish myself for not knowing it) so hats off to the JSTOR for having it available at all.
 
@@ -54,7 +54,9 @@ modulus_trans <- function(lambda){
 It hasn't been peer reviewed or anything so use at your own risk.  Please let me know if you find anything wrong with it.
 
 Here's that function in use, re-creating the density plot of income from my previous post, with the zero and negative values showing up nicely but without the crampedness of showing the income on an unadjusted scale.  I haven't done polishing necessary to have axis labels at the various modal points, which is what I would do for a serious use.  This code assumes the existence of a database called nzis11, created as described in [this post](/blog/2015/08/15/importing-nzis-surf.html).
-![density-plot](/img/0006_better_density_plot.svg)
+
+<img src="/img/0006_better_density_plot.svg" width = "100%">
+
 {% highlight R lineanchors %}
 library(RODBC)
 library(showtext)
@@ -82,7 +84,7 @@ ggplot(inc, aes(x = income)) +
 ## Income (including negatives) and hours worked
 So the great advantage of a statistical transformation within the `scales` paradigm is that you never need to worry again about the transformation, you just make it an argument to `scale_x_continuous` (or any continuous `scale`, including colour and size, if you want).  I'll finish this latest step in the journey with New Zealand's Income Survey simulated unit record file from Statistics New Zealand by showing the new transformation in action on two axes at once, with a plot showing the relationship between hours worked and income earned by region, this time with the negative incomes left in.
 
-![regions-plot](/img/0006_income_by_region.png)
+<img src="/img/0006_income_by_region.png" width = "100%">
 
 {% highlight R lineanchors %}
 ggplot(inc, aes(x = hours, y = income)) +
@@ -97,7 +99,7 @@ ggplot(inc, aes(x = hours, y = income)) +
 
 As requested in the comments, here's the untransformed version
 
-![untransformed-plot](/img/0006_income_by_region_no_transform.svg)
+<img src="/img/0006_income_by_region_no_transform.svg" width = "100%">
 
 {% highlight R lineanchors %}
 ggplot(inc, aes(x = hours, y = income)) +

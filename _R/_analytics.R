@@ -45,7 +45,9 @@ pages <- pages_orig %>%
 p <- pages %>%
   arrange(desc(pageViews)) %>%
   dplyr::slice(20:1) %>%
-  mutate(pageTitle = factor(pageTitle, levels = pageTitle)) %>%
+  mutate(
+    pageTitle = str_wrap(pageTitle, 30),
+    pageTitle = factor(pageTitle, levels = pageTitle)) %>%
   ggplot(aes(x = pageViews_prop, y = pageTitle)) +
   geom_point(colour = "steelblue") +
   scale_x_continuous("Proportion of all page views", label = percent) +
@@ -53,7 +55,7 @@ p <- pages %>%
   ggtitle("Most viewed pages on Peter's Stats Stuff",
           "Excluding listings, 'about', and similar administrative pages")
 
-svg("../img/analytics-pageviews.svg", 11, 7)
+svg("../img/analytics-pageviews.svg", 9, 10)
 print(p)
 dev.off()
 

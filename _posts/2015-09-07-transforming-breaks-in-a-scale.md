@@ -16,7 +16,7 @@ category: R
 ## Something missing
 In [my last post](/blog/2015/09/05/creating-a-scale-transformation.html) I developed a new scale transformation for R using the approach and platform from the `ggplot2` and `scales`. I implemented a method proposed in 1980 by John and Draper that does some of the job of a logarithmic transform in reducing the dominance on the page of the large values, but is also continuous through zero and works for negative numbers.  Here's the image where I demonstrated that:
 
-![regions-plot](/img/0006_income_by_region.png)
+<img src = "/img/0006_income_by_region.png" width="100%">
 
 Tweets about the post highlighted a problem with axis labels - no labels at the points where the bulk of the data lie.  This can be fixed by setting the breaks by hand but there should be a way to automate that.  This post records my efforts in this direction. In the image above, you can see the big gap between $0 and $10,000 on the vertical axis (this is showing income per week, so most people are between those two numbers!) and 0 and 50 hours worked per week on the horizontal axis.
 
@@ -25,7 +25,8 @@ To help me address this I simulated some toy data from a realistic situation - a
 
 Here's the density plot of my simulated data, presented in its original scale, with a logarithm scale, and with the new modulus transform scale.  There's usually no strict rights or wrongs in this sort of exploratory analysis, but the logarithm transform does throw away all the negative values and gives a wholy erroneous focus on the big, log-normally distributed part of the data.
 
-![density-plot](/img/0007_density_plots.svg)
+<img src = "/img/0007_density_plots.svg" width="100%">
+
 {% highlight R lineanchors %}
 library(ggplot2)
 library(scales) 
@@ -85,7 +86,7 @@ My strategy is going to be to
   
 The whole thing gets wrapped up in a function that can be used by the `breaks = argument` from a `scale` like `scale_x_continuous`.  Let's see where we're heading:
 
-![density-plots-with-breaks](/img/0007_density_plots_breaks.svg)
+<img src = "/img/0007_density_plots_breaks.svg" width="100%">
 
 One tricky catch was the final tidying up / rounding.  At one point I made the mistake of trying to copy what `pretty()` does and pick the nearest number that is 1, 2 or 5 times a multiple of 10.  This made the gridlines look oddly spaced; it makes sense for a logarithm transform but not for our more complex one.  
 
@@ -132,7 +133,9 @@ p +
 ## Applying to the New Zealand Income Survey 2011
 OK, now I can apply it to the real data from my previous post (and a post earlier than that shows how to get it into the database I'm using here).  First, here's the density of individual weekly income from all sources in that 2011 survey:
 
-![nzis-breaks](/img/0007_better_nzis_breaks.svg)
+<img src = "/img/0007_better_nzis_breaks.svg" width="100%">
+
+
 {% highlight R lineanchors %}
 # connect to database
 library(RODBC)

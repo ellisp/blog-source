@@ -1,25 +1,29 @@
 ---
 layout: default
-title: Most popular pages
+title: 100 most popular pages
 image: /img/analytics-pageviews.svg
 socialimage: /img/analytics-pageviews.png
 nametype: index
 ---
-    		
 
-   <h2>100 most popular pages on Peter's Stats Stuff</h2>
-   
-   
-   
-	<ol class="posts">
-
-	  {% include most-popular.html %}
-	
-	</ol>
-   
-   <img src='/img/analytics-pageviews.svg' width='100%'>
-      
-   <div class = "container">
-   <hr> </hr>
+<div class="jumbotron">
+  <div class="container">
+	<h1>{{ page.title }}</h1>
+	</div>
 </div>
+
+
+  <div class="container">
+	<div class="col-md-5">	
+		<ol class="posts">
+
+		  {% include most-popular.html %}
+		
+		</ol>
+	</div>
+		
+	<div class="col-md-7">	
+	   <img src='/img/analytics-pageviews.svg' width='100%'>
+	</div>
+	</div>
 
