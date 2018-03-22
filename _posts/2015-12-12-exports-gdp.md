@@ -15,7 +15,8 @@ category: R
 ---
 ## Exports and economic growth
 I was looking to show a more substantive piece of analysis using the World Development Indicators data, and at the same time show how to get started on fitting a mixed effects model with grouped time series data.  The relationship between exports' importance in an economy and economic growth forms a good start as it is of considerable theoretical and practical policy interest and has fairly reliable time series data for many countries.  At the most basic level, there is a well known positive relationship between these two variables:
-![scatterplot](/img/0023-p3.svg)
+
+<img src="/img/0023-p3.svg" width = "100%">
 
 The relationship is made particularly strong by the small, rich countries in the top right corner.  Larger countries, with their own large domestic markets, can flourish economically while being less exports-dependent than smaller countries - the USA being the example par excellence.  If the regression is weighted by population, the relationship is much weaker than shown in the above diagram.
 
@@ -23,10 +24,11 @@ However, today, I'm looking at a different aspect of the relationship - changes 
 
 The data come from the World Bank's [World Development Indicators](http://databank.worldbank.org/data/reports.aspx?source=world-development-indicators) (WDI), which I explored recently in [my last post](/blog/2015/12/05/wdi-inequality.html).  I'm comparing "Exports of goods and services (% of GDP)" with "GDP per capita (constant 2000 US$)".  The WDI have at least some data on these variables for 186 countries, but different starting years for each (earliest being 1962).  The data look like this, in a connected scatterplot showing the relationship between the two variables for 12 randomly chosen countries:
 
-![csp1](/img/0023-p1.svg)
+<img src="/img/0023-p1.svg" width = "100%">
+
 
 ... and this, in a more straightforward time series line plot:
-![ts1](/img/0023-p2.svg)
+<img src="/img/0023-p2.svg" width = "100%">
 
 Close watchers will see that there are some country groupings in the dataset (eg "Pacific island small states") that we don't want, in addition to the individual countries we do.  So our first job is to get rid of these.  Here's the R code that pulls in the data, draws the plots so far, and removes those country groupings.
 
@@ -117,13 +119,13 @@ The plan is to fit an appropriate time series model with GDP as a response varia
 * Even after taking first differences of the logarithms of my two main variables (GDP, and Exports as a percentage of GDP), I'm still a little worried that in particular countries there will be non-stationary time series that result in spurious associations.  For example, if the growth rates of both variables are steadily growing or declining.  To reduce this risk I'm going to include year in my model, so at least any linear trend of that sort is removed before looking at whether the two variables move together.
 
 Here's the distribution of the first recorded value of the logarithm of exports as a percentage of gdp:
-![first](/img/0023-p4.svg)
+<img src="/img/0023-p4.svg" width = "100%">
 
 Here's the connected scatter plot of the differenced logarithms (effectively, growth rates):
-![csp2](/img/0023-p6.svg)
+<img src="/img/0023-p6.svg" width = "100%">
 
 Here's the traditional time series plots:
-![ts2](/img/0023-p5.svg)
+<img src="/img/0023-p5.svg" width = "100%">
 
 And here's the code that does the transformations and plots:
 {% highlight R lineanchors %}
@@ -218,7 +220,7 @@ Not wanting to give too precise an interpretation of this without a bit more the
 
 As `exports_g`, `exports_lag` and `year` were all allowed to be random effects ie take different values by country, their differing values for each country are of interest.  The figures above reflect an overall effect of these variables; the actual value in any country is a (approximately) normally distributed random variable.  Here's how their' densities look:
 
-![ref](/img/0023-p7.svg)
+<img src="/img/0023-p7.svg" width = "100%">
 
 Each observation (the little rug marks on the horizontal axis) is the size of the effect for a particular country.  So we can see that while overall value of exports_lag - the persistent impact of a change in exports as a percentage of GDP on GDP growth - was 0.021 as per the table above, any particular country has a value that is lower or hight than that, with a reasonable number of countries seeing a negative impact. 
 

@@ -1,5 +1,5 @@
 body {
-  padding-top: 70px;
+  padding-top: 59px;
   padding-bottom: 30px;
   font-family: 'Roboto';
 }
@@ -53,19 +53,35 @@ a {
   }
 
 .side-div {
-  
+  color: red;
 }
 
+.side-footer {
+	color: black;
+}
 
 .post-summary {
    padding-top: 15px;
    padding-bottom: 15px;
    size: 150%;
-   
+      
 }
 
 .footer{
    background: #edf3f8;
+   padding-left: 20px;
+   padding-right: 20px;
+   padding-bottom: 10px;
+   padding-top: 10px;
+   border-radius: 15px;
+   -webkit-border-radius: 15px;
+   -moz-border-radius: 15px;
+}
+
+.side-banner {
+	color: red;
+	background: pink;
+	background-color: #edf3f8 !important;
    padding-left: 20px;
    padding-right: 20px;
    padding-bottom: 10px;
@@ -102,22 +118,11 @@ a {
 }
 
 }
-.side-banner {
-	background-color: #edf3f8 !important;
-	padding-left: 5px;
-   padding-right: 5px;
-   padding-bottom: 10px;
-   padding-top: 10px;
-   border-radius: 5px;
-   -webkit-border-radius: 5px;
-   -moz-border-radius: 5px;
-}
+
 
 
 
 .img-container{
-     
-   
    margin-top: 10px;
     margin-bottom: 10px;
     margin-right: 10px;
