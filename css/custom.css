@@ -1,6 +1,21 @@
 body {
   padding-top: 70px;
   padding-bottom: 30px;
+  font-family: 'Roboto';
+}
+
+h1 {
+	font-family: 'Sarala'; 
+}
+
+.navbar-brand {
+	font-family: 'Sarala'; 
+	font-size :23px;
+	text-decoration: none !important;
+}
+
+h2, h3, h4, h5, h6 {
+	font-family: 'Roboto';
 }
 
 .theme-dropdown .dropdown-menu {
@@ -18,40 +33,49 @@ body {
 }
 
 .jumbotron {
-    margin-bottom: 0px;
+    margin-top: 0px;
+	margin-bottom: 0px;
     background-image: url(/img/jumbo-back.JPG);
     background-position: 0% 25%;
     background-size: cover;
     background-color: #6279A9;
-    color: #CCFF33;
+    color: white;
     background-repeat: no-repeat;
-    text-shadow: black 0.3em 0.3em 0.3em;
+	font-family: 'Sarala'; font-size: 22px;
 }
+
+
+
 
 a {
-color: #008000;
+   color: #006fc6;
+   text-decoration: none;
+  }
+
+.side-div {
+  
 }
 
+
 .post-summary {
-	!color: #99FF66;
-   padding-left: 50px;
-   padding-right: 50px;
-   font-style: italic;
+   padding-top: 15px;
+   padding-bottom: 15px;
+   size: 150%;
+   
 }
 
 .footer{
-   background: #ecf9ec;
+   background: #edf3f8;
    padding-left: 20px;
    padding-right: 20px;
    padding-bottom: 10px;
    padding-top: 10px;
-border-radius: 15px;
--webkit-border-radius: 15px;
--moz-border-radius: 15px;
+   border-radius: 15px;
+   -webkit-border-radius: 15px;
+   -moz-border-radius: 15px;
 }
 
 .showcase-item{
- <!  background: #ecf9ec; !>
    padding-left: 20px;
    padding-right: 20px;
    padding-bottom: 10px;
@@ -66,6 +90,30 @@ border-radius: 15px;
    -webkit-border-radius: 15px;
    -moz-border-radius: 15px;
 }
+
+.navbar-inverse {
+	background-color: #396a93;
+	padding-left: 60px;
+}
+
+
+.dropdown-menu li > a:hover, .dropdown-menu li > a:focus, .dropdown-submenu:hover > a {
+	background-color: #1967be;
+}
+
+}
+.side-banner {
+	background-color: #edf3f8 !important;
+	padding-left: 5px;
+   padding-right: 5px;
+   padding-bottom: 10px;
+   padding-top: 10px;
+   border-radius: 5px;
+   -webkit-border-radius: 5px;
+   -moz-border-radius: 5px;
+}
+
+
 
 .img-container{
      

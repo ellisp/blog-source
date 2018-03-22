@@ -1,91 +1,102 @@
 ---
-layout: default
+layout: default-no-footer
 ---
 
-    <div class="jumbotron">
-      <div class="container">
-        <h1>{{page.title}}</h1>
-         <p class="meta">{{ page.date | date_to_string }}</p>
-        
-      </div>
-    </div>
 
-
-
-
-<div class = "post-summary">
-<h2>At a glance:</h2>
-   {{ page.description }}
-   <hr></hr>
+<div class="jumbotron">
+  <div class="container">
+	<center><h1>{{page.title}}</h1></center>
+	 	
+  </div>
 </div>
 
-<div class="post">
+<!--
 <div class="col-md-2">
-
 </div>
-  <div class="col-md-8">
+-->
 
-  {{ content }}
+	<div class = "post-summary">
+	<h2>At a glance:</h2>
+	   <p>{{ page.description }}</p>
+	   <p class="meta">{{ page.date | date_to_string }}</p>
+	   <hr></hr>
+	</div>
 
-</div>
 
-<div class = "container">
-   <div class="col-md-4">
-   {% if page.previous %} 
-        <a rel="prev" href="{{ page.previous.url }}">
-        <p>&larr; Older</p>
-        <p>{{ page.previous.title }}</p>
-        
-        </a>
-    {% endif %}
-    </div>
-    <div class="col-md-4">
-    </div>
-    <div class="col-md-4" style="text-align: right;">
-    {% if page.next %} 
-        <a rel="next" href="{{ page.next.url }}">
-        <p>Newer &rarr;</p>
-        <p>{{ page.next.title }}</p>
-        
-        </a>
-    {% endif %}
-      </div>
-      </div>
-      
-      
-      
+<div class="col-md-7">
+
+	<div class="post">
+		
+	  {{ content }}
+
+		
+	</div>
 </div>
 
+<div class="col-md-1"></div>
+<div class="col-md-4">
+	<div class="side-banner">
+	
 
+
+	<div class = "container">
+	   <div class = "side-div">
+	   {% if page.previous %} 
+			
+			<p>&larr; Previous post</p>
+			<p><a rel="prev" href="{{ page.previous.url }}">{{ page.previous.title }}</a></p>
+		{% endif %}
+		</div>
+		
+		<div class = "side-div">
+		{% if page.next %} 
+			
+			<p>Next post &rarr;</p>
+			<p><a rel="next" href="{{ page.next.url }}">{{ page.next.title }}</a></p>
+			
+			
+		{% endif %}
+		  </div>
+	</div>
+	
+	 {% include side-footer.html %}
+		  
+		  
+
+
+
+	   
+	<div id="disqus_thread"></div>
+
+		<script type="text/javascript">
+			/* * * CONFIGURATION VARIABLES * * */
+			var disqus_shortname = 'statsinthewild';
+			
+			/* * * DON'T EDIT BELOW THIS LINE * * */
+			(function() {
+				var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+				dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+				(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+			})();
+		</script>
+
+		<script type="text/javascript">
+			/* * * CONFIGURATION VARIABLES * * */
+			var disqus_shortname = 'statsinthewild';
+			
+			/* * * DON'T EDIT BELOW THIS LINE * * */
+			(function () {
+				var s = document.createElement('script'); s.async = true;
+				s.type = 'text/javascript';
+				s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+				(document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+			}());
+		</script>
+
+	<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+	</div>	
+</div>    
    
-    <div id="disqus_thread"></div>
-
-    <script type="text/javascript">
-    /* * * CONFIGURATION VARIABLES * * */
-    var disqus_shortname = 'statsinthewild';
-    
-    /* * * DON'T EDIT BELOW THIS LINE * * */
-    (function() {
-        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    })();
-</script>
-
-<script type="text/javascript">
-    /* * * CONFIGURATION VARIABLES * * */
-    var disqus_shortname = 'statsinthewild';
-    
-    /* * * DON'T EDIT BELOW THIS LINE * * */
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
-
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-    
-    
+   
+   
    

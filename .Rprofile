@@ -13,7 +13,7 @@ font_add_google("Poppins", "myfont")
 showtext.auto()
 showtext.opts(dpi = 600)
 
-myfont <- "Century Gothic"
+myfont <- "myfont"
 
 theme_set(theme_light(base_family = myfont) + 
              theme(legend.position = "bottom") +

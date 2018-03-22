@@ -29,7 +29,11 @@
 		 {% endif %}
          <meta property="og:author" content= "{{ site.fbauthor }}" />
          <meta property="og:type" content="article" />
-           
+      
+
+<link href='https://fonts.googleapis.com/css?family=Sarala' rel='stylesheet'>
+<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+	  
           <link href="/css/bootstrap.min.css" rel ="stylesheet">
           <link href="/css/bootstrap-theme.min.css" rel ="stylesheet">
             <link href="/css/custom.css" rel ="stylesheet">     
@@ -57,6 +61,7 @@
    <link rel="alternate" type="application/rss+xml" title="{{ site.name }} by Peter Ellis"
       href="/feed.xml">
 
+	  
 
       
 		</head>
@@ -101,31 +106,30 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/about">About</a></li>
+            <li><a href="/about">about</a></li>
             <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">All blog posts <span class="caret"></span></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">all posts <span class="caret"></span></a>
                 <ul class="dropdown-menu">
-                  <li><a href="/blog">Ordered by date</a></li>
-				  <li><a href="/blog/most-popular.html">Ordered by popularity</a></li>
-                  <li><a href="/blog/index_by_tag.html">Grouped by subject matter</a></li>
-                  <li><a href = {{ site.posts.first.url }}>Most recent post</a></li>
-				  <li><a href="/blog/nz.html">All blog posts with data about New Zealand</a></li>
-				  <li><a href="/blog/voting.html">All blog posts on voting behaviour</a></li>
+                  <li><a href="/blog">ordered by date</a></li>
+				  <li><a href="/blog/most-popular.html">ordered by popularity</a></li>
+                  <li><a href="/blog/index_by_tag.html">grouped by subject matter</a></li>
+                  <li><a href = {{ site.posts.first.url }}>most recent post</a></li>
+				  <li><a href="/blog/nz.html">all posts with data about new zealand</a></li>
+				  <li><a href="/blog/voting.html">all posts on voting behaviour</a></li>
                  </ul>
             </li>
-              <li><a href="/blog/showcase.html">Showcase</a></li>
-              <li><a href="/presentations/index.html">Presentations</a></li>
+              <li><a href="/blog/showcase.html">showcase</a></li>
+              <li><a href="/presentations/index.html">presentations</a></li>
 			  <li class="dropdown">
-				<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">NZ Election forecasts<span class="caret"></span></a>
+				<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">nz election forecasts<span class="caret"></span></a>
                 <ul class="dropdown-menu">
-                  <li><a href = "/elections/combined.html">Combined model (recommended)</a></li>
-                  <li><a href="https://ellisp.shinyapps.io/nz-election-2017/">Explore coalitions and assumptions</a></li>
-				  <li><a href="/elections/elections.html">Model A ("generalized additive model")</a></li>
-				  <li><a href = "/elections/state-space.html">Model B ("state space")</a></li>
-				  <li><a href="/elections/changelog.html">Log of changes to forecasts</a></li>
-				  <li><a href="https://github.com/ellisp/nz-election-forecast">Source code on GitHub (external site)</a></li>
-				  <li><a href="/blog/voting.html">All blog posts on voting behaviour</a></li>
+                  <li><a href = "/elections/combined.html">combined model (recommended)</a></li>
+                  <li><a href="https://ellisp.shinyapps.io/nz-election-2017/">explore coalitions and assumptions</a></li>
+				  <li><a href="/elections/elections.html">model A "generalized additive model"</a></li>
+				  <li><a href = "/elections/state-space.html">model B "state space"</a></li>
+				  <li><a href="/elections/changelog.html">log of changes to forecasts</a></li>
+				  <li><a href="https://github.com/ellisp/nz-election-forecast">source code on GitHub</a></li>
+				  <li><a href="/blog/voting.html">all posts on voting behaviour</a></li>
                 </ul>				
 			  </li>
 			  
