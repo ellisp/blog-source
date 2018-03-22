@@ -10,10 +10,7 @@ layout: default-no-footer
   </div>
 </div>
 
-<!--
-<div class="col-md-2">
-</div>
--->
+
 
 	<div class = "post-summary">
 	<h2>At a glance:</h2>
@@ -39,16 +36,16 @@ layout: default-no-footer
 	
 
 
-	<div class = "container">
-	   <div class = "side-div">
+	<div>
+	   
 	   {% if page.previous %} 
 			
 			<p>&larr; Previous post</p>
 			<p><a rel="prev" href="{{ page.previous.url }}">{{ page.previous.title }}</a></p>
 		{% endif %}
-		</div>
 		
-		<div class = "side-div">
+		
+		
 		{% if page.next %} 
 			
 			<p>Next post &rarr;</p>
@@ -56,7 +53,7 @@ layout: default-no-footer
 			
 			
 		{% endif %}
-		  </div>
+		
 	</div>
 	
 	 {% include side-footer.html %}
