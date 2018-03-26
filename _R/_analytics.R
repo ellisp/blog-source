@@ -52,7 +52,7 @@ p <- pages %>%
   geom_point(colour = "steelblue") +
   scale_x_continuous("Proportion of all page views", label = percent) +
   labs(y = "") +
-  ggtitle("Most viewed pages on Peter's Stats Stuff",
+  ggtitle("Most viewed pages on Free Range Statistics",
           "Excluding listings, 'about', and similar administrative pages")
 
 svg("../img/analytics-pageviews.svg", 9, 10)
