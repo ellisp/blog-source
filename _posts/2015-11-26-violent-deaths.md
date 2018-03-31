@@ -26,7 +26,7 @@ Looking at snapshot cross-sectional average data since 1990 (for which there is 
 Remember that this only shows relatively weathly countries - for a more complete list (but less complete data) check out this [Wikipedia list of countries that can be ranked by intentional homicide rates](https://en.wikipedia.org/wiki/List_of_countries_by_intentional_homicide_rate) (not quite the same as our data, which includes all deaths from assault, intentional or otherwise) or this [report from the UN Office on Drugs and Crime](https://www.unodc.org/documents/data-and-analysis/Crime-statistics/International_Statistics_on_Crime_and_Justice.pdf).
 
 In the chart below, the label for each country is centred at the overall population rate of deaths from assault and the red and blue vertical strokes mark the male and female rates respectively.  Beware that the scale is logarithmic - this was necessary to stop everywhere except Colombia being squashed into the left of the chart.
-![snapshot](/img/0020-assault-average.svg)
+<img src='/img/0020-assault-average.svg' width='100%'>
 
 ### Compare across time
 Looking at trends across time we see an encouraging sign.  Most countries' violent death rates peaked in the 1980s or 90s and have been declining, in some cases dramatically, in recent years.
@@ -34,14 +34,14 @@ Looking at trends across time we see an encouraging sign.  Most countries' viole
 In the chart below the vertical axis for each country has been set to make most use of the plot area and draw attention to trends rather than absolute levels, so you can't compare the absolute levels of violence across countries.  That's what the first chart was for, so the two charts complement eachother.  The facets in the trend chart below have been *ordered* from lowest to highest rates (1990+ averages), so there is still some visual indicator of absolute size of the problem.
 
 The recent declines are particularly strong in the  Eastern Europe and USSR region - Russia, Estonia, Latvia, Lithuania, Poland, Slovak Republic, Slovenia, Czech Republic, and Germany have all seen dramatic drops in rates of death from assault after rapid growth in the early 1990s, associated with the magnitude of the transition in economic and political systems that took place at that time.  There's also the possibility of changing official statistical practice with the changing political system, but there's no particular reason I know of (I'm not an expert in former and post Soviet statistics systems, either...) to think of that, and the general curve looks plausible given an outsider's view of the recent history there.
-![over-time](/img/0020-deaths-trends.svg)
+<img src='/img/0020-deaths-trends.svg' width='100%'>
 
 Tragically, Norway's [spike in 2011](https://en.wikipedia.org/wiki/2011_Norway_attacks) is really noticeable to a close viewer, even in a chart like this with 40 countries covering 50 years.
 
 ### Secondary point - Catholic countries and gender (more men getting killed) violence patterns?
 Looking into the imbalance between the sexes, we see that the countries with consistently high male to female ratios of rates of violent death are Colombia, Brazil, Mexico, Chile, Costa Rica and South Africa, in all of which males are at least 5 times more likely to be killed violently than are females.  
 
-![gender-plot](/img/0020-gender-ratios.svg)
+<img src='/img/0020-gender-ratios.svg' width='100%'>
 
 At first glance there looks to be a possible correlation between being predominantly Catholic and a high ratio of male to female violent death rates (as well as the Latin American countries leading the pool, Italy and Ireland are also fairly high up on the list).  In an early draft of this post I had a casual mention of this and just a warning against slack inference, but I decided it was irresponsible to leave it at that.  To be more professional, I followed up my hunch with data on the proportion of a country that was Catholic in 2005 courtesy of [data published by David M. Cheney](http://www.catholic-hierarchy.org/country/sc1.html), a Catholic enthusiast (not sanctioned by any Catholic church authority but good enough for our purposes).
 
@@ -51,7 +51,7 @@ The challenge is that we've made up our hypothesis - relationship between Cathol
 
 The nub of the issue is that the apparent relationship with Catholicism might be an artefact of the high male murder by assault rates in five specific countries - Colmbia, Brazil, Mexico, etc - where the high Catholicism is highly correlated with other factors, specifically "Latin Americanism".  Any decent model should take this into account - it's just wrong to treat these five countries as independent observations (as is implicitly done in fitting a simple regression).  The image below illustrates the conundrum:
 
-![catholics-gender](/img/0020-gender-catholic.svg)
+<img src='/img/0020-gender-catholic.svg' width='100%'>
 
 * The top plot ignores the Latin Americanism of those five countries and fits a simple linear regression, which finds (illusory) statistically significant evidence of a link between Catholicism and a higher ratio of male to female death-from-assault rates.  As mentioned above, this approach is unsound because it ignores the grouping of the five prominent countries that drag up the slope of the line.
 * The second plot controls for this by adding a dummy variable for "Americas".  The result is still statistically significant evidence of a Catholic effect, but interacting with the continent effect ie only in the Americas does it seem to matter being an increasingly Catholic country when wondering if males are more likely to be killed in an assault than females.
