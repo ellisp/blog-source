@@ -68,14 +68,10 @@ library(grid)
 library(gridExtra) # added 27/11/2015, for grid.arrange() to work!
 library(dplyr)
 library(tidyr)
-library(showtext) # for fonts
 library(rsdmx)    # for importing OECD data
 library(ISOcodes) # for merging country codes with names
 library(rvest)    # for screen scraping data about Catholicism
 
-font.add.google("Poppins", "myfont")
-showtext.auto()
-theme_set(theme_grey(base_family = "myfont"))
 
 #----------Import and mung the death from assault data---------------
 # load deaths by assault from OECD.Stat
@@ -106,7 +102,7 @@ viol <- viol_sdmx %>%
    mutate(Unit = ifelse(UNIT == "TXCMILTX", 
                         "Deaths per 100 000 population", "Deaths per 100 000 males"),
           Unit = ifelse(UNIT == "TXCMFETF", "Deaths per 100 000 females", Unit),
-          Unit = factor(Unit, levels = unique(Unit)[c(2, 3, 1)]),
+          Unit = factor(Unit, levels = unique(Unit)[c(2, 1, 3)]),
           Year = as.numeric(Year)) %>%
    # not enough data for Turkey to be useful so we knock it out:
    filter(Country != "Turkey")
@@ -149,8 +145,7 @@ viol_sum %>%
    ggplot(aes(x = Value, y = Country)) +
    geom_segment(data = viol_spread, aes(y = Country, yend = Country, x = Male, xend = Female),
                 colour = "white", size = 3) +
-   geom_text(size = 4, aes(label = Label, colour = Unit), alpha = 0.8,
-             family = "myfont") +
+   geom_text(size = 4, aes(label = Label, colour = Unit), alpha = 0.8) +
    labs(y = "") +
    scale_x_log10(("Deaths per 100,000 (logarithmic scale)")) +
    theme(legend.position = "bottom") +

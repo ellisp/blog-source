@@ -35,12 +35,13 @@ svg("../img/0119-suicides.svg", 11, 9)
 suicide %>%
   mutate(
     variable = fct_reorder(variable, -value),
-    country = fct_reorder(country, -value)
+    country = fct_reorder(country, value)
   ) %>%
   ggplot(aes(x = year, y = value, colour = variable)) +
   facet_wrap(~country) +
   geom_line() +
-  labs(colour = "", x = "",
+  scale_colour_manual("", values = c("blue", "grey10", "red")) +
+  labs(x = "",
        y = "Deaths per 100,000 population (standardised rates)") +
   ggtitle("Suicide rates around the world (all methods)",
           "USA is moderately high, but not as high as it features when compared on firearm-related deaths")
@@ -102,7 +103,7 @@ dev.off()
 
 
 # Scatterplot
-svg("../img/0119-scatterplot.svg", 8, 3)
+svg("../img/0119-scatterplot.svg", 8, 6)
 gva %>%
   filter(year == 2017) %>%
   mutate(n_killed = paste0("'", ifelse(`# Killed` < 5, `# Killed`, "More than 4"), " death' incidents")) %>%
@@ -137,7 +138,7 @@ blank_theme <- theme_minimal() +
     axis.text.x = element_blank()
   )
 
-svg("../img/0119-pie.svg", 8, 3)
+svg("../img/0119-pie.svg", 8, 4)
 gva %>%
   filter(year == 2017) %>%
   mutate(n_killed = paste0("'", ifelse(`# Killed` < 5, `# Killed`, "More than 4"), " death' incidents")) %>%
@@ -155,7 +156,7 @@ gva %>%
                      guide = guide_legend(reverse = TRUE)) +
   blank_theme +
   ggtitle("The vast majority of firearm deaths come from single-death incidents.",
-          "Estimated firearms incidents and deaths in the USA in 2017, aggregated by number of deaths per incident")
+          "Estimated firearms deaths in the USA in 2017, aggregated by number of deaths per incident")
 dev.off()          
 
 
@@ -232,11 +233,48 @@ fit2 <- stan("0119-trunc-negbin.stan", data = data)
 phi <- summary(fit2)$summary["phi", "mean"]
 mu <- summary(fit2)$summary["mu", "mean"]
 
-x <- rnbinom(100000, size = phi, mu = mu)
+
 ggplot(data.frame(x), aes(x = x)) +
   geom_histogram(binwidth = 1)
 
 
 cbind(0:10, round(100 * dnbinom(0:10, size = phi, mu = mu), 1))
 
+x_sim <- rnbinom(100000, size = phi, mu = mu)
 
+comp_data <- rbind(
+  data_frame(x = rep(other_years$killed, other_years$freq), source = "Actual, 4+ deaths"),
+  data_frame(x = filter(gva, year == 2017)$`# Killed`, source = "Actual, 1+ deaths"),
+  data_frame(x = x_sim[x_sim >= 1], source = "Simulated, 1+ deaths"),
+  data_frame(x = x_sim[x_sim >= 4], source = "Simulated, 4+ deaths")
+) 
+
+svg("../img/0119-results.svg", 8, 6)
+comp_data %>%
+  ggplot(aes(x = x, y = ..density..)) +
+  facet_wrap(~source) +
+  geom_histogram(binwidth = 1) +
+  ggtitle("Comparison of actual and simulated deaths per incident",
+          "Negative binomial model fit iteratively to two sets of truncated data.
+Simulated data based on the model does not feature the rare, large events observed in reality.")
+dev.off()
+
+#=========final go - model the higher death incidents as their own, as part of a mixture=========
+# This doesn't work either
+
+data <- list(
+  x = rep(other_years$killed, other_years$freq),
+  lower_limit = 4,
+  mu_prior_mean = 3,
+  mu_prior_sd = 15,
+  phi_prior_mean = 3,
+  phi_prior_sd = 15
+)
+
+data$n <- length(data$x)
+
+fit3 <- stan("0119-trunc-negbin.stan", data = data)
+x_sim_2 <- rnbinom(100000, size = summary(fit3)$summary["phi", "mean"], mu = summary(fit3)$summary["mu", "mean"])
+hist(x_sim_2)
+
+convert_pngs("0119")

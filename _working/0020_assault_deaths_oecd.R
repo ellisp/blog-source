@@ -9,9 +9,6 @@ library(ISOcodes) # for merging country codes with names
 library(rvest)    # for screen scraping from the Vatican
 library(gridExtra)
 
-font.add.google("Poppins", "myfont")
-showtext.auto()
-theme_set(theme_grey(base_family = "myfont"))
 
 
 
@@ -41,7 +38,7 @@ viol <- viol_sdmx %>%
    mutate(Unit = ifelse(UNIT == "TXCMILTX", 
                         "Deaths per 100 000 population", "Deaths per 100 000 males"),
           Unit = ifelse(UNIT == "TXCMFETF", "Deaths per 100 000 females", Unit),
-          Unit = factor(Unit, levels = unique(Unit)[c(2, 3, 1)]),
+          Unit = factor(Unit, levels = unique(Unit)[c(2, 1, 3)]),
           Year = as.numeric(Year)) %>%
    # not enough data for Turkey to be useful so we knock it out:
    filter(Country != "Turkey")
@@ -77,9 +74,8 @@ p1 <- viol_sum %>%
    mutate(Label = ifelse(grepl("population", Unit), as.character(Country), "|")) %>%
    ggplot(aes(x = Value, y = Country)) +
    geom_segment(data = viol_spread, aes(y = Country, yend = Country, x = Male, xend = Female),
-                colour = "white", size = 3) +
-   geom_text(size = 4, aes(label = Label, colour = Unit), alpha = 0.8,
-             family = "myfont") +
+                colour = "grey80", size = 3) +
+   geom_text(size = 4, aes(label = Label, colour = Unit), alpha = 0.8) +
    labs(y = "") +
    scale_x_log10(("Deaths per 100,000 (logarithmic scale)")) +
    theme(legend.position = "bottom") +
@@ -91,11 +87,6 @@ p1 <- viol_sum %>%
 svg("../img/0020-assault-average.svg", 10, 10)
 print(p1)
 dev.off()
-
-png("../img/0020-assault-average.png", 1000, 1000, res = 100)
-print(p1)
-dev.off()
-
 
 
 
@@ -115,11 +106,6 @@ p2 <-  viol %>%
 svg("../img/0020-deaths-trends.svg", 10, 10)
    print(p2)
 dev.off()
-
-png("../img/0020-deaths-trends.png", 1000, 1000, res = 100)
-   print(p2)
-dev.off()
-
 
 #--------------gender digression------------
 viol_gender <- viol %>%
@@ -188,3 +174,5 @@ mod3 <- lm(ratio ~ Percent_Catholic * Continent2, data = viol_gender_cath)
 summary(mod1)
 summary(mod2)
 summary(mod3)
+
+convert_pngs("0020")
