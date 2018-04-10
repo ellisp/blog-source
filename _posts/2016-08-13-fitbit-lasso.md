@@ -39,7 +39,7 @@ Basal metabolic rate is dependent on my gender, age, height and weight, none of 
 
 Here's how those seven candidate explanatory variables relate to eachother:
 
-![pairs](/img/0050-pairs.svg)
+<img src = '/img/0050-pairs.svg' width='100%'>
 
 From this chart we see a few things of interest:
 
@@ -91,7 +91,7 @@ pairs(fitbit2[ , -1], lower.panel = panel.cor, main = "Pairwise relationships of
 
 The close relationship between steps and distance (correlation coefficient of 1.00, which means that knowing one you can almost exactly predict the other) isn't surprising to me because fitbit's website makes clear it estimates distance based on steps and stride length.  It applies one stride length to convert from steps to distance for walking, and one for running (which it can detect, presumably, from the pace and violence of motion), but I know that I did virtually no running in this period so it's only converting from steps to walking.  Here's the distribution of fitbit's estimated distance divided by steps:
 
-![stride](/img/0050-stridelenth.svg)
+<img src='/img/0050-stridelenth.svg' width='100%'>
 
 {% highlight R %}
 ggplot(fitbit2, aes(x = Distance / Steps)) + 
@@ -116,11 +116,11 @@ round(coef(mod0))
 
 That figure of 1,926 per day as my "no steps" base calory burn is also somewhat more than the 1,629 that [this website](http://www.bodybuilding.com/fun/bmr_calculator.htm) says should be my basal metabolic rate based on the Harris-Benedict equation.  I'm not sure what's going on here - either fitbit uses a different calculation, or perhaps it's judging various activities from me from my heart rate that don't feature in steps, or something else.  Fitbit doesn't know my real calory burn rates, so it can't be something mysterious to do with my metabolism as it has no way of knowing, it just estimates based on steps, heart rate, weight, height, etc.  Anyway, the simple model above isn't too bad an estimate of how many calories fitbit *says* I use; for the record, here's a comparison of the predicted calories compared to residuals from that model:
 
-![residuals](/img/0050-1var-resid.svg)
+<img src='/img/0050-1var-resid.svg' width='100%'>
 
 And just to put one issue to rest, here's the partial autocorrelation function of the residuals, showing that there's no particular pattern over time not captured in the model.  This is not a particularly interesting chart but I'm including it because it should be standard practice to check for such patterns (which would be shown by one of the vertical bars crossing the horizontal blue lines) when working with data that was captured over a time period.
 
-![pacf](/img/0050-1var-resid-pacf.svg)
+<img src='/img/0050-1var-resid-pacf.svg' width='100%'>
 
 {% highlight R %}
 # check residuals v. fit
@@ -136,7 +136,7 @@ Now I'm ready to move to my full model, predicting daily calories based on all t
 
 The first step is choosing an appropriate alpha - the balance between the extremes of ridge regression and lasso estimation.  I choose repeated cross-validation to do this.  Basically this means fitting the model to slightly different re-samples many times at different values of alpha, using the fit model to predict the "out of bag" points from the original sample that weren't in the re-sample.  The results show only a weak impact of the choice of alpha:
 
-![alphas](/img/0050-cv-alpha.svg)
+<img src='/img/0050-cv-alpha.svg' width='100%'>
 
 Here's the code that did this.
 {% highlight R %}
@@ -294,7 +294,7 @@ One substantive issue of interest to me that I haven't mentioned was the relatio
 
 This can be illustrated by what has become one of the standard plots for this sort of estimation method - a graphic illustration of how the size of coefficients for different variables increase as the penalty against coefficients is relaxed:
 
-![variables](/img/0050-elastic-coefs.svg)
+<img src='/img/0050-elastic-coefs.svg' width='100%'>
 
 We see from this that even the fullest model leaves a zero coefficient for variable #3, `Floors` - the horizontal green line.  `Minutes.Very.Active` is the second last variable to be allowed to increase from zero - it contains relatively little information after all the other "minutes" variables are included.
 

@@ -11,6 +11,7 @@ library(extrafont)
 
 # font_add_google("Poppins", "myfont")
 font_add_google("Roboto", "main_font")
+font_add_google("Roboto", "myfont")
 font_add_google("Sarala", "heading_font")
 
 showtext.auto()

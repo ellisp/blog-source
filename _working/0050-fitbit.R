@@ -26,7 +26,7 @@ fitbit2$Date <- NULL
 fitbit2$Steps <- fitbit2$Steps / 1000 # so coefficients will be calories per thousand steps, easier to describe
 
 plot_pairs <- function(){
-   par(family = "myfont")
+   par(family = "myfont", font.main = 1)
    # let's look at all the candidate variables
    panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
       # function for calculating correlation coefficients and using
@@ -73,13 +73,13 @@ plot(24 - round(apply(minutes, 1, sum) / 60, 1)) # ie sleeping times (approximat
 mod0 <- lm(Calories.Burned ~ Steps, data = fitbit2)
 
 svg("../img/0050-1var-resid.svg", 7, 5)
-par(family = "myfont")
+par(family = "myfont", font.main = 1)
 plot(mod0, which = 1, bty = "l"); grid()
 dev.off()
 
 #----check autocorrelation--------
 svg("../img/0050-1var-resid-pacf.svg", 7, 5)
-par(family = "myfont")
+par(family = "myfont", font.main = 1)
 pacf(resid(mod0), main = "Partial autocorrelation of residuals\nfrom single variable regression")
 dev.off()
 
@@ -206,7 +206,7 @@ thepal <- brewer.pal(7, "Set1")
 ordering <- c(7,5,6,2,1,3,4)
 
 svg("../img/0050-elastic-coefs.svg", 7, 6)
-par(family = "myfont")
+par(family = "myfont", font.main = 1)
 par(mar = c(5.1, 4.1, 6.5, 1), bg = "grey90")
 plot(mod1s, xvar = "dev", label = TRUE, col = thepal, lwd = 2, main = 
         "Increasing contribution of different explanatory variables\nas penalty for including them is relaxed")
