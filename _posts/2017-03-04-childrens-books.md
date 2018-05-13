@@ -4,6 +4,7 @@ title: Visualising relationships between children's books
 date: 2017-03-04
 tag: 
    - ClusterAnalysis
+   - Books
    - R
 description: Statistical methods like hierarchical clustering and principal components analysis can help understand and visualise literary concepts but don't replace reading the books and engaging with them in traditional critical ways!
 image: /img/0083-dendro1.svg
