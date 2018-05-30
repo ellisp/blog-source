@@ -10,7 +10,7 @@ ga_id <- 106185571
 
 
 
-pages_orig <- google_analytics_4(ga_id, 
+pages_orig <- google_analytics(ga_id, 
                    date_range = c("2015-01-01", as.character(Sys.Date())), 
                    metrics = "pageViews", 
                    dimensions = c("pagePath", "pageTitle"))
