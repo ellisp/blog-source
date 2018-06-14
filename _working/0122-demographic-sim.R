@@ -1,16 +1,21 @@
 library(tidyverse)
 library(scales)
-library(gridExtra)        
+library(gridExtra)
+library(frs) # for the french death rates
 
 #-----------------birth probabilities-----------------------------
 first_ave_child_rate <- ave_child_rate <- 2.2
 birth_rate_perturb <- -0.02
-death_rate_perturb <- -0.30
+death_rate_perturb <- +0.30
 mean_starting_age_m <- 35
 mean_starting_age_f <- 35
 sd_starting_age <- 10
 ssr <- 107 # number of boys born for every 100 girls.  global average is 107 accoridng to Wikipedia
 starting_n <- 2000 # number of starting couples
+mimr <- 5 # male infant mortality per 1000, starting
+fimr <- 5 # female infant moratlity per 1000, starting
+mle <- 75 # male life expectanye, starting
+fle <- 80 # female life expectancy, starting
 
 fertile_ages <- 12:50
 n_fertile_ages <- length(fertile_ages)
@@ -20,6 +25,7 @@ birth_probs = data_frame(age = fertile_ages,
                          # mother's sex, for later joining to other tables:
                          sex = "female") 
 
+svg("../img/0122-birth-probability.svg", 8, 4)
 ggplot(birth_probs, aes(x = age, y = prob_birth)) +
   geom_hline(yintercept = ave_child_rate / n_fertile_ages, colour = "steelblue") +
   geom_line() +
@@ -31,37 +37,70 @@ ggplot(birth_probs, aes(x = age, y = prob_birth)) +
                 "to different probabilities by womens' age")) +
   scale_x_continuous(breaks = fertile_ages[fertile_ages %% 2 == 1]) +
   theme(panel.grid.minor = element_blank())
+dev.off()
 
 #-------------------death probabilities---------------------------
 # https://www.ined.fr/en/everything_about_population/data/france/deaths-causes-mortality/mortality-rates-sex-age/
+save(french_death_rates_2015, file = "0122-demographics/french_death_rates_2015.rda")
+age <- french_death_rates_2015$age
 
-
-age <- c(0, seq(from = 2.5, to = 67.5, by = 5), 75, 85, 100, 150)
-rate <- c(3.4, 0.3, 0.1, 0.1, 0.3, 0.6, 0.7, 0.9, 1.2, 1.8, 2.9, 4.5, 7.5, 11.1, 14.9, 26.7, 78, 217, 1000) 
-
-dr <- approx(age, rate, xout = 0:150)
+dr <- approx(age, french_death_rates_2015$male, xout = 0:150)
 death_probs_m <- data_frame(age = dr$x, 
                           prob_death = dr$y / 1000,
                           sex = "male")
 
+#' calculate the multiplier of a given set of death rates, other than IMR, needed to get a new set of death
+#' rates for a target life expectancy
+le_opt <- function(x, age, rate, target){
+    n <- length(rate)
+    rate[-c(1, n)] <- pmax(pmin(1000, rate[-c(1, n)] * x), 0)
+    return(abs(life_expectancy(age, rate) - target))
+    }
 
-rate <- c(2.8, 0.2, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.5, 0.9, 1.5, 2.4, 3.5, 4.8, 6.7, 13.9, 51.1, 179, 1000)
-          
-dr <- approx(age, rate, xout = 0:150)
+# arbitrarily set a male infant death rate:
+death_probs_m[1, "prob_death"] <- mimr / 1000
+
+# modify the rest of the death rates to match an arbitrary life expectancy target:
+best_multiplier <- optimize(f = le_opt, 
+         lower = 0, upper = 100, 
+         age = death_probs_m$age, rate = death_probs_m$prob_death * 1000, target = mle)
+
+death_probs_m[-c(1, nrow(death_probs_m)), "prob_death"] <- best_multiplier$minimum * 
+  death_probs_m[-c(1, nrow(death_probs_m)), ]$prob_death
+
+
+
+dr <- approx(age, french_death_rates_2015$female, xout = 0:150)
 death_probs_f <- data_frame(age = dr$x, 
                             prob_death = dr$y / 1000,
                             sex = "female")
 
+# arbitrarily set a female infant death rate:
+death_probs_f[1, "prob_death"] <- fimr / 1000
+
+# modify the rest of the death rates to match an arbitrary life expectancy target:
+best_multiplier <- optimize(f = le_opt, 
+                            lower = 0, upper = 100, 
+                            age = death_probs_f$age, rate = death_probs_f$prob_death * 1000, target = fle)
+
+death_probs_f[-c(1, nrow(death_probs_f)), "prob_death"] <- best_multiplier$minimum * 
+  death_probs_f[-c(1, nrow(death_probs_f)), ]$prob_death
+
+
+
 
 death_probs <- rbind(death_probs_m, death_probs_f) 
 
+
+
+svg("../img/0122-deathrates.svg", 8, 4)
 ggplot(death_probs, aes(x = age, y = prob_death, colour = sex)) +
   geom_line() +
   scale_y_log10(breaks = c(1, 10, 100, 1000)/ 1000) +
   labs(y = "Probability of dying in any given year") +
   ggtitle("A simple model for age distribution of deaths",
           "Based on French death rates by age group in 2015, with linear interpolation")
-
+dev.off()
 
 # compare to http://archive.stats.govt.nz/browse_for_stats/health/life_expectancy/new-zealand-life-tables-2005-07/chapter-2-national-trends-in-longevity-and-mortality.aspx
 
@@ -128,7 +167,10 @@ for(this_year in 1:500){
   #----------------------deaths----------------------------
   
   death_probs <- death_probs %>%
-    mutate(prob_death = prob_death * rnorm(1, 1 + death_rate_perturb / 100, abs(death_rate_perturb / 100)))
+    mutate(prob_death = pmin(1, prob_death * 
+                               rnorm(1, 1 + death_rate_perturb / 100, abs(death_rate_perturb / 100))))
+  
+
   
   
   new_deaths <- currently_alive %>%
@@ -181,6 +223,24 @@ p2 <- alive_at_end_of_year %>%
   scale_y_continuous("Number of people\n(note that scale varies)", label = comma)
 
 
+p2ad <- alive_at_end_of_year %>%
+  filter(year %in% c(0, 20, 40, 75, 120, 180, 250, 350, 500)) %>%
+  mutate(year_lab = paste("Year:", year),
+         year_lab = fct_reorder(year_lab, year)) %>%
+  mutate(age_c = fct_drop(cut(age, breaks = 0:31 * 5, right = FALSE)) ) %>%
+  group_by(age_c, year_lab, sex) %>%
+  summarise(population = sum(population))
+
+p2a <- p2ad %>%
+  ggplot(aes(x = as.numeric(age_c), y = population, colour = sex)) +
+  geom_line() +
+  facet_wrap(~year_lab, scales = "free_y") +
+  ggtitle("Population age and sex distribution over time") +
+  labs(x = "Age of population", colour = "") +
+  scale_y_continuous("Number of people\n(note that scale varies)", 
+                     breaks = unique(as.numeric(p2ad$age_c)), 
+                     labels = levels(p2ad$age_c))
+
 total_pop <- alive_at_end_of_year %>%
   group_by(year) %>%
   summarise(population = sum(population)) 
@@ -226,7 +286,7 @@ p4 <- alive_at_end_of_year %>%
   ggplot(aes(x = year, y = ave_age, colour = sex)) +
   geom_line() +
   labs(y = "Average age", x = "Year since simulation began") +
-  ggtitle("Average age over time")
+  ggtitle("Average age over time") + guides(colour = guide_legend(override.aes = list(size=100)))
 
 
 p5 <- all_deaths %>%
