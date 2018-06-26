@@ -3,10 +3,18 @@ library(shinyjs)
 library(shinycssloaders)
 
 shinyUI(fluidPage(
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "my_styles.css")
+  ),
+  
+  tags$style(HTML("@import url('https://fonts.googleapis.com/css?family=Roboto');
+@import url('https://fonts.googleapis.com/css?family=Prosto One');
+  ")),
+  
   useShinyjs(),
   
   # Application title
-  titlePanel("Demo demographic simulation"),
+  titlePanel("Population Simulator"),
   
   sidebarLayout(
     sidebarPanel(
@@ -73,7 +81,7 @@ shinyUI(fluidPage(
                      value = 1000),
         sliderInput("number_years",
                      "Number of years to run the simulation over",
-                     min = 50, max = 1000, value = 50)
+                     min = 50, max = 1000, value = 250)
       )
     ),
     mainPanel(
@@ -84,7 +92,9 @@ shinyUI(fluidPage(
         tabPanel("Demographic pyramids",
          withSpinner(plotOutput("pyramids", height = "650px"), type = 6)
         )
-    )
+    ),
+    HTML("<p>See <a href='http://freerangestats.info/blog/2018/06/26/fertility-rate'>Free Range Statistics</a>
+for discussion and explanation of this demonstration population simulator.</p>")
     )
   )
 ))

@@ -286,7 +286,7 @@ p4 <- alive_at_end_of_year %>%
   ggplot(aes(x = year, y = ave_age, colour = sex)) +
   geom_line() +
   labs(y = "Average age", x = "Year since simulation began") +
-  ggtitle("Average age over time") + guides(colour = guide_legend(override.aes = list(size=100)))
+  ggtitle("Average age over time") + guides(colour = guide_legend(override.aes = list(size=1)))
 
 
 p5 <- all_deaths %>%
@@ -298,6 +298,22 @@ p5 <- all_deaths %>%
   ggtitle("Average age at death",
           "Note that this is not the same as life expectancy at birth except in the middle of the data,\nas recent observations are biased to young deaths; and many deaths before year zero were not observed.")
 
-
+svg("../img/0122-pyramids.svg", 8, 6)
 print(p2)
-grid.arrange(p1, p3, p4, p5)
+dev.off()
+
+svg("../img/0122-pop-size.svg", 8, 4)
+print(p1)
+dev.off()
+
+svg("../img/0122-rates.svg", 8, 5)
+print(p3)
+dev.off()
+
+svg("../img/0122-average-age.svg", 8, 4)
+print(p5)
+dev.off()
+
+convert_pngs("0122")
+rsconnect::deployApp("0122-demographics")
+
