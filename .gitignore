@@ -22,7 +22,13 @@ _working/_output/0026_random_forest/
 *wdi.rda
 _working/*.RData
 _working/enron*
+_working/gva.zip
+_working/gun-violence/
+_working/vw_IVS.zip
+_working/bls-cd/
 
+_working/.spyproject/
+_working/melb-rents.xlsx
 # gEcon crap
 *SW_03*
 !0031-shiny/*

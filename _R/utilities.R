@@ -9,6 +9,7 @@ convert_pngs <- function(postnumber){
       
    }
    setwd("../_working")
+   beepr::beep(4)
 }
 
 convert_election_pngs <- function(files = c("gam-final-chances-bar.svg",
@@ -23,6 +24,7 @@ convert_election_pngs <- function(files = c("gam-final-chances-bar.svg",
       
    }
    setwd("../_working")
+   beepr::beep(4)
 }
 
 
