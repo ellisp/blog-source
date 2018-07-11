@@ -201,3 +201,19 @@ summary(mod)
 
 convert_pngs("0124")
 
+install.packages("atus")
+library(atus)
+data(atusact)
+
+atussum <- atusact %>%
+  mutate(traveltime = dur * as.numeric(tiercode > 180000 & tiercode < 190000)) %>%
+  group_by(tucaseid) %>%
+  summarise(travel = sum(traveltime)) %>%
+  ungroup() %>%
+  inner_join(atuscps)
+  
+atussum %>%
+  filter(travel < 360) %>% # outliers
+  ggplot(aes(x = famincome, y = travel)) +
+  geom_boxplot() +
+  coord_flip()

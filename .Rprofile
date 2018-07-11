@@ -8,7 +8,7 @@ library(scales)
 library(grDevices)
 library(stats)
 library(extrafont)
-library(beep)
+library(beepr)
 
 # font_add_google("Poppins", "myfont")
 font_add_google("Roboto", "main_font")
