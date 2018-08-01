@@ -6,27 +6,29 @@ tag:
    - NewZealand
    - Economics
    - R
-description: I have a brief look at the relationship between reported business confidence in New Zealandand what actually happens down the track with economic growth.  
+description: I have a brief look at the relationship between reported business confidence in New Zealand and what actually happens down the track with economic growth.  Confidence can help (a bit) explain future growth; but current and past growth isn't helpful in explaining confidence.
 image: /img/0127-csp-pm.svg
-socialimage: http://freerangestats.info//img/0127-csp-pm.png
+socialimage: http://freerangestats.info/img/0127-csp-pm.png
 category: R
 ---
 
-The ANZ bank have a nice bit of publicity for themselves each month in New Zealand with the release of the results of their monthly Business Outlook Survey.  This week it caused a bit of a stir, with the ANZ's own commentary reporting New Zealand corporate sector is were "in a funk" (ANZ's words) with a net 45 percentage points of businesses pessimistic about the economy (while a net positive 4% were positive about their own activity) , and with some heated discussion on what this measure actually means on Twitter and elsewhere.
+The ANZ bank have a nice bit of publicity for themselves each month in New Zealand with the release of the results of their monthly Business Outlook Survey.  This week it caused a bit of a stir, with the ANZ's own commentary reporting New Zealand corporate sector is "in a funk" (ANZ's words) with a net 45 percentage points of businesses pessimistic about the economy (while a net positive 4% were positive about their own activity). This led to some animated discussion on what this measure actually means on Twitter and elsewhere.
 
-I set out to explore the value of business confidence as a measure of what the economy is actually going to do.  The ANZ's data back to the 1970s are available from [Trading Economics](https://tradingeconomics.com/new-zealand/business-confidence), but only as a slightly inconvenient graphic for non-subscribers.  David Hook [pointed out](https://twitter.com/Thoughtfulnz/status/1024575876552245248) that the OECD have a monthly business confidence measure for many countries.  Its ultimate provenance with regard to New Zealand isn't clear to me, but it follows a similar pattern to the ANZ (not identical, and on a different scale) and it is publicly available so I thought I would work with that.
+I set out to explore the value of business confidence as a measure of what the economy is actually going to do.  The ANZ's data back to the 1970s are available from [Trading Economics](https://tradingeconomics.com/new-zealand/business-confidence), but for non-subscribers this is only as a graphic, slightly inconvenient for my purposes.  David Hood [pointed out](https://twitter.com/Thoughtfulnz/status/1024575876552245248) that the OECD have a monthly business confidence measure for many countries.  The ultimate provenance of the data with regard to New Zealand isn't clear to me, but it follows a similar pattern to the ANZ (not identical, and on a different scale) and it is publicly available so I thought I would work with that.
 
 All the code for today's post is at the bottom of the post.  
 
 ## Introducing "Business Confidence"
 
-Here's the business confidence series reported by the OECD as part of its [leading indicators series](https://data.oecd.org/leadind/business-confidence-index-bci.htm).  Because a crucial part of the controversy is whether business report (and possibly feel) their confidence differently according to their personal political views of the government of the day, I've coloured this chart by the party of the Prime Minister for most of the month that the survey relates to.
+Here's the business confidence series reported by the OECD as part of its [leading indicators collection](https://data.oecd.org/leadind/business-confidence-index-bci.htm).  Because a crucial part of the controversy is whether business report (and possibly feel) their confidence differently according to their personal political views of the government of the day, I've coloured this chart by the party of the Prime Minister for most of the month that the survey relates to.
 
 <img src='/img/0127-bc.svg' width='100%'>
 
 Business confidence is usually reported as "percent of optimists minus percent of pessimists", which in principle is symmetric around zero.  It's not obvious how the OECD have converted such a measure (if they have) into something centred around 100.
 
-The data go back to the 1960s.
+The data go back to the 1960s. The dramatic drop reported by the ANZ in the last week hasn't yet percolated to the OECD database, if indeed the ANZ are one of the sources for the OECD data.  The OECD data go to June 2018, which is extremely up to date for data of this sort.
+
+The most interesting thing with this graph is probably the historical matter - how confidence used to have a semi-regular and large cycle, but since the 1990s the regularity has gone (as has some of the volatility).  Those big patterns in the first few decades that look like seasonality actually reflect some other cycle, longer than a year; a cycle that no longer seems to apply with such regularity.  There were indeed dramatic changes in the economy, and in government-business relations, in the 1980s and 1990s that could explain this.  But I'd also want to check out on how the survey is delivered, and particularly how things are converted to this index, before drawing much from that.
 
 There's a small component of seasonal regularity, changing over time, which we can see in this LOESS-based seasonal decomposition:
 
@@ -42,11 +44,13 @@ I decided the quarterly chain-volume (ie adjusted for price differences) GDP pro
 
 Seasonality in the national accounts is driven by many things, with tourism a particularly big contributor in New Zealand.  
 
-I used the same methods (X13-SEATS-ARIMA, via the `seasonal` R package - with defaults such as adjusting for Easter moving from quarter to quarter) to seasonally adjust these quarterly GDP totals as for business confidence.  Then I used the seasonally adjusted totals as the basis for growth quarter-to-quarter:
+I used the same methods (X13-SEATS-ARIMA, via Christoph Sax's `seasonal` R package - with defaults such as adjusting for Easter moving from quarter to quarter) to seasonally adjust these quarterly GDP totals as for business confidence.  Then I used the seasonally adjusted totals as the basis for growth quarter-to-quarter:
 
 <img src='/img/0127-growth-line.svg' width='100%'>
 
 Note that these percentage rates are just from one quarter to the next, not the annualised growth rates that get most attention in policy discussions.
+
+Stats NZ publish this series only back to 1987.
 
 ## Combining the two
 
@@ -54,7 +58,9 @@ The hope/expectation of business confidence as a leading indicator is that it te
 
 <img src='/img/0127-csp.svg' width='100%'>
 
-Connected scatter plots like those above are probably the best exploratory tool for this sort of bivariate time series, but they're too ugly for lots of communication purposes.  But in this case, we can see that generally, when business confidence is higher, then economic growth in the current period, and the next four periods forward (with gradually weakening relations) is likely to be higher too.  However, there's a *lot* of noise in the relationship; check out for example the top left quadrant of any of the facets comparing business confidence (at various lags) with GDP, which show when business confidence was low, but economic growth ended up being high.
+Connected scatter plots like those above are probably the best exploratory tool for this sort of bivariate time series, but they're too ugly for lots of communication purposes.  But in this case, we can see that generally, when business confidence is higher, then economic growth in the current period and the next four periods forward (with gradually weakening relations) is likely to be higher too.  However, there's a *lot* of noise in the relationship; check out for example the top left quadrant of any of the facets comparing business confidence (at various lags) with GDP, which show when business confidence was low, but economic growth ended up being high.
+
+It's worth noting that a fair chunk of the noise seems to come from the older data (darker in the image above).
 
 As a reference point, I've included the lagged value of quarterly growth itself.  Later on, I'll be looking to see if business confidence helps us predict GDP more than just knowing the historical values of growth does, so this is the right thing to compare it to.  The relationship between growth and its own lagged value is stronger than between growth and business confidence, as seen visually in the connected scatter plots above but also in simple correlations:
 
@@ -64,7 +70,7 @@ How does it look when we consider periods with a Labour Prime Minister separatel
 
 <img src='/img/0127-csp-pm.svg' width='100%'>
 
-This fits with a convenient narrative of business owners erring on the side of pessimism when Labour are in power but being more rational in their expectations with a National government.  However, the statistical modelling discussed in the next section didn't find significant evidence of this or other party effects (on growth, on confidence, or on the relationship between growth and confidence)
+This fits with a convenient narrative of business owners erring on the side of pessimism when Labour are in power but being more rational in their expectations with a National government.  However, the statistical modelling discussed in the next section didn't find significant evidence of this or other party effects (on growth, on confidence, or on the relationship between growth and confidence).  So we leave this one as a non-conclusion.
 
 ## Modelling growth on confidence (and politics) 
 
@@ -74,9 +80,11 @@ I fit three different models to the data exploring how best to explain future ec
 - `model_apol` - an apolitical model which adds lagged business confidence (at 1, 2, 3 and 4 quarter lags) as explanatory variables but does not take into account who was in political power
 - `model_full` - which adds a dummy indicator for periods with a Labour Prime Minister, and also an interaction of that indicator with the first quarter lag of business confidence
 
-All the models were fit with `auto.arima` from Rob Hyndman's `forecast` model, which uses a well-tested algorithm to choose the best time series approach (combination of moving average randomness and lagged values of the response variable) for the response variable itself, in this case quarterly growth in seasonally adjusted real GDP.
+All the models were fit with `auto.arima` from Rob Hyndman's `forecast` R package, which uses a well-tested algorithm to choose the best time series approach (combination of moving average randomness and lagged values of the response variable) for the response variable itself, in this case quarterly growth in seasonally adjusted real GDP.
 
-The `model_apol` was the strongest of the three (with the lowest [AIC](https://en.wikipedia.org/wiki/Akaike_information_criterion)), which was counter to my expectation that the simple univariate model would win.  This is a vote of confidence for business confidence measures having *something* to add to understanding of future economic growth.  This exercise doesn't compare them to other leading indicators (such as commodity and currency prices, to pick two of the most available and pertinent measures, particularly for an export-oriented economy like New Zealand with very large dairy and tourism industries), and it's quite possible that business confidence is picking up signals from those other measures.  But it certainly is picking up something that is of value.
+Time series data is not worth as much, data point for data point, as is data that is sampled independently of a correlating dimension such as time.  The modelling in this section takes this into account (unlike far too much applied statistical/econometric work), and this adds some much-needed conservatism to the inference process.  Graphics such as those shown above are likely to lead to hasty conclusions if they are interpreted as though the data are all independently selected and equally valuable, rather than containing a lot of redundant information from the correlation over time.
+
+The `model_apol` was the strongest of the three (with the lowest [AIC](https://en.wikipedia.org/wiki/Akaike_information_criterion)). This was counter to my expectation that the simple univariate model would win.  This is a vote of confidence for business confidence measures having *something* to add to understanding of future economic growth.  This exercise doesn't compare them to other leading indicators (such as commodity and currency prices, to pick two of the most available and pertinent measures, particularly for an export-oriented economy like New Zealand with very large dairy and tourism industries), and it's quite possible that business confidence is picking up signals from those other measures.  But it certainly is picking up something that is of value.
 
 An increase in business confidence of 1 point on the OECD scale (which would be a bit over one standard deviation of changes in the past decade or so) is estimated to lead to an increase in quarterly economic growth of somewhere between 0.0 and 0.3 percentage points - for example, from real seasonally adjusted quarterly growth of 1.00% to 1.15% (or to anywhere between 1.00% and 1.30%), all else being equal.  So plunges in business confidence are not worth panicking over, but shouldn't be ignored either.
 
@@ -85,6 +93,7 @@ An increase in business confidence of 1 point on the OECD scale (which would be 
 I also tried flipped the problem around.  Can we predict 'business confidence", knowing just past values of business confidence, the political party in power, and current and past values of GDP?  Following the same process as above, I came to a slightly surprising conclusion - neither the party in power, nor current and lagged values of GDP growth, not a combination of the two, add materially to a model trying to explain business confidence.  My best model to explain business confidence was a simple univariate time series model.  In other words, the best predictor (of the very limited set of candidates) of business confidence is past business confidence.
 
 ## Code
+
 
 {% highlight R lineanchors %}
 library(tidyverse)
@@ -95,9 +104,18 @@ library(seasonal)
 library(nzelect) # for party colours
 library(scales)
 
-#--------------prep - who was in power?-------------
-# taken from https://en.wikipedia.org/wiki/List_of_Prime_Ministers_of_New_Zealand
+#--------------download data that was manually downloaded earlier--------------
+download.file("https://github.com/ellisp/blog-source/blob/master/_working/DP_LIVE_01082018094138947.csv?raw=true",
+              destfile = "DP_LIVE_01082018094138947.csv")
 
+download.file("https://raw.githubusercontent.com/ellisp/blog-source/master/_working/SNE445001_20180801_075329_92.csv",
+              destfile = "SNE445001_20180801_075329_92.csv")
+
+
+#--------------prep - who was in power?-------------
+# Dates taken from https://en.wikipedia.org/wiki/List_of_Prime_Ministers_of_New_Zealand
+
+# a data frame of who was in power for every day over a 70 year period:
 power <- data_frame(
   date = as.Date(c(
     "12/12/1957", "12/12/1960", "8/12/1972", "12/12/1975", 
@@ -105,7 +123,7 @@ power <- data_frame(
   pm_party = c(
     "Labour", "National", "Labour", "National",
     "Labour", "National", "Labour", "National", "Labour"),
-  # the pm_id identifier is used later in grouping data togheter to avoid annoying connecting lines
+  # the pm_id identifier is used later in grouping data together to avoid annoying connecting lines
   # across the years:
   pm_id = 1:9
 ) %>%
@@ -118,6 +136,7 @@ power <- data_frame(
          yr = year(date),
          mon = month(date))
 
+# roll up by month for later use:		 
 power_m <- power %>%
   group_by(yr, mon, pm_party, pm_id) %>%
   summarise(freq = n()) %>%
@@ -125,6 +144,7 @@ power_m <- power %>%
   summarise(pm_party = pm_party[freq == max(freq)],
             pm_id = pm_id[freq == max(freq)])
 
+# roll up by quarter for later use:
 power_q <- power %>%
   group_by(yr, qtr, pm_party, pm_id) %>%
   summarise(freq = n()) %>%
@@ -247,7 +267,8 @@ comb <- gdp_q %>%
 comb %>%
   select(yr_num:bc_lag4) %>%
   gather(variable, value, -yr_num, -growth, -gdp_sa, -pm_party, -pm_id) %>%
-  ggplot(aes(y = growth, x = value)) +
+  ggplot(aes(y = growth, x = value, colour = yr_num)) +
+  scale_colour_viridis(option = "B") +
   facet_wrap(~variable, scale = "free_x") +
   geom_path() +
   geom_smooth(method = "lm") +
@@ -256,7 +277,7 @@ comb %>%
        x = "Value of business confidence, or lagged business confidence, or lagged quarterly growth",
        caption = "Source: OECD (business confidence) and Stats NZ (chain volume GDP, production measure)") +
   ggtitle("Relationship between business confidence and economic growth",
-          "Business confidence ('bc') is positively correlated with future economic growth, but not as strongly as is past values of growth itself.") 
+          "Business confidence ('bc') is positively correlated with future economic growth,\nbut not as strongly as past values of growth itself.") 
 
 
 # Let's quantify those correlations:
