@@ -29,6 +29,7 @@ _working/bls-cd/
 
 _working/.spyproject/
 _working/melb-rents.xlsx
+_working/*.csv
 # gEcon crap
 *SW_03*
 !0031-shiny/*
@@ -55,4 +56,4 @@ twitter-auth.R
 
 data/*
 img/*
-*.csv
+#*.csv

@@ -7,6 +7,7 @@ library(googleAnalyticsR)
 ga_auth()
 
 ga_id <- 106185571
+my_quandl_key <- "Gdtn2-hLnax_T98RqDfx" 
 
 
 
