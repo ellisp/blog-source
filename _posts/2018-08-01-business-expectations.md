@@ -5,6 +5,7 @@ date: 2018-08-01
 tag: 
    - NewZealand
    - Economics
+   - Timeseries
    - R
 description: I have a brief look at the relationship between reported business confidence in New Zealand and what actually happens down the track with economic growth.  Confidence can help (a bit) explain future growth; but current and past growth isn't helpful in explaining confidence.
 image: /img/0127-csp-pm.svg

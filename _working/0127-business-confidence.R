@@ -6,6 +6,14 @@ library(seasonal)
 library(nzelect) # for party colours
 library(scales)
 
+#--------------download data that was manually downloaded earlier--------------
+download.file("https://github.com/ellisp/blog-source/blob/master/_working/DP_LIVE_01082018094138947.csv?raw=true",
+              destfile = "DP_LIVE_01082018094138947.csv")
+
+download.file("https://raw.githubusercontent.com/ellisp/blog-source/master/_working/SNE445001_20180801_075329_92.csv",
+              destfile = "SNE445001_20180801_075329_92.csv")
+
+
 #--------------prep - who was in power?-------------
 # taken from https://en.wikipedia.org/wiki/List_of_Prime_Ministers_of_New_Zealand
 
@@ -164,7 +172,8 @@ svg("../img/0127-csp.svg", 10, 9)
 comb %>%
   select(yr_num:bc_lag4) %>%
   gather(variable, value, -yr_num, -growth, -gdp_sa, -pm_party, -pm_id) %>%
-  ggplot(aes(y = growth, x = value)) +
+  ggplot(aes(y = growth, x = value, colour = yr_num)) +
+  scale_colour_viridis("Year", option = "B") +
   facet_wrap(~variable, scale = "free_x") +
   geom_path() +
   geom_smooth(method = "lm") +
@@ -173,7 +182,7 @@ comb %>%
        x = "Value of business confidence, or lagged business confidence, or lagged quarterly growth",
        caption = "Source: OECD (business confidence) and Stats NZ (chain volume GDP, production measure)") +
   ggtitle("Relationship between business confidence and economic growth",
-          "Business confidence ('bc') is positively correlated with future economic growth, but not as strongly as is past values of growth itself.") 
+          "Business confidence ('bc') is positively correlated with future economic growth,\nbut not as strongly as past values of growth itself.") 
 dev.off()
 
 
@@ -194,7 +203,7 @@ cors %>%
   labs(x = "Correlation coefficient with real quarterly growth in seasonally adjusted GDP",
        caption = "Source: OECD (business confidence) and Stats NZ (chain volume GDP, production measure)") +
   ggtitle("Relationship between business confidence and economic growth",
-          "Business confidence is positively correlated with future economic growth, but not as strongly as is past values of growth itself.")
+          "Business confidence is positively correlated with future economic growth,\nbut not as strongly as is past values of growth itself.")
 dev.off()
 
 svg("../img/0127-csp-pm.svg", 10, 9)
@@ -235,11 +244,12 @@ AIC(model_full, model_apol, model_simp)
 
 model_apol
 model_full
-# the estimate of the bc_lag1 coefficient is 0.0018.  So an increase in business confidence by 1 on the OECD
+# the estimate of the bc_lag1 coefficient in the model_full is 0.0018.  So an increase in business confidence by 1 on the OECD
 # scale would increase forecast quarterly GDP by 0.18 percentage points (eg from 1.00% to 1.18%).  1 is a
-# reasonable increase - about 1.4 standard deviations (using last 10 years' variability as a baseline)
+# reasonable increase - about 1.1 standard deviations (using last 20 years' variability as a baseline)
+# sd(tail(bc_ts, 80))
 
-# sd(tail(bc_ts, 40))
+# blog reports results for model_apol, which has the lowest AIC.
 
 #---------------------can party explain business confidence?-------------------
 # On the other hand, it's worth noting that lagged and current values of GDP growth
