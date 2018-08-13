@@ -15,8 +15,8 @@ font_add_google("Roboto", "main_font")
 font_add_google("Roboto", "myfont")
 font_add_google("Sarala", "heading_font")
 
-showtext.auto()
-showtext.opts(dpi = 600)
+showtext_auto()
+showtext_opts(dpi = 600)
 
 myfont <- "main_font"
 main_font <- "main_font"
