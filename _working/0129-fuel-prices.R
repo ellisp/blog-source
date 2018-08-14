@@ -1,6 +1,8 @@
 library(tidyverse)
 library(scales)
 library(openxlsx)
+library(forecast)
+library(nlme)
 
 # download...
 
@@ -20,20 +22,21 @@ for(i in 1:length(sn)){
 fuel_df <- do.call("rbind", fuel_orig)
 summary(fuel_df)
 
+south_island <- c("Canterbury", "Nelson", "Otago", "Southland", "West Coast")
+big_four <- c("CALTEX", "Z ENERGY", "BP", "MOBIL")
+
 fuel_tidy <- fuel_df %>%
   select(-LPG) %>%
   gather(fueltype, value, -Company, -Date, -region) %>%
-  filter(!is.na(value)) 
-
-south_island <- c("Canterbury", "Nelson", "Otago", "Southland", "West Coast")
-
-
+  filter(!is.na(value)) %>%
+  mutate(island = ifelse(region %in% south_island, "South", "North"),
+         company_type = ifelse(Company %in% big_four, "Big Four", "Smaller"))
+  
 
 p91 <- fuel_tidy %>%
   filter(fueltype == "91") %>%
-  group_by(region, Date) %>%
+  group_by(region, island, Date) %>%
   summarise(value = mean(value, tr = 0.2)) %>%
-  mutate(island = ifelse(region %in% south_island, "South", "North")) %>%
   ungroup() %>%
   mutate(region = fct_reorder(region, as.numeric(as.factor(island))))
 
@@ -80,76 +83,51 @@ ggplot() +
   labs(x = "2018; grey line shows Auckland")
 dev.off()
 
-svg("../img/0129-auck-minus-rest.svg", 8, 4)
-fuel_tidy %>%
-  filter(fueltype == "91") %>%
-  mutate(island = ifelse(region %in% south_island, "South", "North")) %>%
+diff_data <- fuel_tidy %>%
+  filter(fueltype == "91" & company_type == "Big Four") %>%
   group_by(Date) %>%
   summarise(auck_v_rest = 
-              mean(value[region == "Auckland"], tr = 0.2) - 
-              mean(value[region != "Auckland"], tr = 0.2),
+              mean(value[region == "Auckland"], tr = 0) - 
+              mean(value[region != "Auckland"], tr = 0),
             auck_v_si = 
-              mean(value[region == "Auckland"], tr = 0.2) - 
-              mean(value[island != "South"], tr = 0.2)) %>%
+              mean(value[region == "Auckland"], tr = 0) - 
+              mean(value[island != "South"], tr = 0)) %>%
   mutate(post_tax = as.integer(Date >= as.Date("2018-07-01"))) %>%
   gather(comparison, value, -Date, -post_tax) %>%
-  mutate(comparison = ifelse(comparison == "auck_v_si", "South Island", "All NZ except Auckland")) %>%
-  ggplot(aes(x = Date, y = value)) +
+  mutate(comparison = ifelse(comparison == "auck_v_si", "Compared to South Island", 
+                             "Compared to all NZ except Auckland"))
+
+svg("../img/0129-auck-minus-rest.svg", 8, 4)
+ggplot(diff_data, aes(x = Date, y = value)) +
   facet_wrap(~comparison, ncol = 2) +
   geom_line() +
   geom_smooth(aes(group = post_tax), method = "lm") +
-  scale_y_continuous("Average price in Auckland minus\naverage price in comparison area",
-                     label = dollar)
+  scale_y_continuous("Average price of 91 petrol in Auckland minus\naverage price in comparison area",
+                     label = dollar) +
+  labs(x = "Date in 2018.",
+       caption = "Source: pricewatch.co.nz, collated by @Economissive") +
+  ggtitle("Fuel prices in Auckland compared to two other comparison areas",
+          "Restricted to prices from BP, Caltex, Mobil and Z Energy")
 dev.off()  
-  
 
-#=======modelling=============
+D <- subset(diff_data, comparison == "Compared to all NZ except Auckland")
 
-library(nlme)
-library(forcats)
-head(fuel_tidy)
+diff_data_ts <- ts(D$value)
 
-tidy_91 <- fuel_tidy %>%
-  filter(fueltype == 91) %>%
-  filter(region != "Wairarapa") %>%
-  group_by(Date, Company, region) %>%
-  mutate(value = mean(value)) %>%
-  mutate(post_tax = as.integer(Date >= as.Date("2018-07-01"))) %>%
-  ungroup() %>%
-  mutate(Company = fct_relevel(Company, "Z ENERGY"),
-         auckland_post_tax = as.integer(region == "Auckland" & post_tax == 1))
+forecast::auto.arima(diff_data_ts, xreg = D$post_tax)
 
-mod <- lme(value ~ Date * post_tax + Company + auckland_post_tax, 
-           random = ~ post_tax | region, 
-           correlation = corAR1(),
-           data = tidy_91)
+model <- gls(value ~ Date * post_tax, 
+            data = subset(diff_data, comparison == "Compared to all NZ except Auckland"),
+            cor = corARMA(p = 1, q = 1))
 
+auto.arima(residuals(model))
 
-summary(mod)
-anova(mod)
+summary(model)  
+plot(model)
+convert_pngs("0129")
 
-rf <- ranef(mod)
-plot(rf$post_tax)
-apply(rf, 2, mean)
-coef(mod)
+fuel_tidy %>%
+  filter(Date == "2018-06-30" & region == "Wellington")
 
-ints <- intervals(mod, which = "fixed")$fixed
-ints <- round(ints, 2)
-ints
-#----------with differences--------------
-# not sure this makes sense
-diff_91 <- fuel_tidy %>%
-  group_by(Date, region) %>%
-  mutate(value = value - lag(value)) %>%
-  filter(!is.na(value)) %>%
-  mutate(post_tax = as.integer(Date >= as.Date("2018-07-01")))
-
-mod2 <- lme(value ~ poly(Date, 2) + Company, data = diff_91, random = ~ post_tax | region, correlation = corAR1())
-
-summary(mod2)
-anova(mod2)
-
-rf <- ranef(mod2)
-
-
-dim(diff_91)
+# Wouldn't it be better to model all the original microdata as a multilevel model rather than aggregating it? 
+# Yes, but that gets much more complicated very quickly, and also badly loses in interpretability.
