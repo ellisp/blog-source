@@ -11,16 +11,20 @@ library(extrafont)
 library(beepr)
 
 # font_add_google("Poppins", "myfont")
-font_add_google("Roboto", "main_font")
-font_add_google("Roboto", "myfont")
-font_add_google("Sarala", "heading_font")
+res <- try(font_add_google("Roboto", "Roboto"))
+if(class(res) != "try-error"){
+  font_add_google("Sarala", "Sarala")
+  showtext_auto()
+  showtext_opts(dpi = 600)
+  
+} 
 
-showtext_auto()
-showtext_opts(dpi = 600)
+myfont <- "Roboto"
+main_font <- "Roboto"
+heading_font <- "Sarala"
 
-myfont <- "main_font"
-main_font <- "main_font"
-heading_font <- "heading_font"
+
+
 
 theme_set(theme_light(base_family = main_font) + 
              theme(legend.position = "bottom") +
@@ -31,4 +35,4 @@ theme_set(theme_light(base_family = main_font) +
 update_geom_defaults("text", list(family = main_font))
 
 # update the "most popular" pages page
-source("../_R/_analytics.R")
+# source("../_R/_analytics.R")
