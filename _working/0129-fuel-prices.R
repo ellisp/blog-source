@@ -73,7 +73,7 @@ dev.off()
 
 
 
-svg("../img/0129-petrol-perc-auckland.svg", 10, 6)
+svg("../img/0129-petrol-perc-auckland.svg", 10, 8)
 ggplot() +
   geom_hline(yintercept = 1, colour = "grey50") +
   geom_rect(data = data.frame("hello world"), 
@@ -129,7 +129,7 @@ ggplot(diff_data, aes(x = Date, y = value)) +
                      label = dollar) +
   labs(x = "Date in 2018\nAverage prices have not been weighted by population or sales",
        caption = "Source: pricewatch.co.nz, collated by @Economissive") +
-  ggtitle("Fuel prices in Auckland compared to two other comparison areas",
+  ggtitle("Fuel prices in Auckland compared to three other comparison areas",
           "Restricted to prices from BP, Caltex, Mobil and Z Energy")
 dev.off()  
 

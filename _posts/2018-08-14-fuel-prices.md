@@ -223,7 +223,7 @@ ggplot(diff_data, aes(x = Date, y = value)) +
                      label = dollar) +
   labs(x = "Date in 2018\nAverage prices have not been weighted by population or sales",
        caption = "Source: pricewatch.co.nz, collated by @Economissive") +
-  ggtitle("Fuel prices in Auckland compared to two other comparison areas",
+  ggtitle("Fuel prices in Auckland compared to three other comparison areas",
           "Restricted to prices from BP, Caltex, Mobil and Z Energy")
 
 # Modelling:

@@ -11,19 +11,17 @@ library(extrafont)
 library(beepr)
 
 # font_add_google("Poppins", "myfont")
-res <- try(font_add_google("Roboto", "Roboto"))
-if(class(res) != "try-error"){
-  font_add_google("Sarala", "Sarala")
-  showtext_auto()
-  showtext_opts(dpi = 600)
-  
-} 
+# res <- try(font_add_google("Roboto", "Roboto"))
+# if(class(res) != "try-error"){
+#   font_add_google("Sarala", "Sarala")
+#   showtext_auto()
+#   showtext_opts(dpi = 600)
+#   
+# } 
 
 myfont <- "Roboto"
 main_font <- "Roboto"
 heading_font <- "Sarala"
-
-
 
 
 theme_set(theme_light(base_family = main_font) + 
