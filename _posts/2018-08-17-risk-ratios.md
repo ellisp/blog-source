@@ -17,6 +17,13 @@ This post tries to explain the difference between odds ratios and relative risk 
 
 Odds ratios and relative risk are commonly used to contrast the prevalence of some indicator (eg disease) in different categories of population.  They seem to get particular emphasis in medical and epidemiological literature but are used broadly.
 
+Before we look at odds and risk *ratios*, let's be clear on what odds and probabilities are *(this couple of paragraphs added on 20 August 2018)*.  
+
+- A *probability* will be a familiar concept to readers of this blog.  Let's say that one quarter of tigers are diseased.  If we pick a tiger at random, there is a 1/4 (or 0.25) probability that we pick a diseased one.  When picking something at random, a probability is the ratio of number of positive occurrences (treating "diseased" as a "positive", in the clinical sense) divided by the number of *total possible occurrences*.
+- The *odds* is instead the number of positive occurrences in relation to the number of *non positive occurrences*.  So while the tiger has a one in four probability of being diseased, we say the odds are "3 to 1" (or "1 to 3" - if you get these mixed up don't worry, so does everyone else, just make sure you keep track of whether the "1" or the "3" is the thing you are worried about!).  For every one diseased tiger, there are three non-diseased tigers.  If you were gambling $10, you would want the bookie to pay you "3 to 1" in winnings ($30) on your wager (plus returning your original $10 stake) to make it worthwhile betting that a randomly chosen tiger had the disease.  
+- a *relative  risk ratio* is one probability divided by another; for example the probability of a tiger being diseased, divided by the probability of a bear being diseased.  A lot of confusion would be saved (in my view) if we could call these "probability ratios" instead, but the term "relative risk ratio" seems to be here to stay.
+- an *odds ratio* is one set of odds divided by another; for example, the odds of a tiger being diseased, divided by the odds of a bear being diseased.
+
 This diagram demonstrates with some simulated data the core concepts:
 
 <img src='/img/0131-data.svg' width='100%'>
@@ -149,3 +156,7 @@ So, key points;
 - `exp(coef(model))` for a glm fit with `family = quasibinomial` will give odds ratios
 - `exp(coef(model))` for a glm fit with `family = quasipoisson` will give relative risk ratios
 - remember that point estimates from this approach are biased, and like all point estimates give an undue impression of precision; always include a confidence interval or credibility interval as well.
+
+### Modification history
+
+Modified on 20 August 2018 to add definition of "odds" and of "probability".
