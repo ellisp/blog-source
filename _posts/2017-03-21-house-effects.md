@@ -5,6 +5,7 @@ date: 2017-03-21
 tag: 
    - VotingBehaviour
    - NewZealand
+   - Surveys
    - R
 description: I use generalized additive models to explore "house effects" (ie statistical bias) in polling firms' estimates of vote in previous New Zealand elections.
 image: /img/0084-house1.svg

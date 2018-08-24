@@ -4,6 +4,7 @@ title: State-space modelling of the Australian 2007 federal election
 date: 2017-06-24
 tag: 
    - VotingBehaviour
+   - Surveys
    - R
    - Timeseries
    - Stan

@@ -3,7 +3,7 @@ layout: post
 title: Skill v luck in determining backgammon winners
 date: 2016-03-19
 tag: 
-   - Backgammon
+   - Games
    - R
 description: I explore the relationship between decision quality and winning in backgammon, using data from XG-Gammon analysis of matches on FIBS and grid.gammon
 image: /img/0032-luck-v-net-skill.svg

@@ -5,6 +5,7 @@ date: 2018-04-11
 tag: 
    - NewZealand
    - OpenData
+   - Surveys
    - Tools
 description: I show a workaround to make it (relatively) easy to work with weighted survey data in Power BI, and ruminate on how this compares to other approaches of working with weighted data.
 image: /img/0121-powerbi.png

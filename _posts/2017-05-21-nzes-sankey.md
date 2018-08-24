@@ -5,6 +5,7 @@ date: 2017-05-21
 tag: 
    - NewZealand
    - VotingBehaviour
+   - Surveys
    - R
 description: Sankey charts based on individual level survey data are a good way of showing change from election to election.  I demonstrate this, via some complications with survey-reweighting and missing data, with the New Zealand Election Study for the 2014 and 2011 elections.
 image: /img/0098-vote.png

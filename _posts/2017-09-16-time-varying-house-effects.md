@@ -5,6 +5,7 @@ date: 2017-09-16
 tag: 
    - NewZealand
    - VotingBehaviour
+   - Surveys
    - Stan
    - R
 description: I adjust my state-space model of New Zealand voting behaviour to allow for the house effect of one of the pollsters to change from the time they started including an on-line sample, and get some interesting results.

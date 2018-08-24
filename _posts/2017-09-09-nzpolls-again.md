@@ -5,6 +5,7 @@ date: 2017-09-09
 tag: 
    - NewZealand
    - VotingBehaviour
+   - Surveys
    - R
 description: New Zealand electoral polls going back 15 years
 image: /img/0110-polls.svg

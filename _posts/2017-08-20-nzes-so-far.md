@@ -5,6 +5,7 @@ date: 2017-08-20
 tag: 
    - Shiny
    - VotingBehaviour
+   - Surveys
    - NewZealand
    - R
 description: I introduce a new web app that allows nons-specialists to explore voting behaviour in the New Zealand Election Study, and reflect on what I've done so far with that data.
