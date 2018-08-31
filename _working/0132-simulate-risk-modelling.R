@@ -378,7 +378,7 @@ p2 <- ggplot(cis_df, aes(x = binomial_svy, y = naive)) +
        caption = str_wrap("Source for both diagrams: complex samples of around 2,100 each, drawn from a 
 population of 1 million stratified by 14 unequal regions with 
 5 out of 100 potential primary sampling units chosen per region.  Model has three categorical explanatory variables and a single binary (quasi-binomial family) response.
-Points have been jittered.", 86)) +
+Points have been jittered.", 90)) +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent)
 
@@ -401,7 +401,7 @@ ggplot(cis_df, aes(x = binomial_svy, y = poisson_svy)) +
 population of 1 million stratified by 14 unequal regions with 
 5 out of 100 potential primary sampling units chosen per region.  Model has three categorical 
 explanatory variables and a single binary response from either the quasi-binomial or quasi-poisson family.
-Points have been jittered.", 87)) +
+Points have been jittered.", 90)) +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent)
 dev.off()

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Rents in Melbourne
-date: 2018-08-30
+date: 2018-08-31
 tag: 
    - TimeSeries
    - R
@@ -13,9 +13,9 @@ category: R
 
 ## Motivation
 
-So, I'm in the process of moving to Melbourne and have a personal interest in the rental market there.  But I'm also more generally interested in the economics of housing.  Purchase costs get most of the attention, but rental costs are generally recognised as [the better indication of the real "price" of housing](https://theconversation.com/why-rents-not-property-prices-are-best-to-assess-housing-supply-and-need-driven-demand-100383) in supply and demand terms. Variance from speculative booms and busts is smoothed out, but even more importantly, ....
+So, I'm in the process of moving to Melbourne and have a personal interest in the rental market there.  But I'm also more generally interested in the economics of housing.  Purchase costs get most of the attention, but rental costs are generally recognised as [the better indication of the real "price" of housing](https://theconversation.com/why-rents-not-property-prices-are-best-to-assess-housing-supply-and-need-driven-demand-100383) in supply and demand terms. Variance from speculative booms and busts is smoothed out, but even more fundamentally, it is rent that reflects the cost of living in a home.  Perhaps an analogy helps - when we are interested in the price of going to the movies we look at what it costs to receive the service of sitting in the cinema for two hours, not of purchasing the cinema.
 
-My interest was also picqued by a tweet, perhaps in May or June 2018, that I can no longer locate (perhaps it was deleted) indicating that housing price growth in Sydney and Melbourne (but not Perth) is being led by lower-cost suburbs; I think the punch line was something like "first home owners are the ones driving the housing boom".  There are a lot of implicit assumptions in that conclusion but without being able to track down the tweet and the article it was referring to I can't address them here.  
+My interest was also piqued by a tweet (perhaps in May or June 2018, that I can no longer locate) indicating that housing price growth in Sydney and Melbourne (but not Perth) is being led by lower-cost suburbs; I think the punch line was something like "first home owners are the ones driving the housing boom".  There are a lot of implicit assumptions in that conclusion but without being able to track down the tweet and the article it was referring to I can't address them here.  
 
 I did wonder though whether the trend was actually a regression to the mean of sorts. If there is an element of randomness in suburbs' house prices (as surely there is), some suburbs would be higher-priced than their fundamentals support at one point in time due to chance. We would expect their growth from that point in time to be less than average, precisely because the starting point is an artifical and unsustainable high.  And vice versa for suburbs that happen to be lower than average at a particular point in time.
 
@@ -25,7 +25,9 @@ Anyway, I was interested in seeing if there was a pattern like this in rent pric
 
 For flats/apartments in Melbourne and perhaps for smaller houses, the higher priced suburbs in 2000 have had weaker rental growth in the intervening period.   
 
-Notably, other than flats in Port Melbourne, *all* the growth in suburbs' median rental rates have grown faster than inflation as measured by the consumer price index, [which has grown at around 2.6% over this time period](https://www.rba.gov.au/calculator/annualDecimal.html).
+Notably, other than flats in Port Melbourne (which started out the period as the most expensive by far), *all* the suburbs' median rental rates have grown faster than inflation as measured by the consumer price index, [which has grown at around 2.6% over this time period](https://www.rba.gov.au/calculator/annualDecimal.html).  Over this time period (which is long compared to the breathless up-and-down commentary we often get with housing markets), rents have generally grown pretty steadily, without some of the [fluctuations seen in purchase prices](http://www.abc.net.au/news/2018-06-30/melbourne-falling-unit-prices/9918452).  This growth in the real price of rent isn't surprising, but it is also definitely less than the growth in the cost of purchasing houses and flats.
+
+
 
 ## Data from DHHS
 
@@ -233,15 +235,14 @@ For what it's worth and to encourage diagnostic checks being reported as a matte
 
 ## Price and volume
 
-don't have a great measure of volume of flats on the market, only the number of "moves".  But worht looking at:
+In thinking about some of that variation in growth in pricing, I wondered about the supply side.  Are volumes going up at different rates in these different suburbs? In the data to hand I don't have a great measure of volume of flats on the market, only the number of "moves" which is a proxy at best (because the velocity of moves might itself be an important factor).  For what it's worth, here's a comparison of growth in rental price to growth in number of moves:
 
 <img src='/img/0123-growth-volume.svg' width='100%'>
 
-That graphic feels a bit squashed compared to the others, because I've forced both axes to use the same scale (with `+ coord_equal()`, which is usually good practice in this situation.  It highlights that each facet is wider than it is tall, because ...
+That graphic feels a bit squashed compared to the others, because I've forced both axes to use the same scale (with `+ coord_equal()`), which is usually good practice in this situation.  It highlights that each facet is wider than it is tall, because of the greater variation in growth of volume of moves than in pricing.
 
 {% highlight R lineanchors %}
 #----------compare price and volume------
-
 growth_melb_counts <-  rents %>%
   filter(variable == "Count") %>%
   filter(grepl("Melbourne", district) & grepl("[2-3]", property)) %>%
@@ -254,7 +255,6 @@ growth_melb_counts <-  rents %>%
   left_join(growth_melb, by = c("area", "property")) %>%
   rename(growth_price = growth)
 
-svg("../img/0123-growth-volume.svg", 8, 4)
 growth_melb_counts %>%
   ggplot(aes(x = growth_volume, y = growth_price, label = area)) +
   geom_smooth(method = "rlm", colour = "orange") +
@@ -270,3 +270,5 @@ growth_melb_counts %>%
 Growth in volume of moves has much higher variance than does growth in price.")   +
   coord_equal()
 {% endhighlight %}
+
+OK, that's it for today.  There's a lot more that could be done here by bringing in other datasets - particularly with a spatial element, and comparison to other prices - but that can wait for another day.
