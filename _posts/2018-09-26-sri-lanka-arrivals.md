@@ -40,7 +40,7 @@ Here's a different look at the seasonality and growth, putting month of the year
 
 <img src = '/img/0134-seasonality.svg' width = '100%'>
 
-This visualization is better at showing the two peak periods of tourism per year.  These two seasons are partly driven by the weather; Sri Lanka experiences [two monsoons per year](http://www.meteo.gov.lk/index.php?option=com_content&view=article&id=94&Itemid=310&lang=en), and partly by holidays and other seasonal features in the origin market countries.
+This visualization is better at showing the two peak periods of tourism per year.  These two seasons are partly driven by the weather - Sri Lanka experiences [two monsoons per year which impact differently on different parts of the island](http://www.meteo.gov.lk/index.php?option=com_content&view=article&id=94&Itemid=310&lang=en) - and partly by holidays and other seasonal features in the origin market countries.
 
 These images also suggest (to me) a slowing in arrivals growth since 2015, but without a longer time series (at least back to the end of the war) it's difficult to know how substantive that would be.
 
@@ -134,7 +134,8 @@ autoplot(forecast(mod, h = 18)) +
   scale_y_continuous("Visitor arrivals to Sri Lanka per month\n(Shaded blue area shows forecasts and uncertainty)", 
                      label = comma) +
   coord_cartesian(ylim = c(80000, 300000)) +
-  labs(x = "Growth has slowed slightly since 2015")
+  labs(x = "Growth has slowed slightly since 2015",
+       fill = "Prediction interval level of confidence (%):")
   
 #--------------more detailed seasonality plot----------------
 monthly %>%

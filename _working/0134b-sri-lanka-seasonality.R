@@ -62,7 +62,8 @@ autoplot(forecast(mod, h = 18)) +
   scale_y_continuous("Visitor arrivals to Sri Lanka per month\n(Shaded blue area shows forecasts and uncertainty)", 
                      label = comma) +
   coord_cartesian(ylim = c(80000, 300000)) +
-  labs(x = "Growth has slowed slightly since 2015")
+  labs(x = "Growth has slowed slightly since 2015",
+       fill = "Prediction interval level of confidence (%):")
 dev.off()  
   
 #--------------more detailed seasonality plot----------------
