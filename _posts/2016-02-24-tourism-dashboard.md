@@ -4,6 +4,7 @@ title: New Zealand Tourism Dashboard pushes Shiny to the max
 date: 2016-02-24
 tag: 
    - Shiny
+   - Tourism
    - R
 description: The New Zealand Ministry of Business, Innovation and Employment has released a "Tourism Dashboard" built with R and Shiny to give flexible access to the full range of official statistics on tourism in New Zealand (disclaimer - I work for them).
 image: /img/0033-tourism-dashboard.png
