@@ -33,4 +33,4 @@ theme_set(theme_light(base_family = main_font) +
 update_geom_defaults("text", list(family = main_font))
 
 # update the "most popular" pages page
-# source("../_R/_analytics.R")
+source("../_R/_analytics.R")
