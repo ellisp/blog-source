@@ -2,15 +2,17 @@ library(tidyverse)
 library(ineq)
 library(GGally)
 
+#' Generate a log normal distribution
+#' 
+#' @details Generates a log normal distribution of mean \code{mu} and inequality that will depend on \code{sd}.
+#' @param n sample size
+#' @param mu mean of the log-normal distribution
+#' @param sd standard deviation of the underlying normal distribution
 rinc <- function(n = 1000, mu = 20000, sd = 1){
   x <- exp(rnorm(n, mean = log(mu), sd = sd))
   x <- x - mean(x) + mu
   return(x)
 }
-
-plot(density(rinc()))
-mean(rinc())     
-Gini(rinc(sd = 0.1))
 
 n <- 1000
 x1 <- rinc(n = n, sd = 0.8)
@@ -21,13 +23,20 @@ data1 <- data_frame(
 ) %>%
   mutate(lifespan = ifelse(income < 10000, rnorm(n(), 50, 7), rnorm(n(), 70, 10)))
 
-data1 %>%
-  ggplot(aes(x = income, fill = country)) +
-  geom_density(alpha = 0.5) +
-  scale_x_continuous(label = dollar)
+ginis <- data1 %>%
+  group_by(country) %>%
+  summarise(ineq = Gini(income))
 
-Gini(x1)
-Gini(x2)
+data1a <- data1 %>%
+  left_join(ginis, by = "country") %>%
+  mutate(label = paste0(country, ": Gini = ", round(ineq, 2)))
+
+data1a %>%
+  ggplot(aes(x = income, fill = label)) +
+  geom_density(alpha = 0.5, colour = NA) +
+  scale_x_continuous(label = dollar) +
+  labs(fill = "") +
+  ggtitle("Two simulated income distributions")
 
 ggplot(data1, aes(x = income, y = lifespan, colour = country)) +
   geom_point()
