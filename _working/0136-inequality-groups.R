@@ -187,7 +187,7 @@ data1a %>%
   geom_density(alpha = 0.5, colour = NA) +
   scale_x_continuous(label = dollar) +
   labs(fill = "") +
-  ggtitle("Two simulated income distributions",
+  ggtitle("Two simulated income distributions with identical mean income",
           "Statistical density plots")
 dev.off()
 
@@ -205,7 +205,7 @@ data1a %>%
   geom_ribbon(aes(x = inc_level, ymin = cum_inc_prop, ymax = inc_level),
               alpha = 0.5) +
   coord_equal() +
-  ggtitle("Two simulated income distributions",
+  ggtitle("Two simulated income distributions with identical mean income",
           "Lorenz curve plots; shaded area shows the gap to pure equality.") +
   labs(x = "Cumulated proportion of people, poorest to richest",
        y = "Cumulative income received",
@@ -237,7 +237,7 @@ x <- 0 :100000
 y <- 50 + x ^ 0.5 / 7
 
 # visual demo of relationship:
-svg("../0136-sim-curve.svg", 8, 5)
+svg("../img/0136-sim-curve.svg", 8, 5)
 par(family = main_font, font.main = 1, bty = "l")
 plot(x, y, type = "l", xlab = "Income", ylab = "Average life span",
      main = "Simulated dimininishing marginal impact of income on mean life expectancy",
@@ -263,12 +263,12 @@ data3 <- data2 %>%
             life_exp = mean(lifespan)) %>%
   ungroup() 
 
-svg("../0136-sim-pairs.svg", 8, 7)
+svg("../img/0136-sim-pairs.svg", 8, 7)
 data3 %>%
   dplyr::select(-country) %>%
   ggpairs() +
   ggtitle("Relationship between three key development indicators",
-          "Inequality appears to have a country-level impact on life expectancy, even though the relationship is purely via individual income.") +
+          "Inequality appears to have a country-level impact on life expectancy, even though the relationship is purely\nvia individual income.") +
   labs(caption = "Source: Simulated data where individual income impacts on life expectancy, but country level inequality has no direct effect.")
 dev.off()
   

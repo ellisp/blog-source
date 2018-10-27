@@ -259,7 +259,7 @@ for(i in (n-7):1){
 # TODO - simulation; including maybe an animation
 
 sims <- list()
-reps <- 1000
+reps <- 10000
 for(i in 1:reps){
   current_state  <- c(1, rep(0, n))
   all_states <- 0
