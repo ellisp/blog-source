@@ -13,13 +13,13 @@ category: R
 
 A necessary but not sufficient condition for a game being one of skill rather than pure chance is that the player gets to make *choices*. If the game play is fully automatic, as in standard Snakes and Ladders, then there cannot possibly be any skill involved.
 
-However, any game of pure chance can be converted to one of skill simply by adding a wager, or similar tool that sets up decisions for players such as the doubling cube in backgammon (backgammon of course is not a game of pure chance even just in the counter play, but it's the doubling cube that brings in most of the skill).
+However, any game of pure chance can be converted to one of skill simply by adding a wager, or similar tool that sets up decisions for players such as the doubling cube in backgammon (backgammon of course is not a game of pure chance even just in the checker play, but it's the doubling cube that brings in most of the skill). This is one of the reasons why so much effort over the centuries has gone into understand the probabilities of elementary card and dice games; leveraging the probabilities into a gamble turn a game of low or zero skill into something much more interesting.
 
-*Note - if you're reading this on R Bloggers, the graphics aren't showing up for a reason I need to troubleshoot. Read the original on [Free Range Statistics](http://freerangestats.info/blog/2018/10/27/dice-games) to get the graphics and formulae.*
+*Note - if you're reading this on R Bloggers, the graphics aren't showing up for a reason I need time to troubleshoot. Read the original on [Free Range Statistics](http://freerangestats.info/blog/2018/10/27/dice-games) to get the graphics and formulae.*
 
 ## A simple game
 
-Imagine a simple dice game familiar from intro to probability classes, where players A and B take turns, with A starting, and the first to roll a six wins. No choices are involved.  
+Imagine a simple dice game familiar from "intro to probability" classes, where players A and B take turns, with A starting, and the first to roll a six wins. No choices are involved.  
 
 Computing the probability of A winning is a classic exercise in probability pedagogy with an elegant derivation. At the beginning of the game, A obviously has a 1/6 probability of winning straight away, and a 5/6 probability of being disappointed for now and giving the dice to B. At that point, B has 1/6 probability of winning straight away, and a 5/6 probability of having to give the dice back to A... So if p is the probability of winning given you are holding the dice, simply solve:
 
@@ -29,7 +29,7 @@ And some highschool algebra gives the answer as \$$p = \frac{6}{11}$$.
 
 So if Player A can convince B to have an even odds bet ("let's both put in a dollar and whoever wins gets it all"), and to keep playing the game all night (with A always being allowed to start), they'll come out on average about 9c better for each round they've played.
 
-The converse doesn't hold true; just having choices doesn't mean there is skill involved.  Consider if, perhaps as part of distracting B from the scam, A introduces a variant. Before each roll, the player has to decide whether to use a red or a blue die. We have choice, but no impact on the game; it remains a game of pure chance.  Doubtless silly superstitions ("red always works for me after midnight!") and rituals ("baby needs new shoes!") will evolve, and possibly links to political preferences, but the maths of the game doesn't change. 
+The converse of "no choices means no skill" doesn't hold true; just having choices doesn't mean there is skill involved.  Consider if, perhaps as part of distracting B from the scam, A introduces a variant. Before each roll, the player has to decide whether to use a red or a blue die. We have choice, but no impact on the game; it remains a game of pure chance.  Doubtless silly superstitions ("red always works for me after midnight!") and rituals ("baby needs new shoes!") will evolve, and possibly links to political preferences, but the maths of the game doesn't change. 
 
 My hunch is that for psychological reasons players will focus on the things they can control unless they have discipline of iron. I imagine this has been researched, but looking into that will be for another day.
 
@@ -39,7 +39,7 @@ Games are rarely as simple as the example above. Game designers and players have
 
 For even modestly complicated games, simulations will always trump analytical (ie pen and paper) solutions. Before we complicate our dice game, lets simulate the simple version to see if we can replicate the analytical result.
 
-There are plenty of ways to do this, but an efficient way with this super-simple game is to generate a large collection of dice rolls all at once, mark the wins and work out who won by the game length (odd number of rolls means A won). This gives us, in addition to the correct average result, a nice visualisation of game lengths:
+There are plenty of ways to do this, but an efficient way with this super-simple game is to generate a large collection of dice rolls all at once, mark the wins and work out who won by the game length (odd number of rolls means A won). This gives us, in addition to the correct average result, a nice visualisation of the geometric distribution of game lengths:
 
 <img src = '/img/0137-simple-results.svg' width = '100%'>
 
@@ -159,7 +159,7 @@ ggplot(results, aes(x = game_length, fill = who_won)) +
 
 ## Key points
 
-Some basic points I'll be drawing on again in future posts
+Some basic points I'll be drawing on again in future posts:
 
 - games with no choices are games of chance
 - games of pure chance do not imply equal chances of winning
