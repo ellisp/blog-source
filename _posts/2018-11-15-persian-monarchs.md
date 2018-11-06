@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The maths of Persian Monarchs gameplay
-date: 2018-10-15
+date: 2018-11-15
 tag: 
    - Games
    - R
