@@ -164,10 +164,10 @@ mod1 <- glm(censored_count_num ~ animals * region, data = data, family = "poisso
 mod2 <- glm(count_replaced ~ animals * region, data = data, family = "poisson")
 
 #------------with censored poisson regression-------------------------
-# (this method does so badly that I can only assume I am using it wrongly
+# (note that we indicated a complete observation with a 1, and a censored one with a 0)
 data$z <- pmax(6, data$count)
-data$lcensored <- is.na(data$censored_count_num )
-mod3 <- vglm(SurvS4(z, lcensored, type = "left") ~ animals * region, family = cens.poisson, data = data)
+data$not_lcensored <- as.numeric(!is.na(data$censored_count_num ))
+mod3 <- vglm(SurvS4(z, not_lcensored, type = "left") ~ animals * region, family = cens.poisson, data = data)
 
 #------------------ with multiple imputation----------
 #' Imputation function for suppressed data for use with mice - Poisson-based
@@ -238,9 +238,7 @@ d2 <- d %>%
   summarise(mse = mean(square_error),
             trmse = mean(square_error, tr = 0.2)) %>%
   ungroup()  %>%
-  mutate(method = fct_reorder(method, mse)) %>%
-  arrange(trmse) %>%
-  mutate(method = fct_reorder(method, trmse))
+  mutate(method = fct_reorder(method, mse))
 
 # summary graphic:  
 

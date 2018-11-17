@@ -15,6 +15,8 @@ socialimage: http://freerangestats.info/img/0138-corresp.gif
 category: R
 ---
 
+*Updated 9 November 2018 with corrected use of the left-censored survival model*
+
 This is a post about dealing with tables that have been subject to cell suppression or perturbation for confidentiality reasons.  While some of the data world is only just waking up to issues of confidentiality and privacy, national statistics offices and associated researchers over some decades have developed a whole field of knowledge and tools in the area of "statistical disclosure control".  I found [Duncan, Elliot and Salazar-Gonzalez' *Statistical Confidentiality: Principles and Practice*](https://www.springer.com/us/book/9781441978011) and excellent text on this subject when I had to get on top of it late in 2017, while working on Stats NZ's Integrated Data Infrastructure (IDI) output release processes.
 
 Why does one need to suppress data when it has already been aggregated and isn't sensitive itself? Because we fear "data snoopers" (yes, that really is the correct technical term) who will combine our published data with other datasets - public or private - to reveal sensitive information.  For example, if we publish a table that shows there is only one hairdresser in Smallville, that in itself isn't sensitive; but if we combine it with a separate dataset showing the average income of hairdressers in Smallville we have given away their private information. The thing that makes statistical disclosure control so hard is that we *don't know* what other datasets the data snooper may have available to them to use in combination with our data, however innocuous it looks on its own.
@@ -281,7 +283,7 @@ For a more general approach, I wanted to be ready for a situation with more than
 
 One thought is to treat the missing data as a parameter, constrained to be an integer from zero to five, and estimate it simultaneously with the main model in a Bayesian framework.  In principle this would work, except the missing data has to be an integer (because it then forms part of a Poisson or negative binomial distribution as part of the main model) and it is difficult to estimate such discontinuous parameters.  You can't do it in Stan, for example.
 
-Another way of looking at the problem is to note that this is [censored data](https://en.wikipedia.org/wiki/Censoring_(statistics)) and use methods developed specifically with this in mind. "Survival analysis" has of course developed methods for dealing with all sorts of censored data; most obviously with "right-censored" data such as age at death when some of the subjects are still alive. Left-censored data occurs when measurement instruments struggle at the lower end of values, but is also an appropriate description of our suppressed values. In R, the `VGAM` package provides methods for fitting generalized linear models to data that is either left, right or interval censored.  *Caveat (and spoiler) - my results from doing this are so bad that I suspect I was using it wrong, so read all references to this below with even more than usual caution!*.
+Another way of looking at the problem is to note that this is [censored data](https://en.wikipedia.org/wiki/Censoring_(statistics)) and use methods developed specifically with this in mind. "Survival analysis" has of course developed methods for dealing with all sorts of censored data; most obviously with "right-censored" data such as age at death when some of the subjects are still alive. Left-censored data occurs when measurement instruments struggle at the lower end of values, but is also an appropriate description of our suppressed values. In R, the `VGAM` package provides methods for fitting generalized linear models to data that is either left, right or interval censored.  
 
 The third family of methods I tried involved substituting values for the suppressed cells.  At its simplest, I tried replacing them all with "3".  At the more complex end, I used multiple imputation to generate 20 different datasets with random values from zero to five in each suppressed cell; fit the model to each dataset; and pool the results.  This is a method I use a lot with other missing data and is nicely supported by the `mice` R package. `mice` doesn't have an imputation method (that I can see) that exactly meets my case of a number from zero to five, but it's easy to write your own.  I did this two different ways:
 
@@ -298,9 +300,10 @@ Here's the results of all those different methods. First, in a summary of the me
 
 What we see from this single simulated dataset is:
 
-* the survival analysis method performed really badly.  So badly that I think I must be doing it wrong somehow (I can't see how), so treat this with caution.
-* simply substituting the number "3" in for all suppressed values worked fine; in fact as well as using the original unavailable data, or the most sophisticated multiple imputation method
-* multiple imputation with probabilities proportional to the Poisson density out-performed multiple imputation with sampling from a uniform distribution. Sampling the suppressed values from a uniform distribution gives particularly bad coefficients for the coefficients related to the suppressed cells (interaction of tigers with region B, and bears with region B).
+* simply substituting the number "3" in for all suppressed values worked fine; in fact nearly as well as using the original unavailable data, or the most sophisticated multiple imputation method
+* multiple imputation with probabilities proportional to the Poisson density out-performed multiple imputation with sampling from a uniform distribution. 
+* the survival analysis method performed ok by this crude measure (in fact, better than fitting regression to the full data), once I got my indicator of which observations were censored the right way around, thanks to the comment by Aniko Szabo - but not as well as the best multiple imputation method.
+* Sampling the suppressed values from a uniform distribution, and the left-censored survival analysis method, both give particularly bad coefficients for the coefficients related to the suppressed cells (interaction of tigers with region B, and bears with region B).
 
 Because this is a single simulated dataset, the conclusions above should be treated as only indicative. A good next step would be to generalise this by testing it with many datasets, but that will have to wait for a later blog post as this one is already long enough! My working hypothesis when I get to that is that multiple imputation with probabilities proportional to the Poisson density will be the best method, but I'm open to being wrong on that.
 
@@ -326,10 +329,10 @@ mod0 <- glm(count ~ animals * region, data = data, family = "poisson")
 mod2 <- glm(count_replaced ~ animals * region, data = data, family = "poisson")
 
 #------------with censored poisson regression-------------------------
-# (this method does so badly that I can only assume I am using it wrongly
+# (note that we indicated a complete observation with a 1, and a censored one with a 0)
 data$z <- pmax(6, data$count)
-data$lcensored <- is.na(data$censored_count_num )
-mod3 <- vglm(SurvS4(z, lcensored, type = "left") ~ animals * region, family = cens.poisson, data = data)
+data$not_lcensored <- as.numeric(!is.na(data$censored_count_num ))
+mod3 <- vglm(SurvS4(z, not_lcensored, type = "left") ~ animals * region, family = cens.poisson, data = data)
 
 #------------------ with multiple imputation----------
 #' Imputation function for suppressed data for use with mice - Poisson-based
@@ -399,9 +402,7 @@ d2 <- d %>%
   summarise(mse = mean(square_error),
          trmse = mean(square_error, tr = 0.2)) %>%
   ungroup()  %>%
-  mutate(method = fct_reorder(method, mse)) %>%
-  arrange(trmse) %>%
-  mutate(method = fct_reorder(method, trmse))
+  mutate(method = fct_reorder(method, mse)) 
 
 # summary graphic:  
 ggplot(d2, aes(x = mse, y = trmse, label = method)) +
