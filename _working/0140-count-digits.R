@@ -1,5 +1,5 @@
 
-
+#====================counting digits in page numbers===============
 # one-liner:
 length(stringr::str_extract_all(paste(1:2000, collapse = ""), pattern = "1", simplify = TRUE))
 
@@ -50,6 +50,8 @@ d <- d %>%
   mutate(cum_freq = cumsum(freq))
 
 
+plot(density(rcauchy(100)))
+
 p <- d %>%
   ggplot(aes(x = n, y = cum_freq, colour = as.factor(digit))) +
   geom_line() +
@@ -65,12 +67,16 @@ CairoPNG("../img/0140-75000-results.png", 8 * 600, 5 * 600, res = 600)
 print(p)
 dev.off()
 
-#--------Benford's 'law'-----------
-#' Function to draw a chart of frequency of first digits 
+#================Benford's 'law'============
+
+#-----------set up---------------
+#' Function to draw a chart of frequency of first digits and compare to that predicted by Benford's 'law'
 #' 
 #' @param x a univariate numeric vector
 #' @param desc description of x to use as subtitle 
 #' Other parameters are self-explanatory
+#' 
+#' See https://en.wikipedia.org/wiki/Benford%27s_law
 count_first_digit <- function(x, desc, main_title = "Frequency of first digits", 
                               seed = 123, legend.position = "none", 
                               bottom_lab = "", left_lab = "Leading digit"){
@@ -94,7 +100,8 @@ count_first_digit <- function(x, desc, main_title = "Frequency of first digits",
     ggplot(aes(x = as.ordered(digit), y = value, fill = variable)) +
     geom_col(position = "dodge") +
     coord_flip() +
-    scale_fill_manual("", values = c("grey85", "darkblue")) +
+    scale_fill_manual("", values = c("grey85", "darkblue"),
+                      guide = guide_legend(reverse = TRUE)) +
     ggtitle(main_title,
             desc) +
     labs(x = left_lab, y = bottom_lab) +
@@ -104,15 +111,44 @@ count_first_digit <- function(x, desc, main_title = "Frequency of first digits",
 
 }
 
+#---------------with simulated distributions---------------------
 n <- 1000000
-p1 <- count_first_digit(rnorm(n), "Standard normal distribution", legend.position = c(0.8, 0.8))
+p1 <- count_first_digit(rnorm(n), "Standard normal distribution", legend.position = c(0.7, 0.7),
+                        main_title = "Frequency of first digits, simulated")
 p2 <- count_first_digit(exp(rnorm(n)), "Standard log-normal distribution", "", left_lab = "")
 p3 <- count_first_digit(runif(n, 0, 1), "Standard uniform distribution", "", left_lab = "")
-p4 <- count_first_digit(runif(n, -95, 95), "[-95, 95] uniform distribution", "")
-p5 <- count_first_digit(rgamma(n, 2), "Gamma distribution with shape 1, rate 1", "", bottom_lab = "Frequency", left_lab = "")
+p4 <- count_first_digit(runif(n, -85, 85), "[-85, 85] uniform distribution", "")
+p5 <- count_first_digit(rgamma(n, 2), "Gamma distribution with shape 1, rate 1", "", 
+                        bottom_lab = "Frequency", left_lab = "")
 p6 <- count_first_digit(rcauchy(n), "Standard Cauchy distribution", "", left_lab = "")
 
-CairoSVG("../img/0140-benford-sim.svg", 10, 6)
+CairoSVG("../img/0140-benford-sim.svg", 10.5, 6)
 grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 3)
 dev.off()
 
+#--------with some real datasets----------
+p1 <- count_first_digit(AirPassengers, "Monthly Airline Passenger Numbers\n1949-1960", 
+                        main_title = "Frequency of first digits, real data",
+                        legend.position = c(0.7, 0.7))
+
+p2 <- count_first_digit(BJsales, "\nBox & Jenkins Sales Data", "", left_lab = "")
+
+p3 <- count_first_digit(CO2$uptake, "\nCarbon dioxide uptake in Grass Plants", "", left_lab = "")
+
+p4 <- count_first_digit(EuStockMarkets, "Daily Closing Prices of Major European\nStock Indices, 1991-1998", 
+                        "")
+
+p5 <- count_first_digit(Seatbelts[ , "DriversKilled"], "\nRoad Casualties in Great Britain 1969-84", 
+                        "", left_lab = "")
+
+p6 <- count_first_digit(morley[, "Speed"], "\nSpeed of light estimated by Michelson", "", left_lab = "")
+
+CairoSVG("../img/0140-benford-real.svg", 10.5, 6)
+grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 3)
+dev.off()
+
+CairoSVG("../img/0140-benford-population.svg", 8, 4)
+count_first_digit(population$population, "National population figures")
+dev.off()
+
+convert_pngs("0140")
