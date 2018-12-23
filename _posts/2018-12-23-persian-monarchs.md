@@ -1,3 +1,74 @@
+---
+layout: post
+title: Simulating Persian Monarchs gameplay
+date: 2018-12-23
+tag: 
+   - Games
+   - Simulations
+   - R
+description: Persian Monarchs described by P. G. Wodehouse in one of his funniest novels is an extremely simple fictional card game, but the gambling makes it a game of skill, and we can even construct plausible different strategies for winning. A good strategy involving card-counting beats a non-counting alternative by about 4% and random wagering by 36%.
+image: /img/0135-density.svg
+socialimage: http://freerangestats.info/img/0135-density.png
+category: R
+---
+
+## 'I can teach you in a minute...'
+
+In a [recent post I simulated some simple dice games](/blog/2018/10/27/dice-games) and promised (or threatened) that this was the first of a series of posts about games of combined luck and chance. The main aim of that post was to show how even simple probabilistic games can become complicated with tweaks to the rules, but I also mentioned a key concept that "any game of chance can be converted to a complex game of skill by adding gambling".
+
+Now I want to explore this last idea further with the fictional game Persian Monarchs. As far as I can tell, this game was invented by P. G. Wodehouse for his classic 1939 comedic novel [Uncle Fred in the Springtime](https://www.goodreads.com/book/show/13707721-uncle-fred-in-the-springtime), surely a front runner for some of the best humorous writing of the twentieth century. Wodehouse was in true mid-season form with this, his first full length novel featuring "[Uncle Fred](https://en.wikipedia.org/wiki/Uncle_Fred)" (Frederick Altamont Cornwallis Twistleton, 5th Earl of Ickenham); before much of his work became tired and formulaic in the post-WWII years.
+
+The plot of the novel is complex and not really to the point for a statistics blog, so do yourself a favour and read it for yourself in your own time. But for our purposes, it's important to know that several of the key plot twists revolve around substantial sums of money gambled on Persian Monarchs, described by one character thus:
+
+> 'I could teach it you in a minute. In its essentials it is not unlike Blind Hooky. Here's the way it goes. You cut a card, if you see what I mean, and the other fellow cuts a card, if you follow me. Then if the card you've cut is higher than the card the other fellow has cut, you win. While, conversely, if the card the other fellow's cut is higher than the card you've cut, he wins.'
+
+> He shot an anxious glance at Mr Pott, as if wondering if he had been too abstruse. But Mr Pott appeared to have followed him perfectly.
+
+> 'I think I see the idea,' he said. 'Anyway, I'll pick it up as I go along.'
+
+Claude Eustace 'Mustard' Pott - the "Mr Pott" in the quotation above - is actually a Persian Monarchs player of considerable accomplishment; in addition to being a former silver ring bookie and Shakespearan actor, and current private detective and part time card hustler. So having a not-too-bright but rich and friendly representative of the upper classes explain his own favourite game to him is as close to heaven as he gets.
+
+It's not clear from the novel whether Mr Pott (or, later, the Duke of Dunstable, who also shows himself to be a master of cardplay) win at Persian Monarchs through superior skill or through outright cheating. There are indications both ways. For my purposes, I'm going to put aside the question of cheating and consider how it's possible for skill to shine through in such a simple game.
+
+It all comes down to the addition of choices about offering and accepting wagers. As the gambling rules around Persian Monarchs are not described by Wodehouse, I'm going to assume that it's something like the following:
+
+* each player contributes one counter (or other gambling unit) at the beginning of a hand to a combined stake, before receiving their card;
+* after seeing their card, the non-dealer has the option of raising the wager by an extra amount, up to some specified limit (10 in my simulations below), but by zero if they wish. The dealer then has to either cover the increased wager, or decline on the spot in which case the non-dealer wins the existing stake in full regardless of who has the higher cards;
+* if the dealer has covered the extra wager, whomever has the highest card wins and collects the entire stake.
+
+I'm also going to assume that once a hand is finished, those cards are put aside and the next hand proceeds with a reduced pack; until the pack is finished at which point the cards are all brought together and reshuffled.
+
+To skip to the chase, here are the results of simulations of three different strategies at Persian Monarchs:
+
+* choosing to offer or accept extra wagers completely at random;
+* offering or accepting wagers partly at random (in order to avoid being predictable and easy to bluff) but with probabilities aimed at delivering optimal results in the long run, taking into account which cards have so far appeared;
+* as above, but without bothering to count the cards that have already appeared and been discarded, so basing choices on general probabilities about one's card relative to a complete pack.
+
+<img src='/img/0135-density.svg' width='100%'>
+
+At the end of a game that goes through two whole packs of cards, the optimal strategy outperforms the non-card-counting by between 3.8 to 5.3 counters; and the random strategy by 35 to 37 counters. So skill counts big time. Even the marginal advantage given by counting the cards and adjusting one's strategy accordingly makes a 4% difference in your rate of return.
+
+### 'Optimal' strategy?
+
+For what I've defined as the optimal strategy (without either proof or adequate demonstration by simulation), the non-dealer's wager-offering algorithm is as follows:
+
+- First choose whether to offer an increased wager or not. Do this at random, with a 'probability of offering more' equal to the estimated probability that the card I've got is higher than a random card from the pack.
+- Having decided to offer an increased wager, pick a random number between 1 and 10 to increase the wager by that.
+
+The decision of whether to accept or not is taken similarly.
+
+The trick in constructing a decision rule here is that we want to avoid being predictable to our opponent. For example, if we only offered an increased wager when we had one of the top 50% cards in the pack, we have ruled out any bluffing, and once our opponent picks this up they can use it to their advantage. Similarly, if we increase the wager by more depending on our confidence, we are giving away information. So we want a compromise between strict determination and a bit of randomness always present (even if I draw the Queen of spades I might decline an increased wager, or with the 3 of clubs I might offer to increase the stake, albeit at low probability), with your opponent not quite sure where you're coming from - let's call it the '[madman strategy](https://en.wikipedia.org/wiki/Madman_theory) of Persian Monarchs'.
+
+## Writing a card game in R
+
+How did I implement all this?
+
+First, I defined a few convenience objects and functions. 
+
+- `pack` is a data frame of 52 rows with the value and suit of all the cards in a standard pack of cards, with precedence in order as per Bridge;
+- `pm_draw` is a function that, given an existing (possibly incomplete) pack of cards, returns a drawn card and the remaining pack as two elements of a list:
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(scales)
 library(parallel)
@@ -22,8 +93,11 @@ pm_draw <- function(pack){
   remaining_pack <- pack[pack$id != drawn$id, ]
   return(list(drawn = drawn, remaining_pack = remaining_pack))
 }
+{% endhighlight %}
 
+Then the workhorse of the whole project comes in the next function, `pm_hand`, which plays a single hand of Persian Monarchs with two players. The wagering strategy can be "auto" (the best strategy I could think of), "ask" (a human gets asked to decide each wager decision) "random" and "non-card-counter". In itself, this function is not much use, but it abstracts the work of a single hand of dealing, wagering, accepting and checking the result away from what is going to become the main loop of the game to ge defined later.
 
+{% highlight R lineanchors %}
 #' Play a hand of Persian Monarchs
 #' 
 #' @param p1_counters number of counters owned by player 1 (non-dealer) at beginning of hand
@@ -169,7 +243,11 @@ pm_hand <- function(p1_counters, p2_counters, known_pack,
     p2_counters = p2_counters,
     known_pack = known_pack))
 }
+{% endhighlight %}
 
+Having defined the functionality of a single hand, I then wrote a function for the main cycle of a game of user-specified rounds.  This is basically a wrapper around `pm_hand`, making it user-friendly for a player with sufficient messages to the console.
+
+{% highlight R lineanchors %}
 #-----------------------Human versus computer---------------------
 #' Play a human v computer game of Persian Monarchs
 #' 
@@ -232,9 +310,21 @@ persian_monarchs_hvc <- function(human = 100, computer = 100, rounds = 10){
   }
 }
 
-# Uncomment next line and run it if you want to play an interactive game
-# persian_monarchs_hvc(rounds = 3)
+# Run an interactive game against the computer for three rounds
+persian_monarchs_hvc(rounds = 3)
+{% endhighlight %}
 
+This lets us play the game interactively in the R console, with a typical three round game shown in the screenshot below:
+
+<img src='/img/0135-gameplay.png' width='100%'>
+
+As you can see, at the end of the three rounds I'd lost a total of one counter to the computer, playing a more or less ad hoc but sensible strategy of increasing the wager by substantial amounts if I draw a spade, less so for hearts, and minimal or nothing for the minor suits (and comparable strategy for acceptance).
+
+## Simulating card game results
+
+It was fun to write a computer game in R, but this particular one isn't really fascinating enough to play thousands of rounds to explore optimal strategy. To do that we want a function that lets a computer play against itself, so I adapt the `persian_monarchs_hvc` function to `persian_monarchs_cvc` (computer versus computer) as below. We can specify one of the three automated strategies for each player.
+
+{% highlight R lineanchors %}
 #-------------------------computer versus computer-------------------
 #' Play a computer v computer game of Persian Monarchs
 #' 
@@ -310,10 +400,17 @@ persian_monarchs_cvc <- function(c1 = 100, c2 = 100,
   return(data_frame(c1 = c1, c2 = c2))
 }
 
-persian_monarchs_cvc(rounds = 3)
+# examples:
+persian_monarchs_cvc(rounds = 3, verbose = TRUE)
 persian_monarchs_cvc(rounds = 26, c1_method = "auto", c2_method = "auto", verbose = FALSE)
 persian_monarchs_cvc(rounds = 26, c1_method = "auto", c2_method = "random", verbose = FALSE)
+{% endhighlight %}
 
+Now that we have this function, it's a simple matter of playing many thousands of games between computer opponents with differing strategies.  This sort of thing usually needs parallel processing (ie running simulations on as many processors as are available at once, rather than just one at a time) to happen in a reasonable period of time. These days, R has plenty of packages to enable this, even on Windows.
+
+The code below does the simulations (and modelling and presentation of results) of what I've called the "optimal" strategy versus an identical strategy, a "no card counting" alternative, and making wager decisions at random.
+
+{% highlight R lineanchors %}
 #--------------------multiple simulations using parallel processing--------------------
 # cluster with seven processors:
 cl <- makeCluster(7)
@@ -330,7 +427,7 @@ results_auto <- parLapply(cl, 1:n, function(x){
   persian_monarchs_cvc(rounds = 26, c1_method = "auto", c2_method = "auto", verbose = FALSE)
   })
 results_auto_df <- do.call("rbind", results_auto) %>%
-  mutate(c2_method = "Best mathematical strategy")
+  mutate(c2_method = "Best strategy")
 
 # Run 2 - computer two plays ok but without counting cards left in the pack
 results_ncc <- parLapply(cl, 1:n, function(x){
@@ -362,13 +459,17 @@ p <- results_combined  %>%
        colour = "Wagering decisions:",
        y = paste("Density of results from", format(n, big.mark = ","), "simulations")) +
   ggtitle("Results of two automated wagering strategies for Persian Monarchs",
-          "Counters left (having started with 100) after 26 rounds (two full packs) against a\nmathematically sound strategy")
-
-CairoSVG("../img/0135-density.svg", 8, 5)
+          "Counters left (having started with 100) after 26 rounds (two full packs) against a\nsound strategy")
 print(p)
-dev.off()
 
 mod <- lm(c2 ~ c2_method, data = results_combined)
 confint(mod)
 
-convert_pngs("0135")
+{% endhighlight %}
+
+### Reflection
+
+Astute readers will have noticed that the strategy I've sometimes called "optimal" is anything but. In fact, I've assumed away the chance of learning anything from the opponent's own behaviour, whether a priori (for instance the reasonable assumption that they are more likely to accept or offer increased wagers with better cards) or after observing them for many rounds. So if we were seeking to create a Persian Monarchs master computer player, the algorithms above would be a sort of starting base case, to which we would need to add the ability to learn all sorts of tactics and strategies such as reading the opponent's tendencies, swapping strategies oneself to confuse the opponent, bluffs and counter bluffs.
+
+But that's enough for now. In 2019 I'll be extending this idea to some reflections on variants of Snakes and Ladders, and then to a classic 1970s text-based computer game that's the granddaddy of *Civilization* and its turn-based strategic world-building ilk.
+
