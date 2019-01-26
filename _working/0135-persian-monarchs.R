@@ -330,7 +330,7 @@ results_auto <- parLapply(cl, 1:n, function(x){
   persian_monarchs_cvc(rounds = 26, c1_method = "auto", c2_method = "auto", verbose = FALSE)
   })
 results_auto_df <- do.call("rbind", results_auto) %>%
-  mutate(c2_method = "Best mathematical strategy")
+  mutate(c2_method = "Best strategy")
 
 # Run 2 - computer two plays ok but without counting cards left in the pack
 results_ncc <- parLapply(cl, 1:n, function(x){
@@ -362,7 +362,7 @@ p <- results_combined  %>%
        colour = "Wagering decisions:",
        y = paste("Density of results from", format(n, big.mark = ","), "simulations")) +
   ggtitle("Results of two automated wagering strategies for Persian Monarchs",
-          "Counters left (having started with 100) after 26 rounds (two full packs) against a\nmathematically sound strategy")
+          "Counters left (having started with 100) after 26 rounds (two full packs) against a\nsound strategy")
 
 CairoSVG("../img/0135-density.svg", 8, 5)
 print(p)
