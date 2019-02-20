@@ -30,6 +30,13 @@ _working/bls-cd/
 _working/.spyproject/
 _working/melb-rents.xlsx
 _working/*.csv
+
+_working/d_questions.txt
+_working/d_responses.txt
+_working/d_respondents.txt
+_working/f_wvs.txt
+
+
 # gEcon crap
 *SW_03*
 !0031-shiny/*

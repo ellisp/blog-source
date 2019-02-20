@@ -4,6 +4,7 @@ library(data.table)
 library(odbc)
 library(viridis)
 library(ggthemes)
+library(scales)
 
 # correct citation must be used WV6_Data_R_v20180912; . 
 
@@ -301,6 +302,8 @@ p <- d2 %>%
   ggtitle("What do people of the world agree with?",
           "All questions in the World Values survey with an agree/disagree style of response.")
   
-CairoSVG("../img/0142-heatmap.svg", 18, 9.5)
+CairoSVG("../img/0143-heatmap.svg", 18, 9.5)
 print(p)
 dev.off()
+
+convert_pngs("0143")
