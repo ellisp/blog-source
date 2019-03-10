@@ -11,8 +11,11 @@ results_2pp_div %>%
   select(division_nm, swing_to_govt, election_year) %>%
   spread(election_year, swing_to_govt)
 
+
 #---------------------------explore distribution of swings---------
 
+# We are interested for future forecasting models in the variance of division-level swings
+# that are not explained by the nation-wide swing
 model <- lm(swing_to_govt ~ avg_swing, data = d)
 confint(model)
 coef(model) # of course the slope is 1 and the intercept is 0, basically - by design
@@ -21,7 +24,7 @@ summary(model)
 
 residual_sd <- summary(model)$sigma
 
-
+# Let's try to visualise those historical swings
 d <- results_2pp_div  %>%
   group_by(election_year, incumbent) %>%
   mutate(avg_swing = sum(swing_to_govt * total_votes) / sum(total_votes)) %>%
@@ -52,33 +55,33 @@ p7 <- d %>%
   ggtitle("Individual seats face more voting uncertainty than Australia as a whole",
           "Each point represents the swing in a single seat; residual standard deviation of about 3.2 percentage points around the nation-wide swing.")
 
-CairoSVG("output/p7.svg", 13, 9)
+CairoSVG("../img/0146-incumbency.svg", 13, 9)
 print(p7)
 dev.off()
 
 #--------------------explore spatial aspects of swings---------------------------
 
-CairoSVG("output/2pp-swing-2016.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-swing-2016.svg", 8, 6.5)
 ozpol_infographic(2016, variable = "swing_to_govt", fontfamily = main_font)
 dev.off()
 
-CairoSVG("output/2pp-votes-2016.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-votes-2016.svg", 8, 6.5)
 ozpol_infographic(2016, fontfamily = main_font)
 dev.off()
 
-CairoSVG("output/2pp-swing-2013.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-swing-2013.svg", 8, 6.5)
 ozpol_infographic(2013, variable = "swing_to_govt", fontfamily = main_font)
 dev.off()
 
-CairoSVG("output/2pp-votes-2013.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-votes-2013.svg", 8, 6.5)
 ozpol_infographic(2013, fontfamily = main_font)
 dev.off()
 
-CairoSVG("output/2pp-swing-2010.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-swing-2010.svg", 8, 6.5)
 ozpol_infographic(2010, variable = "swing_to_govt", fontfamily = main_font)
 dev.off()
 
-CairoSVG("output/2pp-votes-2010.svg", 8, 6.5)
+CairoSVG("../img/0146-2pp-votes-2010.svg", 8, 6.5)
 ozpol_infographic(2010, fontfamily = main_font)
 dev.off()
 
@@ -86,7 +89,7 @@ dev.off()
 
 d1 <- results_2pp_div %>%
   filter(election_year == 2016) %>%
-  left_join(ced_data_2016, by = "division_nm") %>%
+  left_join(div_census_2016, by = "division_nm") %>%
   select(division_nm, state_ab, lib_nat_percentage, swing_to_govt, young_persons:only_english_spoken_home) %>%
   mutate(state_ab = fct_relevel(state_ab, "NSW"))
 
@@ -120,7 +123,7 @@ d3 <- d1 %>%
 
 mod1 <- lm(I(swing_to_govt / 100) ~ ., data = d3)
 
-confint(mod1)[-1, ] %>%
+p10 <- confint(mod1)[-1, ] %>%
   as.data.frame() %>%
   mutate(var = rownames(.),
          var = gsub("state_ab", "", var),
@@ -140,61 +143,16 @@ confint(mod1)[-1, ] %>%
           "Comparing the 2016 results to 2013 by electoral division (or 'seat').
           Conclusions about individual characteristics relating to vote should be drawn only with great caution.")
 
+CairoSVG("../img/0146-census-vote.svg", 8, 6)
+print(p8)
+dev.off()
 
-#==============crude simulation===============
-# so plausible to 
-# a) model the overall swing to the govt
-# b) simulate for individual seats a randomness of N(0, 3.2) on top of that overall swing
-# c) add those swings to the 2016 results
+CairoSVG("../img/0146-census-swing.svg", 8, 6)
+print(p9)
+dev.off()
 
-# Important - this misses out on two things that are needed:
-# a) 2 new electorates this time around
-# b) seats held by other parties
+CairoSVG("../img/0146-mod-results.svg", 8, 6)
+print(p10)
+dev.off()
 
-last_result <- results_2pp_div %>%
-  filter(election_year == 2016) %>%
-  summarise(alp_2pp_2016 = sum(alp_votes) / sum(total_votes)) %>%
-  pull(alp_2pp_2016)
-
-# last election the ALP got 49.6% of the 2pp. Currently on track to about 52 with sd of about 3.
-# So an average swing against the govt of N(2.5, 3), and division-level randomness on top of that.
-
-baseline <- results_2pp_div %>%
-  filter(election_year == 2016) %>%
-  select(division_nm, alp_percentage) %>%
-  mutate(link = 1)
-
-nsims <- 1e5
-set.seed(321)
-sims <- tibble(sim = 1:nsims, link = 1) %>%
-  mutate(avg_swing = rnorm(n(), -2.5, 3)) %>%
-  full_join(baseline, by = "link") %>%
-  select(-link) %>%
-  mutate(extra_swing = rnorm(n(), 0, residual_sd)) %>%
-  group_by(sim) %>%
-  # we scale the extra_swing to be mean zero so we aren't accidentally changing the average swing:
-  mutate(extra_swing = extra_swing - mean(extra_swing),
-         total_swing = avg_swing + extra_swing,
-         alp_percentage_2019 = alp_percentage - total_swing) %>%
-  ungroup()
-
-
-sims_by_div <- sims %>%
-  group_by(sim) %>%
-  summarise(avg_swing = unique(avg_swing),
-            number_seats_alp = sum(alp_percentage_2019 > 50),
-            prop_seats_alp = mean(alp_percentage_2019 > 50)) %>%
-  ungroup()
-
-m <- sims_by_div %>%
-  summarise(m = round(mean(prop_seats_alp > 0.5) * 100, 1)) %>%
-  pull(m)
-
-sims_by_div %>%
-  ggplot(aes(x = number_seats_alp)) +
-  geom_histogram(alpha = 0.5, binwidth = 1, colour = "grey") +
-  geom_vline(xintercept = 75.5, colour = "steelblue") +
-  scale_x_continuous("Number of House of Representative seats won by ALP") +
-  scale_y_continuous("Number of simulations\n(out of 100,000)", label = comma ) +
-  ggtitle(paste0(m, "% probability of ALP win in the 2019 Federal Election"))
-
+convert_pngs("0146")

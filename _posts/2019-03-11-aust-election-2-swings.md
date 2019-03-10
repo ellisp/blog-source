@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Exploring swings in Australian federal elections
-date: 2019-03-10
+date: 2019-03-11
 tag: 
    - Australia
    - VotingBehaviour
