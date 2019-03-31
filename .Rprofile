@@ -10,6 +10,7 @@ library(stats)
 library(extrafont)
 library(beepr)
 library(Cairo)
+library(ggrepel)
 
 # font_add_google("Poppins", "myfont")
 # res <- try(font_add_google("Roboto", "Roboto"))
@@ -32,6 +33,8 @@ theme_set(theme_light(base_family = main_font) +
                    plot.title = element_text(family = heading_font))
           ) 
 update_geom_defaults("text", list(family = main_font))
+update_geom_defaults("text_repel", list(family = main_font))
+update_geom_defaults("label", list(family = main_font))
 
 # update the "most popular" pages page
 #source("../_R/_analytics.R")
