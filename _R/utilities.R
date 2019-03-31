@@ -1,14 +1,18 @@
-convert_pngs <- function(postnumber){
-   setwd("../img")
-   files <- list.files()
-   files <- files[grepl(paste0("^", postnumber, ".+svg$"), files)]
+convert_pngs <- function(pattern, directory = "../img"){
+    if(!is.na(as.numeric(pattern))){
+      pattern <- paste0("^", pattern)
+    }
+  
+   origdir <- setwd(directory)
+   files <- list.files(recursive = TRUE, full.names = TRUE, pattern = pattern)
+   files <- files[grepl("\\.svg$", files)]
    for(i in files){
       output <- gsub("svg$", "png", i)
-      cmd <- paste0('\"C:\\Program Files\\ImageMagick-7.0.2-Q16\\magick\"', " ", i, " ", output)
+      cmd <- paste0('\"C:\\Program Files\\ImageMagick-7.0.2-Q16\\magick\"', " -density 300 ", i, " ", output)
       system(cmd)
       
    }
-   setwd("../_working")
+   setwd(origdir)
    beepr::beep(4)
 }
 
