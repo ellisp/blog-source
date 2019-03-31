@@ -330,51 +330,55 @@ That's all for now. Comments are very welcome, including spotting any mistakes; 
 
 As usual, here are the contributors to R that made all this possible:
 
-```
-thankr::shoulders() %>% knitr::kable() %>% clipr::write_clip()
-```
+{% highlight R lineanchors %}
+thankr::shoulders() %>% 
+  mutate(maintainer = str_squish(gsub("<.+>", "", maintainer))) %>%
+  knitr::kable() %>% 
+  clipr::write_clip()
+{% endhighlight %}
 
-|maintainer                                      | no_packages|packages                                                                                                                                                |
-|:-----------------------------------------------|-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-|Hadley Wickham <hadley@rstudio.com>             |          18|assertthat, dplyr, ellipsis, forcats, ggplot2, gtable, haven, httr, lazyeval, modelr, plyr, rvest, scales, stringr, testthat, tidyr, tidyverse, usethis |
-|R Core Team <R-core@r-project.org>              |          11|base, compiler, datasets, graphics, grDevices, grid, methods, splines, stats, tools, utils                                                              |
-|Gábor Csárdi <csardi.gabor@gmail.com>           |           9|callr, cli, crayon, desc, pkgconfig, processx, ps, remotes, sessioninfo                                                                                 |
-|Kirill Müller <krlmlr+r@mailbox.org>            |           5|DBI, hms, pillar, rprojroot, tibble                                                                                                                     |
-|Jim Hester <james.hester@rstudio.com>           |           4|devtools, pkgbuild, pkgload, readr                                                                                                                      |
-|Winston Chang <winston@stdout.org>              |           4|extrafont, extrafontdb, R6, Rttf2pt1                                                                                                                    |
-|Yixuan Qiu <yixuan.qiu@cos.name>                |           3|showtext, showtextdb, sysfonts                                                                                                                          |
-|Jim Hester <james.f.hester@gmail.com>           |           3|fs, glue, withr                                                                                                                                         |
-|Lionel Henry <lionel@rstudio.com>               |           3|purrr, rlang, tidyselect                                                                                                                                |
-|Jeroen Ooms <jeroen@berkeley.edu>               |           2|curl, jsonlite                                                                                                                                          |
-|Dirk Eddelbuettel <edd@debian.org>              |           2|digest, Rcpp                                                                                                                                            |
-|Edzer Pebesma <edzer.pebesma@uni-muenster.de>   |           2|sf, units                                                                                                                                               |
-|Jennifer Bryan <jenny@stat.ubc.ca>              |           1|cellranger                                                                                                                                              |
-|Jeremy Stephens <jeremy.f.stephens@vumc.org>    |           1|yaml                                                                                                                                                    |
-|Peter Ellis <peter.ellis2013nz@gmail.com>       |           1|ozfedelect                                                                                                                                              |
-|Michel Lang <michellang@gmail.com>              |           1|backports                                                                                                                                               |
-|Deepayan Sarkar <deepayan.sarkar@r-project.org> |           1|lattice                                                                                                                                                 |
-|Achim Zeileis <Achim.Zeileis@R-project.org>     |           1|colorspace                                                                                                                                              |
-|Martin Maechler <mmaechler+Matrix@gmail.com>    |           1|Matrix                                                                                                                                                  |
-|Claus O. Wilke <wilke@austin.utexas.edu>        |           1|cowplot                                                                                                                                                 |
-|Alex Hayes <alexpghayes@gmail.com>              |           1|broom                                                                                                                                                   |
-|Simon Wood <simon.wood@r-project.org>           |           1|mgcv                                                                                                                                                    |
-|Max Kuhn <max@rstudio.com>                      |           1|generics                                                                                                                                                |
-|Stefan Milton Bache <stefan@stefanbache.dk>     |           1|magrittr                                                                                                                                                |
-|Jennifer Bryan <jenny@rstudio.com>              |           1|readxl                                                                                                                                                  |
-|Jim Hester <jim.hester@rstudio.com>             |           1|memoise                                                                                                                                                 |
-|Rasmus Bååth <rasmus.baath@gmail.com>           |           1|beepr                                                                                                                                                   |
-|R-core <R-core@R-project.org>                   |           1|nlme                                                                                                                                                    |
-|James Hester <james.hester@rstudio.com>         |           1|xml2                                                                                                                                                    |
-|Brian Ripley <ripley@stats.ox.ac.uk>            |           1|class                                                                                                                                                   |
-|Simon Urbanek <Simon.Urbanek@r-project.org>     |           1|Cairo                                                                                                                                                   |
-|Hugh Parsonage <hugh.parsonage@gmail.com>       |           1|Census2016.DataPack                                                                                                                                     |
-|Gabor Csardi <csardi.gabor@gmail.com>           |           1|prettyunits                                                                                                                                             |
-|Charlotte Wickham <cwickham@gmail.com>          |           1|munsell                                                                                                                                                 |
-|David Meyer <David.Meyer@R-project.org>         |           1|e1071                                                                                                                                                   |
-|Roger Bivand <Roger.Bivand@nhh.no>              |           1|classInt                                                                                                                                                |
-|Kevin Ushey <kevin@rstudio.com>                 |           1|rstudioapi                                                                                                                                              |
-|Justin Talbot <justintalbot@gmail.com>          |           1|labeling                                                                                                                                                |
-|Vitalie Spinu <spinuvit@gmail.com>              |           1|lubridate                                                                                                                                               |
-|Marek Gagolewski <marek@gagolewski.com>         |           1|stringi                                                                                                                                                 |
-|Simon Urbanek <simon.urbanek@r-project.org>     |           1|audio                                                                                                                                                   |
-
+|maintainer          | no_packages|packages                                                                                                                                                |
+|:-------------------|-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Hadley Wickham      |          18|assertthat, dplyr, ellipsis, forcats, ggplot2, gtable, haven, httr, lazyeval, modelr, plyr, rvest, scales, stringr, testthat, tidyr, tidyverse, usethis |
+|R Core Team         |          11|base, compiler, datasets, graphics, grDevices, grid, methods, splines, stats, tools, utils                                                              |
+|Gábor Csárdi        |           9|callr, cli, crayon, desc, pkgconfig, processx, ps, remotes, sessioninfo                                                                                 |
+|Kirill Müller       |           5|DBI, hms, pillar, rprojroot, tibble                                                                                                                     |
+|Jim Hester          |           4|devtools, pkgbuild, pkgload, readr                                                                                                                      |
+|Winston Chang       |           4|extrafont, extrafontdb, R6, Rttf2pt1                                                                                                                    |
+|Jim Hester          |           3|fs, glue, withr                                                                                                                                         |
+|Lionel Henry        |           3|purrr, rlang, tidyselect                                                                                                                                |
+|Yixuan Qiu          |           3|showtext, showtextdb, sysfonts                                                                                                                          |
+|Yihui Xie           |           3|highr, knitr, xfun                                                                                                                                      |
+|Edzer Pebesma       |           2|sf, units                                                                                                                                               |
+|Jeroen Ooms         |           2|curl, jsonlite                                                                                                                                          |
+|Dirk Eddelbuettel   |           2|digest, Rcpp                                                                                                                                            |
+|R-core              |           1|nlme                                                                                                                                                    |
+|Vitalie Spinu       |           1|lubridate                                                                                                                                               |
+|Michel Lang         |           1|backports                                                                                                                                               |
+|Simon Wood          |           1|mgcv                                                                                                                                                    |
+|Achim Zeileis       |           1|colorspace                                                                                                                                              |
+|Gabor Csardi        |           1|prettyunits                                                                                                                                             |
+|Simon Urbanek       |           1|Cairo                                                                                                                                                   |
+|James Hester        |           1|xml2                                                                                                                                                    |
+|Justin Talbot       |           1|labeling                                                                                                                                                |
+|Roger Bivand        |           1|classInt                                                                                                                                                |
+|Jennifer Bryan      |           1|readxl                                                                                                                                                  |
+|Kevin Ushey         |           1|rstudioapi                                                                                                                                              |
+|Max Kuhn            |           1|generics                                                                                                                                                |
+|Stefan Milton Bache |           1|magrittr                                                                                                                                                |
+|Martin Maechler     |           1|Matrix                                                                                                                                                  |
+|Charlotte Wickham   |           1|munsell                                                                                                                                                 |
+|Matthew Lincoln     |           1|clipr                                                                                                                                                   |
+|Marek Gagolewski    |           1|stringi                                                                                                                                                 |
+|Jeremy Stephens     |           1|yaml                                                                                                                                                    |
+|Deepayan Sarkar     |           1|lattice                                                                                                                                                 |
+|Claus O. Wilke      |           1|cowplot                                                                                                                                                 |
+|Rasmus Bååth        |           1|beepr                                                                                                                                                   |
+|Jennifer Bryan      |           1|cellranger                                                                                                                                              |
+|Hugh Parsonage      |           1|Census2016.DataPack                                                                                                                                     |
+|Alex Hayes          |           1|broom                                                                                                                                                   |
+|Peter Ellis         |           1|ozfedelect                                                                                                                                              |
+|David Meyer         |           1|e1071                                                                                                                                                   |
+|Brian Ripley        |           1|class                                                                                                                                                   |
+|Simon Urbanek       |           1|audio                                                                                                                                                   |
+|Jim Hester          |           1|memoise                                                                                                                                                 |

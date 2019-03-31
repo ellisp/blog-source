@@ -225,4 +225,10 @@ dev.off()
 
 convert_pngs("0146")
 
-thankr::shoulders() %>% knitr::kable() %>% clipr::write_clip()
+thankr::shoulders() %>% 
+  mutate(maintainer = str_squish(gsub("<.+>", "", maintainer))) %>%
+  knitr::kable() %>% 
+  clipr::write_clip()
+
+x <- shoulders()
+str(x)

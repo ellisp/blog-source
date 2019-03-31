@@ -2,6 +2,7 @@ body {
   padding-top: 59px;
   padding-bottom: 30px;
   font-family: 'Roboto';
+  font-size: 14px;
 }
 
 h1 {
@@ -63,6 +64,10 @@ h2, h3, h4, h5, h6 {
   width: auto;
 }
 
+.padded-paras {
+	padding: 5px;
+}
+
 .jumbotron {
     margin-top: 0px;
 	margin-bottom: 0px;
@@ -86,13 +91,14 @@ a {
 
 .side-footer {
 	color: black;
+	font-size: 13px;
 }
+
 
 .post-summary {
    padding-top: 15px;
    padding-bottom: 15px;
    size: 150%;
-      
 }
 
 .footer{
@@ -148,6 +154,10 @@ a {
    
 }
 
+img{
+	padding:10px;
+}
+
 code {
     padding: 2px 4px;
     font-size: 90%;
@@ -170,4 +180,8 @@ table {
 
 td {
   padding: 1px 5px 1px 1px;
+}
+
+.boxed {
+  border: 1px solid grey ;
 }
