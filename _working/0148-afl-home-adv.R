@@ -206,7 +206,7 @@ clusterExport(cluster, c("r2", "afl_elos", "params"))
 # 519 seconds for 10 sets of parameters. So can do about 1.1 per minute (with 7 processors); 180 will take 3 hours.
 system.time({
   suppressWarnings(rm(res))
-  res <- foreach(i = 1:100, .combine = rbind) %dopar% {
+  res <- foreach(i = 1:1000, .combine = rbind) %dopar% {
     x <- params[i, ]
     
     success_rate <- r2 %>%
@@ -225,8 +225,11 @@ system.time({
 })
 
 stopCluster(cluster)
+save(res, params, file = "afl_simulation_results.rda")
 
 #------------------Examine results------------------------------
+
+
 
 params_with_res <- params %>%
   left_join(res, by = "row_num") %>%
@@ -235,9 +238,10 @@ params_with_res <- params %>%
   select(-row_num) 
 
 params_with_res%>%
-  slice(1:20) %>%
-  kable() %>%
-  write_clip()
+  slice(1:20)
+
+save(params_with_res, file = "0148_1000_runs_params_with_res.rda")
+stop("That's as far as we need to go for repeating this")
 
 CairoSVG("../img/0148-density-success.svg", 8, 4)
 ggplot(params_with_res, aes(x = success_rate)) +

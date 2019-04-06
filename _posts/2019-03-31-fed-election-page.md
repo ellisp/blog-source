@@ -14,7 +14,7 @@ category: R
 
 ## The election forecasts
 
-Building on my recent blog posts, I've put up a [page dedicated to forecasts of the coming Australian federal election](http://127.0.0.1:4000/elections/oz/index.html). It takes the state space model of two-party-preferred vote from my [first blog on polls leading up to this election](/blog/2019/03/02/aust-election-1), and combines it with a more nuanced understanding of the seats actually up for grabs in this election than I'd been able to develop for [my second blog, on swings](/blog/2019/03/11/aust-election-2-swings). For the current margins at divisional level after the various electoral distributions, I'm drawing on this [excellent summary by the ABC](https://www.abc.net.au/news/elections/federal-redistribution-2018/).
+Building on my recent blog posts, I've put up a [page dedicated to forecasts of the coming Australian federal election](/elections/oz/index.html). It takes the state space model of two-party-preferred vote from my [first blog on polls leading up to this election](/blog/2019/03/02/aust-election-1), and combines it with a more nuanced understanding of the seats actually up for grabs in this election than I'd been able to develop for [my second blog, on swings](/blog/2019/03/11/aust-election-2-swings). For the current margins at divisional level after the various electoral distributions, I'm drawing on this [excellent summary by the ABC](https://www.abc.net.au/news/elections/federal-redistribution-2018/).
 
 To cut to the chase, here's my prediction - 76 percent chance of ALP being able to form government by themselves:
 

@@ -33,6 +33,7 @@ r <- results %>%
   ungroup()
 
 
+
 #----------------home/away adjustments---------------------
 d <- r %>%
   group_by(team) %>%
