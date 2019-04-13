@@ -35,11 +35,11 @@ yields <- do.call("rbind", yields_l) %>%
   group_by(Date) %>%
   mutate(ratio_5_30 = value[period == "30 yr"] / value[period == "5 yr"],
          yield_av = mean(value, na.rm = TRUE, tr = 0.2),
-         yield_30 = value[period == "30 yr"],
-         yield_5 = value[period == "5 yr"]) %>%
+         yield_30yr = value[period == "30 yr"],
+         yield_3mo = value[period == "3 mo"],
+         diff303 = yield_30yr - yield_3mo) %>%
   ungroup() %>%
-  filter(!is.na(value)) %>%
-  arrange(Date)
+  filter(!is.na(value)) 
   
 p1 <- yields %>% 
   filter(Date < as.Date("1990-01-31")) %>%
@@ -49,6 +49,10 @@ p1 <- yields %>%
   scale_y_continuous("Treasury yield curve rate") +
   scale_x_continuous("", breaks = periods[c(10:12), ]$period_n,
                      labels = periods[c(10:12), ]$period)
+
+svglite("../img/0151-faceted.svg", 8, 6)
+print(p1)
+dev.off()
 
 col_br <- tibble(
   lab = c(1990, 2000, 2010),
@@ -67,30 +71,36 @@ p2 <- yields %>%
   scale_x_continuous("", breaks = periods[c(10:12), ]$period_n,
                      labels = periods[c(10:12), ]$period)
 
+svglite("../img/0151-all-years-one-frame.svg", 8, 6)
 print(p2)
+dev.off()
 
-d <- yields %>% 
-  filter(Date < as.Date("1991-01-31"))
+d <- yields # %>% 
+  filter(Date < as.Date("1990-02-28"))
 
- a <- d %>% 
-  ggplot(aes(x = period_n, y = value, colour = yield_av)) +
-  # geom_segment(data = distinct(d, Date, yield_30, yield_5), 
-  #              x = 1826, xend = 10958, aes(y = yield_5, yend = yield_30),
-  #              colour = "grey50") +
-  geom_path(size = 1.5) +
+a <- d %>% 
+  ggplot(aes(x = period_n, y = value)) +
+  geom_segment(data = distinct(d, Date, yield_3mo, yield_30yr),
+               x = 90, xend = 10958, aes(y = yield_3mo, yend = yield_30yr),
+               colour = "grey50") +
+  geom_line(size = 1.5, aes(colour = diff303)) +
   scale_y_continuous("Treasury yield curve rate") +
   scale_x_continuous("", breaks = periods[c(10:12), ]$period_n,
                      labels = periods[c(10:12), ]$period) +
-  scale_colour_viridis_c("Unweighted average yield", option= "A", direction = -1) +
-  labs(
-    subtitle = "Daily US Treasury Yield Curve Rates 1990 to 2019",
-    title = 'Date: {frame_time}') +
-  transition_time(Date) +
-  ease_aes('linear')
+  scale_colour_viridis_c("Premium for long term lending:\n30 year yield minus 3 month yield", 
+                         option= "A", direction = -1) +
+  labs(title = "US Treasury Yield Curve Rates, 1990 to 2019",
+       subtitle = 'Date: {frame_time}') +
+  transition_time(Date) 
 
-res <- 150
-animate(a, nframes = 100, dev = "png", start_pause = 5, end_pause = 15, rewind = TRUE,
+
+
+res <- 100
+animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
+        start_pause = 5, end_pause = 15, rewind = TRUE,
         type = "cairo-png", antialias = "subpixel", 
-        width = 8 * res, height =  6 * res, res = res)
+        width = 6 * res, height =  4.3 * res, res = res,
+        renderer = ffmpeg_renderer())
 
-anim_save("0151-yield-anim.gif", path = "../img/")
+anim_save("0151-yield-anim.mpg", path = "../img/")
+# 42MB as a GIF if doing 3 frames per day for 10 years
