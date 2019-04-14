@@ -87,15 +87,18 @@ a <- d %>%
   transition_time(Date) 
 
 
-
+dir.create("tmp")
 res <- 150
 animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
         type = "cairo-png", antialias = "subpixel", 
         width = 6 * res, height =  4.3 * res, res = res,
-        renderer = ffmpeg_renderer())
+        renderer = file_renderer(dir = "tmp", overwrite = TRUE))
 
-anim_save("0151-yield-anim150.mp4", path = "../img/")
-# 42MB as a GIF if doing 3 frames per day for 10 years
+
+
+od <- setwd("tmp")
+system("ffmpeg -i gganim_plot%04d.png  -pix_fmt yuv420p -s 900x646 -c:v libx264 -r 30 movie.mp4")
+setwd(od)
 
 
 p3 <- yields %>%
@@ -149,9 +152,11 @@ a2 <- d2 %>%
 
 
 
-res <- 120
+res <- 100
 animate(a2, nframes = length(unique(d2$Date)) * 3, dev = "png", fps = 15,
         type = "cairo-png", antialias = "subpixel", 
         width = 6 * res, height =  4.3 * res, res = res)
 
 anim_save("0151-yield-anim-monthly.gif", path = "../img/")
+
+convert_pngs("0151")
