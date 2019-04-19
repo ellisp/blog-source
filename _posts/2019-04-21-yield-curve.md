@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Animating the US Treasury yield curve rates
-date: 2019-04-14
+date: 2019-04-21
 tag: 
    - Visualisation
    - Economics
