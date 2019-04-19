@@ -159,10 +159,24 @@ elos_latest <- elos_best %>%
 
 
 fixture <- tibble(
-  home = c("Sydney", "Collingwood", "Geelong", "Essendon", "Port Adelaide", "West Coast", 
-           "North Melbourne", "Gold Coast", "St Kilda"),
-  away = c("Melbourne", "Footscray", "GWS", "Brisbane Lions", "Richmond", "Fremantle", "Adelaide", 
-           "Carlton", "Hawthorn")
+  home = c("Brisbane Lions", 
+           "North Melbourne", 
+           "West Coast", 
+           "GWS", 
+           "Melbourne", 
+           "Richmond", 
+           "Footscray", 
+           "Adelaide", 
+           "Hawthorn"),
+  away = c("Collingwood", 
+           "Essendon", 
+           "Port Adelaide", 
+           "Fremantle", 
+           "St Kilda", 
+           "Sydney", 
+           "Carlton", 
+           "Gold Coast", 
+           "Geelong")
 )
 
 fixture %>%
