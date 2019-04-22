@@ -87,14 +87,14 @@ a <- d %>%
   transition_time(Date) 
 
 
+# Save the frames in the file system and then manually knit into an animation, because
+# there are so many and so large that I like to keep control of the two steps:
 dir.create("tmp")
 res <- 150
 animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
         type = "cairo-png", antialias = "subpixel", 
         width = 6 * res, height =  4.3 * res, res = res,
         renderer = file_renderer(dir = "tmp", overwrite = TRUE))
-
-
 
 od <- setwd("tmp")
 system("ffmpeg -i gganim_plot%04d.png  -pix_fmt yuv420p -s 900x646 -c:v libx264 -r 30 movie.mp4")
@@ -160,3 +160,15 @@ animate(a2, nframes = length(unique(d2$Date)) * 3, dev = "png", fps = 15,
 anim_save("0151-yield-anim-monthly.gif", path = "../img/")
 
 convert_pngs("0151")
+
+?frs
+
+thankr::shoulders() %>% 
+  mutate(maintainer = str_squish(gsub("<.+>", "", maintainer)),
+         maintainer = ifelse(maintainer == "R-core", "R Core Team", maintainer)) %>%
+  group_by(maintainer) %>%
+  summarise(`Number packages` = sum(no_packages),
+            packages = paste(packages, collapse = ", ")) %>%
+  arrange(desc(`Number packages`)) %>%
+  knitr::kable() %>% 
+  clipr::write_clip()
