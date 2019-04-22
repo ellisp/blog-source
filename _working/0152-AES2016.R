@@ -11,6 +11,7 @@ library(readxl)
 library(testthat)
 library(survey)
 library(vcd)
+library(RColorBrewer)
 
 #---------------------Import and tidy data-----------------
 # Download by hand from https://dataverse.ada.edu.au/dataset.xhtml?persistentId=doi:10.4225/87/7OZCZA
@@ -418,7 +419,7 @@ p4 <- d4 %>%
   scale_y_continuous(breaks = c(-1, -0.5, 0, 0.5, 1), labels = c("100%", "50%", "0", "50%", "100%")) + 
   theme(panel.spacing = unit(1.5, "lines")) +
   expand_limits(y = c(-1, 1)) +
-  ggtitle("Attitudes to left-right economic issues, by first preference Senate vote in 2016",
+  ggtitle("Attitudes to left-right economic issues, by Senate vote",
           "Do you strongly agree ... or strongly disagree with the following statement?") +
   labs(x = "", y = "", caption = "Source: Australian Election Study 2016; analysis by freerangestats.info.")
 
@@ -472,7 +473,7 @@ p5 <- d5 %>%
   scale_y_continuous(breaks = c(-1, -0.5, 0, 0.5, 1), labels = c("100%", "50%", "0", "50%", "100%")) + 
   theme(panel.spacing = unit(1.5, "lines")) +
   expand_limits(y = c(-1, 1)) +
-  ggtitle("Attitudes to liberal-conservative social issues, by first preference Senate vote in 2016",
+  ggtitle("Attitudes to liberal-conservative social issues, by Senate vote",
           "Do you strongly agree ... or strongly disagree with the following statement?") +
   labs(x = "", y = "", caption = "Source: Australian Election Study 2016; analysis by freerangestats.info.")
 
