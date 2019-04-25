@@ -198,7 +198,7 @@ params <- expand.grid(
 
 
 #-------------------------Run the model with a subset of the combinations of parameters------------------
-cluster <- makeCluster(7) # only any good if you have at least 7 processors :)
+cluster <- makeCluster(7, outfile = "") # only any good if you have at least 7 processors :)
 registerDoParallel(cluster)
 
 clusterEvalQ(cluster, {
