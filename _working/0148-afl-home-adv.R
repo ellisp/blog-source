@@ -41,7 +41,7 @@ r <- results %>%
 #==================analysis of the home team advantage===================
 
 # Proportion of home winners over full range of history:
-CairoSVG("../img/0148-home-history.svg", 8, 4)
+CairoSVG("../img/0148-rev-home-history.svg", 8, 4)
 r %>%
   filter(location == "home") %>%
   group_by(season) %>%
@@ -65,7 +65,7 @@ d <- r %>%
   arrange(desc(home_adv)) %>%
   filter(end > "2000-01-01")
 
-CairoSVG("../img/0148-hometeam-snap.svg", 8, 6)
+CairoSVG("../img/0148-rev-hometeam-snap.svg", 8, 6)
 d %>%
   ggplot(aes(x = away_wins, y = home_wins, label = team, colour = home_adv)) +
   geom_abline(intercept = 0, slope = 1) +
@@ -116,7 +116,13 @@ r2 <- r %>%
 #' @param new_round_factor how much to shrink Elo ratings towards 1500 in the first match of each season.
 #' 1 means no shrinkage, 0 means every team starts the season fresh with a rating of 1500 regardless of 
 #' past performance.
-afl_elos <- function(r, sc = 1, pred_margin = 30, margin_power = 1, experience = 100, new_round_factor = 1){
+afl_elos <- function(r, 
+                     sc = 1, 
+                     pred_margin = 30, 
+                     margin_power = 1, 
+                     experience = 100, 
+                     new_round_factor = 1,
+                     home_sc = 1){
   r <- r %>%
     group_by(game) %>%
     arrange(date, game, desc(winner))
@@ -138,8 +144,8 @@ afl_elos <- function(r, sc = 1, pred_margin = 30, margin_power = 1, experience =
                      ml = (round(this_game[1, "margin"] / sc) ^ margin_power),
                      axp = experience,
                      bxp = experience,
-                     a_adv = this_game[1, "location_adjustment"],
-                     b_adv = this_game[2, "location_adjustment"])
+                     a_adv = this_game[1, "location_adjustment"] * home_sc,
+                     b_adv = this_game[2, "location_adjustment"] * home_sc)
     
     # er: calculate elo rating arising from this game to use for the prediction, for use in
     # measureing prediction success
@@ -170,14 +176,14 @@ afl_elos <- function(r, sc = 1, pred_margin = 30, margin_power = 1, experience =
 }
 
 #---------------Define all possible combinations of parameters---------------------
-
-set.seed(123)
+set.seed(666)
 params <- expand.grid(
   sc = c(1, 3, 6),
   pred_margin = c(1, 10, 20, 30),
   margin_power = 0:6 / 6,
   experience = 0:4 * 100,
-  new_round_factor = 0:5 / 5
+  new_round_factor = 0:5 / 5,
+  home_sc = 0:4 / 4
 ) %>%
   # if margin_power is 0 then sc and pred_margin make no difference, so we can drop a few
   # paramter combinations:
@@ -203,24 +209,29 @@ clusterEvalQ(cluster, {
 
 clusterExport(cluster, c("r2", "afl_elos", "params"))
 
+unlink("afl_sim_res.csv")
+
 # 519 seconds for 10 sets of parameters. So can do about 1.1 per minute (with 7 processors); 180 will take 3 hours.
 system.time({
   suppressWarnings(rm(res))
-  res <- foreach(i = 1:1000, .combine = rbind) %dopar% {
+  res <- foreach(i = 1:4000, .combine = rbind) %dopar% {
     x <- params[i, ]
     
     success_rate <- r2 %>%
-      filter(season >= 1950) %>%
+      filter(season >= 1990) %>%
       afl_elos(sc = x$sc,
                pred_margin = x$pred_margin,
                margin_power = x$margin_power,
                experience = x$experience,
-               new_round_factor = x$new_round_factor) %>%
+               new_round_factor = x$new_round_factor,
+               home_sc = x$home_sc) %>%
       filter(location == "home") %>%
       summarise(sp = mean(successful_prediction)) %>%
       pull(sp)
     
-    return(data.frame = data.frame(row_num = i, success_rate = success_rate))
+    output <- data.frame(row_num = i, success_rate = success_rate)
+    write_csv(output, "afl_sim_res.csv", append = TRUE)
+    return(data.frame = output)
   }
 })
 
@@ -229,7 +240,7 @@ save(res, params, file = "afl_simulation_results.rda")
 
 #------------------Examine results------------------------------
 
-
+res <- read_csv("afl_sim_res.csv", col_names = c("row_num", "success_rate"))
 
 params_with_res <- params %>%
   left_join(res, by = "row_num") %>%
@@ -240,90 +251,13 @@ params_with_res <- params %>%
 params_with_res%>%
   slice(1:20)
 
-save(params_with_res, file = "0148_1000_runs_params_with_res.rda")
+save(params_with_res, file = "0148_1000_runs_params_with_res_and_home_scaling.rda")
 stop("That's as far as we need to go for repeating this")
 
-CairoSVG("../img/0148-density-success.svg", 8, 4)
+CairoSVG("../img/0148-rev-density-success.svg", 8, 4)
 ggplot(params_with_res, aes(x = success_rate)) +
   geom_density(fill = "steelblue", alpha = 0.5) +
   geom_rug() +
   ggtitle("Distribution of success rates in parameter contest")
 dev.off()
 
-best_params <- params_with_res[1, ]
-
-elos_best <- r2 %>%
-  afl_elos(sc               = best_params$sc,
-           pred_margin      = best_params$pred_margin,
-           margin_power     = best_params$margin_power,
-           experience       = best_params$experience,
-           new_round_factor = best_params$new_round_factor)
-
-CairoSVG("../img/0148-best-preds.svg", 8, 5)
-elos_best %>%
-  filter(location == "away" & date < "2019-01-01") %>%
-  group_by(season) %>%
-  summarise(successful_prediction = mean(successful_prediction)) %>%
-  ggplot(aes(x = season, y = successful_prediction)) +
-  geom_line() +
-  scale_y_continuous("Percentage of successful predictions", label = percent_format(accuracy = 1)) +
-  ggtitle("Predictions of past AFL games",
-          "Using the best combination found of parameters for Elo ratings and shrinkage during the off-season.
-Prediction success of 70% is difficult to achieve in the modern era.") +
-  labs(caption = the_caption, x = "")
-dev.off()
-
-
-
-
-#==================Predictions for this round!=====================
-elos_latest <- elos_best %>%
-  group_by(team) %>%
-  arrange(desc(date)) %>%
-  slice(1) %>%
-  ungroup() %>%
-  arrange(desc(new_elo)) %>%
-  select(team, elo = new_elo)
-
-fixture <- tibble(
-  home = c("Richmond", "Sydney", "Essendon", "Port Adelaide", "Geelong", "West Coast",
-           "North Melbourne", "Hawthorn", "Gold Coast"),
-  away = c("Collingwood", "Adelaide", "St Kilda", "Carlton", "Melbourne", "GWS", "Brisbane Lions", 
-           "Footscray", "Fremantle")
-)
-
-fixture %>%
-  left_join(elos_latest, by = c("home" = "team")) %>%
-  rename(home_elo = elo) %>%
-  left_join(elos_latest, by = c("away" = "team")) %>%
-  rename(away_elo = elo)  %>%
-  left_join(filter(adjustments, location == "home"), by = c("home" = "team")) %>%
-  rename(home_adjustment = location_adjustment) %>%
-  select(-location)  %>%
-  left_join(filter(adjustments, location == "away"), by = c("away" = "team")) %>%
-  rename(away_adjustment = location_adjustment) %>%
-  select(-location) %>%
-  mutate(final_prob = elo_prob(home_elo, away_elo, 
-                               ml = (best_params$pred_margin / best_params$sc) ^ best_params$margin_power, 
-                               a_adv = home_adjustment, 
-                               b_adv = away_adjustment),
-         winner = ifelse(final_prob > 0.5, home, away),
-         fair_returns_home = 1/final_prob,
-         fair_returns_away = 1/ (1- final_prob)) %>%
-  kable() %>%
-  write_clip()
-
-
-
-
-thankr::shoulders() %>% 
-  mutate(maintainer = str_squish(gsub("<.+>", "", maintainer)),
-         maintainer = ifelse(maintainer == "R-core", "R Core Team", maintainer)) %>%
-  group_by(maintainer) %>%
-  summarise(`Number packages` = sum(no_packages),
-            packages = paste(packages, collapse = ", ")) %>%
-  arrange(desc(`Number packages`)) %>%
-  knitr::kable() %>% 
-  clipr::write_clip()
-
-convert_pngs("0148")
