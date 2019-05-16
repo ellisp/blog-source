@@ -11,6 +11,8 @@ library(extrafont)
 library(beepr)
 library(Cairo)
 library(ggrepel)
+library(svglite)
+library(frs)
 
 # font_add_google("Poppins", "myfont")
 # res <- try(font_add_google("Roboto", "Roboto"))
