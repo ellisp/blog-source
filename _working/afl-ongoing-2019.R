@@ -182,7 +182,7 @@ fixture <- tibble(
            "Footscray", 
            "Fremantle", 
            "Sydney", 
-           "Gold Coast Suns", 
+           "Gold Coast", 
            "Hawthorn", 
            "Carlton")
 )
