@@ -5,7 +5,7 @@ library(frs)       # for Elo functions
 library(Cairo)
 library(ggrepel)
 library(lubridate)
-
+library(beepr)
 
 update_geom_defaults("text_repel", list(colour = "brown", font = myfont ))
 the_caption <- "Source: afltables via fitZroy; analysis by freerangestats.info"
@@ -167,24 +167,18 @@ elos_latest <- elos_best %>%
 
 
 fixture <- tibble(
-  home = c("West Coast", 
-           "Collingwood", 
-           "Brisbane Lions", 
-           "Geelong", 
-           "Essendon",
-           "North Melbourne", 
-           "Port Adelaide", 
-           "Richmond",
-           "GWS"),
-  away = c("Melbourne", 
-           "St Kilda", 
-           "Adelaide", 
-           "Footscray", 
-           "Fremantle", 
-           "Sydney", 
+  home = c("Adelaide", 
+           "Essendon", 
            "Gold Coast", 
+           "Fremantle", 
+           "Carlton",
+           "North Melbourne"),
+  away = c("Richmond", 
            "Hawthorn", 
-           "Carlton")
+           "St Kilda",
+           "Port Adelaide", 
+           "Footscray", 
+           "GWS")
 )
 
 fixture %>%
@@ -205,3 +199,5 @@ fixture %>%
          winner = ifelse(final_prob > 0.5, home, away),
          fair_returns_home = 1/final_prob,
          fair_returns_away = 1/ (1- final_prob))
+
+beep()
