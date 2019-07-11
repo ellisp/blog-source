@@ -169,7 +169,7 @@ elos_latest <- elos_best %>%
 fixture <- tibble(
   home = c("West Coast", 
            "Sydney", 
-           "Haswthorn", 
+           "Hawthorn", 
            "Essendon",
            "Gold Coast",
            "Geelong",
