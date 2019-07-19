@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Forecasting unemployment
-date: 2019-07-10
+date: 2019-08-10
 tag: 
    - TimeSeries
    - Economics

@@ -42,15 +42,15 @@ aafc <- function(y, h, xreg = NULL, ...){
   }
 }
 
-# this CV takes about x minutes
+# this CV takes about 20 seconds
 system.time({
-  aa1_cv <- tsCV(y, aafc, xreg = x)
-  aa2_cv <- tsCV(y, aafc)
-})
+  aa1_cv <- tsCV(y, aafc)
+  aa2_cv <- tsCV(y, aafc, xreg = x)
+  })
 
-rbind(accuracy(unemp_ts + aa1_cv, unemp_ts),
-      accuracy(unemp_ts + aa2_cv, unemp_ts)) %>%
+rbind(accuracy(y + aa1_cv, y),
+      accuracy(y + aa2_cv, y)) %>%
   as.data.frame() %>%
-  mutate(model = c("With interest rates", "Univariate")) %>%
+  mutate(model = c("Univariate", "With x regressor")) %>%
   dplyr::select(model, everything())
 
