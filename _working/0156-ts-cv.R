@@ -1,21 +1,47 @@
 library(forecast)
+library(dplyr)
+library(ggplot2)
 
-
-
-
-
-
-set.seed(123)
+# Simulate data:
+set.seed(125)
 n <- 100
 x <- ts(cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
-y = ts(c(0, 0.4 * x[-n] + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n - 1))))
+y = ts(0.4 * x + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+z = ts(0.4 * y + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+z <- c(0, z[1:(n - 1)])
+  
+d <- cbind(x, y, z)
 
-autoplot(cbind(x, y))
+# Exploratory plot:
+p1 <- autoplot(d) +
+  ggtitle("Three simulated, related, time-series",
+          "x causes y and y causes z; our job is to forecast y.") +
+  labs(colour = "", y ="")
 
-mod1 <- auto.arima(y)
-mod2 <- auto.arima(y, xreg = x)
+svg_png(p1, "../img/0156-ts")
 
-AIC(mod1, mod2)
+# Auto correlations:
+p2 <- ggPacf(d) + 
+  theme(panel.grid = element_blank()) +
+  ggtitle("Partial autocorrelations and cross correlations", 
+          "Original series")
+
+p3 <- ggPacf(diff(d)) + 
+  theme(panel.grid = element_blank()) +
+  ggtitle("Partial autocorrelations and cross correlations", 
+          "First differenced series")
+
+svg_png(p2, "../img/0156-pacf1")
+svg_png(p3, "../img/0156-pacf2")
+
+
+mod1 <- auto.arima(y, d = 1)
+mod2 <- auto.arima(y, xreg = x, d = 1)
+mod3 <- auto.arima(y, xreg = z, d = 1)
+mod4 <- auto.arima(y, xreg = cbind(x, z), d = 1)
+
+
+knitr::kable(AIC(mod1, mod2, mod3, mod4))
 # gets a warning - because the differencing is different in the two models
 
 
@@ -42,15 +68,33 @@ aafc <- function(y, h, xreg = NULL, ...){
   }
 }
 
-# this CV takes about 20 seconds
+# this CV takes about 50 seconds
 system.time({
-  aa1_cv <- tsCV(y, aafc)
-  aa2_cv <- tsCV(y, aafc, xreg = x)
+  aa1_cv <- tsCV(y, aafc, d = 1)
+  aa2_cv <- tsCV(y, aafc, xreg = x, d = 1)
+  aa3_cv <- tsCV(y, aafc, xreg = z, d = 1)
+  aa4_cv <- tsCV(y, aafc, xreg = cbind(x, z), d = 1)
+  
   })
 
-rbind(accuracy(y + aa1_cv, y),
-      accuracy(y + aa2_cv, y)) %>%
+rbind(accuracy(ts(y[-1] - aa1_cv[-n]), ts(y[-1])),
+      accuracy(ts(y[-1] - aa2_cv[-n]), ts(y[-1])),
+      accuracy(ts(y[-1] - aa3_cv[-n]), ts(y[-1])),
+      accuracy(ts(y[-1] - aa4_cv[-n]), ts(y[-1]))) %>%
   as.data.frame() %>%
-  mutate(model = c("Univariate", "With x regressor")) %>%
-  dplyr::select(model, everything())
+  mutate(model = c("Univariate", 
+                   "With x regressor", 
+                   "With z regressor", 
+                   "Both x and z as regressors")) %>%
+  dplyr::select(model, everything()) %>%
+  knitr::kable()
 
+
+# mean error of univariate model:
+mean(aa1_cv, na.rm = TRUE)
+
+# root mean square error of x regressor model
+sqrt(mean(aa2_cv ^ 2, na.rm = TRUE))
+
+# mean absolute error of z regressor model
+mean(abs(aa3_cv), na.rm = TRUE)
