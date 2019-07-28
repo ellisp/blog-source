@@ -6,8 +6,8 @@ library(ggplot2)
 set.seed(125)
 n <- 100
 x <- ts(cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
-y = ts(0.4 * x + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
-z = ts(0.4 * y + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+y = ts(0.6 * x + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+z = ts(0.6 * y + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
 z <- c(0, z[1:(n - 1)])
   
 d <- cbind(x, y, z)

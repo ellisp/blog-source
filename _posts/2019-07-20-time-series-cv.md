@@ -43,8 +43,8 @@ library(ggplot2)
 set.seed(125)
 n <- 100
 x <- ts(cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
-y = ts(0.4 * x + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
-z = ts(0.4 * y + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+y = ts(0.6 * x + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
+z = ts(0.6 * y + cumsum(arima.sim(list(ar = 0.5, ma = 0.5), n = n)))
 z <- c(0, z[1:(n - 1)])
   
 d <- cbind(x, y, z)
@@ -97,10 +97,10 @@ Because I made up the data, I happen to know that model 2 is the "correct" speci
 
 |     | df|      AIC|
 |:----|--:|--------:|
-|mod1 |  4| 296.5697|
+|mod1 |  3| 313.1799|
 |mod2 |  5| 290.6071|
-|mod3 |  5| 298.3167|
-|mod4 |  6| 292.4237|
+|mod3 |  4| 315.0472|
+|mod4 |  6| 292.3268|
 
 The models were fit with the code below - the perfect example of fitting enormously complex models with a single line of code each:
 
@@ -182,30 +182,31 @@ I'm not sure this is the best way to evaluate those forecast errors (ie by using
 
 |model                      |         ME|     RMSE|       MAE|      MPE|     MAPE|      ACF1| Theil's U|
 |:--------------------------|----------:|--------:|---------:|--------:|--------:|---------:|---------:|
-|Univariate                 | -0.0644993| 1.176706| 0.9418404| 67.83953| 87.59643| 0.0875559| 0.7309581|
-|With x regressor           | -0.0571786| 1.178075| 0.9518618| 56.12344| 77.77357| 0.1666608| 0.7689045|
-|With z regressor           | -0.0785069| 1.199313| 0.9560272| 64.66338| 86.54123| 0.1082143| 0.7329273|
-|Both x and z as regressors | -0.0734302| 1.214711| 0.9830786| 58.47590| 82.00609| 0.1580462| 0.7727410|
+|Univariate                 | -0.0238600| 1.249621| 0.9706499| 28.28211| 47.15084| 0.0725987| 0.4626243|
+|With x regressor           | -0.0560274| 1.177935| 0.9507106| 20.91153| 45.24956| 0.1673370| 0.3950919|
+|With z regressor           | -0.0156043| 1.245264| 0.9824904| 29.08816| 47.88510| 0.0453596| 0.5016008|
+|Both x and z as regressors | -0.0909384| 1.212325| 0.9823389| 22.85555| 46.54281| 0.1491128| 0.4872987|
 
-Model 2, with just the x regressor, has the smallest mean error, second lowest root mean square error and mean absolute error, lowest mean percentage error (which I don't like as a metric) and lowest mean absolute percentage error. The autocorrelation of its errors is relatively high, but I don't think that matters. Overall, this method comes up with fair support for the correct underlying model. In this particular case.
+Model 2, with just the x regressor, has the lowest root mean square error, mean absolute error, mean percentage error, mean absolute percentage error and Theil's U. The autocorrelation of its errors is relatively high, but I don't think that matters. It has more biased forecasts (mean error) than the models that don't include x but depending on context we might accept that in return for being closer on average. Overall, this method comes up with good support for the correct underlying model.
 
 Just to check I haven't mangled anything, gotten the signs the wrong way around, etc I calculated a few of these stats by hand directly from the `tsCV` output:
 
 ```
 > # mean error of univariate model:
 > mean(aa1_cv, na.rm = TRUE)
-[1] -0.06449931
+[1] -0.02386004
 > 
 > # root mean square error of x regressor model
 > sqrt(mean(aa2_cv ^ 2, na.rm = TRUE))
-[1] 1.178075
+[1] 1.177935
 > 
 > # mean absolute error of z regressor model
 > mean(abs(aa3_cv), na.rm = TRUE)
-[1] 0.9560272
+[1] 0.9824904
 ```
 
-OK, final word on this is that I tried this with various other settings (eg just changing the random seed from 125 to another number) and from ad hoc observation it seemed the AIC was perhaps slightly better at picking the correct model than was the cross-validation.  Neither method is fool-proof - remember, forecasting is hard! This is something worth more investigation I think.
+Final word on this is that I tried running this program with various other settings (eg just changing the random seed from 125 to another number, or making the relationships between the variables a little weaker) and sometimes the AIC was slightly better at picking the correct model than was the cross-validation.  Neither method is fool-proof - remember, forecasting is hard, there is always a lot of noise around the signal!
 
 OK, c'est tout. Today's key thought again: Time series cross-validation is important part of the toolkit, and `forecast::tsCV` makes it straightforward to implement.
+
 

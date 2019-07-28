@@ -9,24 +9,34 @@ library(rvest)
 library(seasonal)
 library(ggdag)
 
+
 the_caption <- "Analysis by http:://freerangestats.info"
 
 #------------unemployment------------------
 lfs1 <- read_abs("6202.0", tables = 1)
 
+govt <- tibble(end = as.Date(c("1975-12-13", "1983-03-05", "1996-03-02", "2007-11-24", "2013-09-07", "2022-06-30")),
+               party = c("ALP", "Lib/Nat", "ALP", "Lib/Nat", "ALP", "Lib/Nat")) %>%
+  mutate(start = c(as.Date("1972-12-02"), end[-n()]))
+          
 p <- lfs1 %>%
-  filter(series ==  "Unemployment rate ;  Persons ;") %>%
-  ggplot(aes(x = date, y = value / 100, colour = series_type)) +
-  geom_line() +
+  filter(series ==  "Unemployment rate ;  Persons ;" & series_type != "Trend") %>%
+  ggplot() +
+  geom_rect(data = govt, alpha = 0.8, 
+            aes(xmin =start, xmax = end, ymin = -Inf, ymax = Inf, fill = party)) +
+  geom_line(aes(x = date, y = value / 100, colour = series_type)) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   labs(x = "",
        y = "Unemployment rate",
-       colour = "",
+       colour = "Unemployment series:",
        title = "Unemployment in Australia, 1978 to present",
        subtitle = "Monthly series 6202.0 from the Australian Bureau of Statistics",
-       caption = the_caption)
+       caption = the_caption) +
+  scale_fill_manual("Federal government:", values = c("ALP" = "#E53440", "Lib/Nat" = "#1C4f9C")) +
+  scale_colour_manual(values = c("Original" = "black", "Seasonally Adjusted" = "white")) +
+  theme(legend.key = element_rect(fill = "grey"))
 
-svg_png("../img/0155-unemp", p)
+svg_png(p, "../img/0155-unemp", w =9, h = 4.5)
 
 # prepare data frame for later with columns for each series
 unemp <- lfs1 %>%
@@ -156,7 +166,7 @@ p <- combined %>%
        subtitle = "Sourced from ASX, RBA and ABS",
        caption = the_caption)
 
-svg_png("../img/0155-combined-series", p, 9, 8)
+svg_png(p, "../img/0155-combined-series", 9, 8)
 
 d1 <- combined %>%
   dplyr::select(-unemployment) %>%
@@ -189,7 +199,7 @@ p <- d1 %>%
   scale_x_continuous(label = comma) +
   scale_y_continuous(label = percent) +
   my_col_scale
-svg_png("../img/0155-csp1", p, 11, 6)
+svg_png(p, "../img/0155-csp1", 11, 6)
 
 
 d2 <- combined %>%
@@ -212,13 +222,13 @@ p <- d2 %>%
   labs(x        = "Growth in other variable",
        y        = "Growth in unemployment rate",
        title    = "Changes in interest rates and stock prices, compared to unemployment rate - monthly changes",
-       subtitle = "Unemployment and ASX200 shown as diff(log(x)); interest rate shown in percentage points.
-Increase in unemployment copmes with decrease in interest rate; no real relationship to stock prices.",
+       subtitle = "Unemployment and ASX200 shown as diff(log(x)); change in interest rate shown in percentage points.
+Increase in unemployment comes with decrease in interest rate; no real relationship to stock prices.",
        colour   = "") +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent)  +
   my_col_scale 
-svg_png("../img/0155-csp2", p, 11, 6)
+svg_png(p, "../img/0155-csp2", 11, 6)
 
 
 #-----------------Subsets of data for modelling---------------
@@ -242,10 +252,14 @@ comb_ts_d <- scale(cbind(asx200_ts, unemp_sa_ts, interest_ts)[-1, ])
 
 mod_var <- VAR(comb_ts_d, p = 2)
 
-plot(irf(mod_var, impulse = "interest_ts"), main = "Impact of a shock upwards to interest rates",
-     sub = "We can see that this model is based on a misinterpretation of causality")
-plot(irf(mod_var, impulse = "asx200_ts"), main = "Impact of a shock upwards to shock price")
-plot(irf(mod_var, impulse = "unemp_sa_ts"), main = "Impact of a shock upwards to unemployment")
+p1 <- function(){plot(irf(mod_var, impulse = "interest_ts"), main = "Impact of a shock upwards to interest rates",
+     sub = "We can see that this model can lead to a misinterpretation of causality", bty = "l")}
+p2 <- function(){plot(irf(mod_var, impulse = "asx200_ts"), main = "Impact of a shock upwards to stock price")}
+p3 <- function(){plot(irf(mod_var, impulse = "unemp_sa_ts"), main = "Impact of a shock upwards to unemployment")}
+
+svg_png(p1, "../img/0155-irf1", 9, 5)
+svg_png(p2, "../img/0155-irf2", 9, 5)
+svg_png(p3, "../img/0155-irf3", 9, 5)
 
 
 #--------------Digression to think about causality-----------------------
@@ -271,21 +285,22 @@ g <- tidy_dagitty(dagified) %>%
 
 svg_png("../img/0155-dag", g, 8, 8)
 
-#----------------Forecasting without a VAR---------------
-mod_aa1a <- auto.arima(unemp_ts, 
+#----------------ARIMA modelling---------------
+mod_aa0 <- auto.arima(unemp_ts, d = 1)
+
+mod_aa1 <- auto.arima(unemp_ts, d=1,
+                      xreg = interest_ts)
+
+mod_aa2 <- auto.arima(unemp_ts, d=1, 
+                      xreg = cbind(asx200_ts, interest_ts))
+
+mod_aa3 <- auto.arima(unemp_ts,  d=1,
                       xreg = cbind(asx200_ts, asx200_ts1, interest_ts))
-mod_aa1b <- auto.arima(unemp_ts, 
-                       xreg = cbind(asx200_ts, interest_ts))
-mod_aa1c <- auto.arima(unemp_ts, 
-                       xreg = interest_ts)
 
-mod_aa1a
-mod_aa1b
-mod_aa1c
+knitr::kable(AIC(mod_aa0, mod_aa1, mod_aa2, mod_aa3))
 
-# the minimal model has poorer (higher) AIC, suggesting it's not as good at one-step-out forecasting
-mod_aa2 <- auto.arima(unemp_ts)
-mod_aa2
+
+knitr::kable(round(confint(mod_aa1), 2))
 
 # The fact that higher interest rates are a good forecast of lower unemployment suggests the RBA (or banks?)
 # are taking extra information into account in setting their interest rates - they know something about
@@ -324,15 +339,38 @@ aafc <- function(y, h, xreg = NULL, ...){
 
 # this CV takes about 20 minutes
 system.time({
-  aa1_cv <- tsCV(unemp_ts, aafc, xreg = interest_ts)
-  aa2_cv <- tsCV(unemp_ts, aafc)
+  aa1_cv <- tsCV(unemp_ts, aafc, xreg = interest_ts, d = 1)
+  aa0_cv <- tsCV(unemp_ts, aafc, d=1)
 })
 
-rbind(accuracy(unemp_ts + aa1_cv, unemp_ts),
-      accuracy(unemp_ts + aa2_cv, unemp_ts)) %>%
+rbind(accuracy(unemp_ts - aa1_cv, unemp_ts),
+      accuracy(unemp_ts - aa0_cv, unemp_ts)) %>%
   as.data.frame() %>%
   mutate(model = c("With interest rates", "Univariate")) %>%
-  dplyr::select(model, everything())
+  dplyr::select(model, everything()) %>%
+  knitr::kable()
+
+#---------longer series------
+
+unemp_long <- ts(unemp$unemployment, frequency = 12, start = c(1978, 2))
+interest_long <- ts(interest$interest, frequency = 12, start = c(1976, 5)) %>%
+  window(start = c(1978, 2))
+
+mod_aa0_long <- auto.arima(unemp_long, d = 1)
+mod_aa1_long <- auto.arima(unemp_long, d=1, xreg = interest_long)
+AIC(mod_aa0_long, mod_aa1_long) %>% knitr::kable()
+
+system.time({
+  aa1_cv_long <- tsCV(unemp_long, aafc, xreg = interest_long, d = 1)
+  aa0_cv_long <- tsCV(unemp_long, aafc, d=1)
+})
+
+rbind(accuracy(unemp_long - aa1_cv_long, unemp_long),
+      accuracy(unemp_long - aa0_cv_long, unemp_long)) %>%
+  as.data.frame() %>%
+  mutate(model = c("With interest rates", "Univariate")) %>%
+  dplyr::select(model, everything()) %>%
+  knitr::kable()
 
 #----------Job Adverts---------
 library(nousutils)
