@@ -74,14 +74,12 @@ bus_counts_orig <- readxl::read_excel("bus_counts.xls" ,
                                       range = "A7:G4976",
                                       col_types = c("text", "text", "text", rep("numeric", 4)))
 
-# see https://en.wikipedia.org/wiki/List_of_companies_of_Australia, largest firm in Australia
-# has 220,000 employees (Wesfarmers)
-names(bus_counts_orig) <- c("state", "code", "industry", "0-0", "1-19", "20-199", "200-250000")
+names(bus_counts_orig) <- c("state", "code", "industry", "0-0", "1-19", "20-199", "200-30000")
 
 bus_counts <- bus_counts_orig %>%
   mutate(code = str_pad(code, 4, "left", "0")) %>%
   filter(!grepl("^Total", industry) & code != "9999") %>%
-  filter((`0-0` + `1-19` + `20-199` + `200-250000`) > 0) %>%
+  filter((`0-0` + `1-19` + `20-199` + `200-30000`) > 0) %>%
   gather(employees, freq, -state, -code, -industry) %>%
   separate(employees, by = "-", into = c("left", "right"), remove = FALSE) %>%
   mutate(left = as.numeric(left),
@@ -158,7 +156,7 @@ bus_summary_simp <- bus_counts_small %>%
             less_crude_avg = sum(freq * just_above_left) / sum(freq),
             another_avg = sum(freq * tiny_above_left) / sum(freq))
 
-# parallel processing for the negatib binomial verions
+# parallel processing for the negative binomial verions
 bus_summary_nb <- bus_counts_small %>%
   group_by(anzsic_group, state) %>%
   partition(cluster = cluster) %>%
