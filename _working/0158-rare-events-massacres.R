@@ -21,8 +21,8 @@ for (i in 1:20000000){
   logL1 <- dpois(x, x, log = TRUE) + dpois(y, y, log = TRUE)
   logLRsim[i] <- 2 * (logL1 - logL0)
 }
-no.exceeding <- sum(logLRsim >= logLRobs)
-no.exceeding
+no_exceeding <- sum(logLRsim >= logLRobs)
+no_exceeding
 mu0 <- (14 / (210 + 260)) * 210
 mu1 <- (14 / (210 + 260)) * 260
 cbind(mu0,mu1)
@@ -37,50 +37,50 @@ mon <- c(9, 1, 6, 8, 10, 12, 9, 8, 8, 10, 3, 1, 4)
 yr <- c(1981, 1984, 1987, 1987, 1987, 1987, 1988, 1990, 1991, 1992, 1993, 1996, 1996)
 months <- 12 *(yr - 1979) + mon
 rbind(mon, yr, months)
-scan.stat <- function(months, window){
-  sum.window <- 0
+scan_stat <- function(months, window){
+  sum_window <- 0
   for (j in 1:(210 - window + 1)){
-    sum.window[j] = sum((j <= months) & (months < j + window))
+    sum_window[j] = sum((j <= months) & (months < j + window))
   }
-  max(sum.window)
+  max(sum_window)
 }
-n.sim <- 10000
-max.window <- 18
-max.stat.mat <- matrix(0, n.sim, max.window)
-for (j in 1:n.sim){
+n_sim <- 10000
+max_window <- 18
+max_stat_mat <- matrix(0, n_sim, max_window)
+for (j in 1:n_sim){
   N <- rpois(1, 13)
-  months.sim <- sort(sample(1:210, size=N, repl=FALSE))
-  for (i in 1:max.window){
-    max.stat.mat[j,i] <- scan.stat(months.sim, i)
+  months_sim <- sort(sample(1:210, size=N, repl=FALSE))
+  for (i in 1:max_window){
+    max_stat_mat[j,i] <- scan_stat(months_sim, i)
   }
 }
-p.vals <- 0
-stat.obs <- 0
-window <- 1:max.window
+p_vals <- 0
+stat_obs <- 0
+window <- 1:max_window
 for (k in window) {
-  stat.obs[k] <- scan.stat(months, k)
-  p.vals[k] <- mean(max.stat.mat[, k] >= stat.obs[k])
+  stat_obs[k] <- scan_stat(months, k)
+  p_vals[k] <- mean(max_stat_mat[, k] >= stat_obs[k])
 }
-cbind(window, stat.obs, p.vals)
-unadj.pval <- min(p.vals)
-unadj.pval
-M.sim <- 10000
-pvals.sim <- 0
-min.pval.sim <- 0
-for (a in 1:M.sim){
+cbind(window, stat_obs, p_vals)
+unadj_pval <- min(p_vals)
+unadj_pval
+M_sim <- 10000
+pvals_sim <- 0
+min_pval_sim <- 0
+for (a in 1:M_sim){
   N <- rpois(1, 13)
-  months.sim <- sort(sample(1:210, size = N,repl = FALSE))
-  stat.obs.sim <- 0
+  months_sim <- sort(sample(1:210, size = N,repl = FALSE))
+  stat_obs_sim <- 0
   for (b in window){
-    stat.obs.sim[b] <- scan.stat(months.sim,b)
-    pvals.sim[b] <- mean(max.stat.mat[,b] >= stat.obs.sim[b])
+    stat_obs_sim[b] <- scan_stat(months_sim,b)
+    pvals_sim[b] <- mean(max_stat_mat[,b] >= stat_obs_sim[b])
   }
-  min.pval.sim[a] <- min(pvals.sim)
+  min_pval_sim[a] <- min(pvals_sim)
 }
-adj.pval <- mean(min.pval.sim <= unadj.pval)
-adj.pval
-tabl <- cbind(window, stat.obs, p.vals)
+adj_pval <- mean(min_pval_sim <= unadj_pval)
+adj_pval
+tabl <- cbind(window, stat_obs, p_vals)
 tabl
-hist(min.pval.sim, pr = TRUE, breaks = (0:20) / 20,
+hist(min_pval_sim, pr = TRUE, breaks = (0:20) / 20,
      main="Simulated minimum p-values (observed in marked in red)")
-abline(v = unadj.pval, col = "red")
+abline(v = unadj_pval, col = "red")
