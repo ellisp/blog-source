@@ -3,7 +3,7 @@ layout: post
 title: Forecasting unemployment
 date: 2019-07-28
 tag: 
-   - TimeSeries
+   - Timeseries
    - Economics
    - Australia
    - R

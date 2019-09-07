@@ -3,7 +3,7 @@ layout: post
 title: Time series forecast cross-validation
 date: 2019-07-20
 tag: 
-   - TimeSeries
+   - Timeseries
    - Forecasting
    - ModellingStrategy
    - R
