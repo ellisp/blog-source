@@ -312,7 +312,7 @@ They start this check by observing the highest number of events per window in si
 </table>
 
 
-The most suspect window length is 7 months. For this window, the observed clumping was more than 95.1% of the simulations. However, we can't use this p value of 0.049 to reject the null hypothesis of no clumping yet, because we have chosen that null hypothesis only after observing the data (that is, we picked 7 months as the window most likely to show clumping from the data). To get a "proper" p value we need to adjust this again by comparing to what we would have seen by chance. Adjusting it this way gets us a p value of 0.095 - not low enough to dismiss the null hypothesis of the data coming from a genuine Poisson process.
+The most suspect window length is 7 months. For this window, the observed clumping was more than 95.1% of the simulations. However, we can't use this p value of 0.049 to reject the null hypothesis of no clumping yet, because we have chosen that null hypothesis only after observing the data (that is, we picked 7 months as the window most likely to show clumping from the data). To get a "proper" p value we need to adjust this again by comparing to what we would have seen by chance. That is, some window is always going to generate the lowest p value by this method; how often will it be as low as 0.049? Adjusting it this way gets us an actual p value of 0.095 - not low enough to dismiss the null hypothesis of the data coming from a genuine Poisson process.
 
 An interesting point about reproducibility here. When I first ran the code directly from the supplement to the original article, I got different results at this point to those reported, although still in line with the substantive conclusions. One of the original authors, Michael Stewart, was able to put me on to the reason why. From version 3.6.0, [R changed its method of random number generation](https://blog.revolutionanalytics.com/2019/05/whats-new-in-r-360.html), which can lead to small (but sometimes material) differences when running simulations from older versions of R even if the random seed is set. In the code for this blog, I used `RNGkind(sample.kind="Rounding")` early in the script to revert to the old behaviour. This is certainly something worth knowing about when trying to reproduce pre-2019 simulation results.
 
@@ -401,18 +401,27 @@ So taken as a given issues such as whether the 13 events are the right ones to c
 If you compare my [eventual R script](https://github.com/ellisp/blog-source/blob/master/_working/0158-rare-events-massacres.R) I used for this blog with [the original](https://acp.silverchair-cdn.com/acp/content_public/journal/aim/937339/m18-0503_supplement.pdf?Expires=1567900673&Signature=E6-Z~KyoSN8w5Q0vyXU1ypYoOOr4g05Vu5a3AHV~PbBj0ewSl7-cgJfvye7BV9DhonioJvK2SFb747-XVpGeuheaBHN0BRQLxPemmQIWyB7eXqyovfTmn6Kfa9Quh5FsLLgWPx-Syv7laz0RICZ9BVdb4bJzQkphRsrq1RMZm6bFWutH2Uoy-E772jI19KUJU1TGIW6AmvI5d1PU1TWHZF-wGwOYqSn-uBtaCVifpzL3MQ0EStdFlrJ55~We-K11wYPl~noH~lrFxDs0YuiM~MmuJzZQewEiAIpPNlfyCox4wrTdpSlmTMBEb1ArmED~JpgLxe7V29OKQV~MrVKIog__&Key-Pair-Id=APKAIE5G5CRDK6RD3PGA), I have made a number of changes to the code. Some of this is to meet my own styling preferences (similar to the [tidyverse style guide](https://style.tidyverse.org/)), and some is just to reflect particularly programming practices that I try to encourage at my work. Here is a rough description of the changes I made:
 
 * Structure, sequencing and content
-  * Brought the definition of the data (number of shootings and the month they are in) up to the front and make a visualisation of it before we get into the analysis
-  * changed the order of some of the analysis to match the presentation of results eg put the calculation of the likelihood ratio from pertured data ahead of the results from bootstrap resampling of the original
+  * bring the definition of the data (number of shootings and the month they are in) up to the front and make a visualisation of it before we get into the analysis
+  * change the order of some of the analysis to match the presentation of results eg put the calculation of the likelihood ratio from pertured data ahead of the results from bootstrap resampling of the original
 * Discipline with objects and variables 
-  * With data that is intrinsically equal lengthed (such as the month and the year of each shooting - stored as vectors `mon` and `yr` in the original) store them in a data frame or tibble which provides the discipline of assuring that they are equally lengthed columns of data
+  * with data that is intrinsically equal lengthed (such as the month and the year of each shooting - stored as vectors `mon` and `yr` in the original) store them in a data frame or tibble which provides the discipline of assuring that they are equally lengthed columns of data
   * replace some magic constants (such as "13", the number of massacres) with variables calculated by R (eg `n_massacres <- nrow(mass_shootings)`, then use `n_massacres` instead of 13 from then onwards) - for maintainability and portability of the code to other use cases, and also for readability (it took me a while to spot the 13s in the code, whereas I find `n_massacres` very readable)
-  * Change `T` and `F` to `TRUE` and `FALSE` throughout
+  * change `T` and `F` to `TRUE` and `FALSE` throughout
 * Documentation, readability and style
-  * Add section and subsection markers
-  * More comments explaining the "why" of each step
-  * Document the purpose and parameters of functions with "roxygen2 - style" (eg `@param`)
+  * add section and subsection markers
+  * more comments explaining the "why" of each step
+  * document the purpose and parameters of functions with "roxygen2 - style" (eg `@param`)
   * spaces after commas, arithmetic operators, assignment operators etc - just for readability
   * replace dots in variable names with underscores
+
+## Addendum
+
+After original posting, my attention was drawn to the [Osmington shooting](https://en.wikipedia.org/wiki/Osmington_shooting), which happened after the period covered by the data in the original article (but before I moved back to Australia). This doesn't change any of the analysis above of course, although it shows the importance of that robustness check of "one more massacre while the article is going into production".
+
+Here is the headline graphic of this post if this later event is included:
+
+<object type="image/svg+xml" data='/img/0158-events-with-osmington.svg' width='100%'><img src='/img/0158-events-with-osmington.png'></object>
+
   
 ## Footnotes
 

@@ -32,7 +32,7 @@ p1 <- ggplot(mass_shootings, aes(xend = approx_date, x = approx_date)) +
        y = "") +
   annotate("text", x = as.Date("2008-01-01"), y = 1, label = "After the gun buy-back",
            colour = "steelblue") +
-  ggtitle("Firearm-related homicides in Australia", 
+  ggtitle("Firearm-related homicides in Australia, to February 2018", 
           "Events in which at least 5 persons other than perpetrator died") 
 
 frs::svg_png(p1, "../img/0158-events")
@@ -182,3 +182,33 @@ for (a in 1:M_sim){
 adj_pval <- mean(min_pval_sim <= unadj_pval)
 adj_pval
 
+#-------------Addendum - including the Osmington solution---------
+mass_shootings2 <- data.frame(
+  mon = c(9, 1, 6, 8, 10, 12, 9, 8, 8, 10, 3, 1, 4,5),
+  yr = c(1981, 1984, 1987, 1987, 1987, 1987, 1988, 1990, 1991, 1992, 1993, 1996, 1996, 2018)
+) 
+
+mass_shootings2 <- mass_shootings2 %>%
+  mutate(months = 12 * (yr - 1979) + mon,
+         approx_date = as.Date(paste(yr, mon, 15, sep = "-")),
+         interval = c(NA, diff(approx_date)))
+
+p3 <- ggplot(mass_shootings2, aes(xend = approx_date, x = approx_date)) +
+  geom_rect(xmin = as.Date("1996-07-15"), xmax = Inf, ymin = -Inf, ymax = Inf,
+            fill = "steelblue", alpha = 0.01) +
+  geom_rect(xmax = as.Date("1996-07-15"), xmin = -Inf, ymin = -Inf, ymax = Inf,
+            fill = "red", alpha = 0.01) +
+  geom_segment(y = -Inf, yend = Inf) +
+  scale_x_date(limits = c(min(mass_shootings$approx_date - 50), as.Date("2019-09-15"))) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(x = "Approximate date of mass shooting",
+       y = "") +
+  annotate("text", x = as.Date("2008-01-01"), y = 1, label = "After the gun buy-back",
+           colour = "steelblue") +
+  ggtitle("Firearm-related homicides in Australia, to September 2019", 
+          "Events in which at least 5 persons other than perpetrator died") 
+
+frs::svg_png(p3, "../img/0158-events-with-osmington")
