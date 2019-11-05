@@ -1,4 +1,7 @@
-
+# Originally this was for a blog post in May 2019.
+# Updated November 2019 to produce just the latest line graph and Twitter-friendly animation
+#
+# Peter Ellis
 
 library(rvest)
 library(tidyverse)
@@ -7,6 +10,8 @@ library(gganimate)
 library(svglite)
 library(frs)
 library(lubridate)
+library(transformr)
+library(gifski)
 
 the_caption <- "Data from https://www.treasury.gov/, analysis by freerangestats.info"
 
@@ -63,12 +68,11 @@ p2 <- yields %>%
                      labels = periods[c(10:12), ]$period) +
   labs(caption = the_caption)
 
-svglite("../img/0151-all-years-one-frame.svg", 8, 6)
-print(p2)
-dev.off()
+# svglite("../img/0151-all-years-one-frame.svg", 8, 6)
+# print(p2)
+# dev.off()
 
-d <- yields  #%>% 
-  filter(Date < as.Date("1991-02-28"))
+d <- yields  #%>% filter(Date < as.Date("1991-02-28"))
 
 a <- d %>% 
   ggplot(aes(x = period_n, y = value)) +
@@ -89,16 +93,16 @@ a <- d %>%
 
 # Save the frames in the file system and then manually knit into an animation, because
 # there are so many and so large that I like to keep control of the two steps:
-dir.create("tmp")
-res <- 150
-animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
-        type = "cairo-png", antialias = "subpixel", 
-        width = 6 * res, height =  4.3 * res, res = res,
-        renderer = file_renderer(dir = "tmp", overwrite = TRUE))
-
-od <- setwd("tmp")
-system("ffmpeg -i gganim_plot%04d.png  -pix_fmt yuv420p -s 900x646 -c:v libx264 -r 30 movie.mp4")
-setwd(od)
+# dir.create("tmp")
+# res <- 150
+# animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
+#         type = "cairo-png", antialias = "subpixel", 
+#         width = 6 * res, height =  4.3 * res, res = res,
+#         renderer = file_renderer(dir = "tmp", overwrite = TRUE))
+# 
+# od <- setwd("tmp")
+# system("ffmpeg -i gganim_plot%04d.png  -pix_fmt yuv420p -s 900x646 -c:v libx264 -r 30 movie.mp4")
+# setwd(od)
 
 
 p3 <- yields %>%
@@ -110,12 +114,10 @@ p3 <- yields %>%
        caption = the_caption) +
   ggtitle("US Treasury Yield Curve Rates, 1990 to 2019")
 
-svglite("../img/0151-trad-line.svg", 8, 6)
-p3
-dev.off()
+frs::svg_png(p3, "../img/0151-trad-line-latest", 8, 6)
 
-plots <- list.files(pattern = "0151.*\\.svg", path = "../img/", full.names = TRUE)
-lapply(plots, svg_googlefonts)
+# plots <- list.files(pattern = "0151.*\\.svg", path = "../img/", full.names = TRUE)
+# lapply(plots, svg_googlefonts)
 
 #-----------------Gif version for Twitter------------
 d2 <- yields %>%
@@ -157,11 +159,9 @@ animate(a2, nframes = length(unique(d2$Date)) * 3, dev = "png", fps = 15,
         type = "cairo-png", antialias = "subpixel", 
         width = 6 * res, height =  4.3 * res, res = res)
 
-anim_save("0151-yield-anim-monthly.gif", path = "../img/")
+anim_save("0151-yield-anim-monthly-latest.gif", path = "../img/")
 
-convert_pngs("0151")
-
-?frs
+# convert_pngs("0151")
 
 thankr::shoulders() %>% 
   mutate(maintainer = str_squish(gsub("<.+>", "", maintainer)),
