@@ -47,8 +47,7 @@ nsim <- 10000
 set.seed(123)
 sims <- data.frame(
   benefit_rand = rgamma(nsim, 7, 0.0001),
-  cost_rand = rgamma(nsim, 10, 0.1),
-  npv = NA
+  cost_rand = rgamma(nsim, 10, 0.1)
 )
 for(i in 1:nsim){
   sims[i, "npv"] <- net_present_value(discount = 4, 
@@ -62,7 +61,7 @@ p0 <- sims %>%
   scale_x_continuous(label = dollar) +
   labs(x = "Net present value",
        title = "Impact of randomness on net present value",
-       subtitle = "Investment with initial cost of $1m, mean annual costs of around $100, and mean annual benefits of around $70,000\nAnnual costs and benefits are Gamma-distributed random variables")
+       subtitle = "Investment with initial cost of $1m, mean annual costs of around $100,\nand mean annual benefits of around $70,000\nAnnual costs and benefits are Gamma-distributed random variables")
 
 
 quantile(sims$npv, c(0.1, 0.9))
@@ -109,11 +108,13 @@ p2 <- sims %>%
   scale_x_continuous(label = percent) +
   labs(x = "Internal rate of return",
        title = "Impact of randomness on internal rate of return",
-       subtitle = "Investment with initial cost of $1m, mean annual costs of around $100, and mean annual benefits of around $70,000\nAnnual costs and benefits are Gamma-distributed random variables")
+       subtitle = "Investment with initial cost of $1m, mean annual costs of around $100,\nand mean annual benefits of around $70,000\nAnnual costs and benefits are Gamma-distributed random variables")
 
 svg_png(p2, "../img/0161-varying-irr")
 quantile(sims$irr, c(0.1, 0.9))
 
+
+#---------More systemic approach - with two functions specific to this particular analysis----------
 
 #'  Cost benefit analysis of a single state of the world
 cba_single <- function(
@@ -121,6 +122,9 @@ cba_single <- function(
   initial_cost_se = initial_cost * generic_uncertainty,
   ongoing_cost,
   ongoing_cost_se = ongoing_cost * generic_uncertainty,
+  prob_ad_hoc_cost,
+  ad_hoc_cost,
+  ad_hoc_cost_se = ad_hoc_cost * generic_uncertainty,
   customer_level_shift,
   customer_level_shift_se = customer_level_shift * generic_uncertainty,
   customer_growth,
@@ -135,11 +139,13 @@ cba_single <- function(
   # randomness
   initial_cost_this <- rnorm(1, initial_cost, initial_cost_se)
   ongoing_cost_this <- rnorm(end_year, ongoing_cost, ongoing_cost_se)
+  ad_hoc_cost_this <- rbinom(end_year, 1, prob = prob_ad_hoc_cost) *
+    rnorm(end_year, ad_hoc_cost, ad_hoc_cost_se)
   customer_level_shift_this = rnorm(1, customer_level_shift, customer_level_shift_se)
   customer_growth_this = rnorm(1, customer_growth, customer_growth_se)
   customer_spend_this = rnorm(1, customer_spend, customer_spend_se)
                          
-  costs_current <- c(initial_cost_this, ongoing_cost_this)
+  costs_current <- c(initial_cost_this, ongoing_cost_this + ad_hoc_cost_this)
   
   customers <- customer_level_shift_this * (1 + customer_growth_this) ^ (0:end_year)
   benefits_current <- customers * customer_spend_this
@@ -169,17 +175,24 @@ cba_single <- function(
   ))
 }
 
-# Example
+# Example usage of the single CBA analysis; performs one run (with random results) for a given
+# set of parameters
 set.seed(321)
 cba_single(
   initial_cost = 1000000,
   ongoing_cost = 10000,
+  prob_ad_hoc_cost = 0.1,
+  ad_hoc_cost = 100000,
   customer_level_shift = 1000,
   customer_growth = 0.02,
   customer_spend = 100
 )
 
-#' Cost benefit analysis of many simulations
+#' Cost benefit analysis of many simulations with a single set of parameters
+#' 
+#' @param nsim number of simulations to run
+#' @param seed random seed to fix so results are reproducible
+#' @param ... other parameters passed to \code{cba_single}
 cba_multi <- function(nsim = 1000, seed = 123, ...){
   output_simple <- tibble('Net Present Value' = numeric(nsim), 
                           'Internal Rate of Return' = numeric(nsim))
@@ -207,22 +220,27 @@ cba_multi <- function(nsim = 1000, seed = 123, ...){
   )
 }
 
+# Example run
 results <- cba_multi(
               initial_cost = 1000000,
               ongoing_cost = 10000,
+              prob_ad_hoc_cost = 0.1,
+              ad_hoc_cost = 100000,
               customer_level_shift = 1000,
-              customer_growth = 0.01,
+              customer_growth = 0.02,
               customer_spend = 100
             )
 
 
-results$output_simple %>%
+p3 <- results$output_simple %>%
   gather(variable, value) %>%
   ggplot(aes(x = value)) +
   facet_wrap(~variable, scales = "free") +
-  geom_density(fill = "steelblue", alpha = 0.1)
+  geom_density(fill = "steelblue", alpha = 0.1) +
+  scale_x_continuous(label= comma) +
+  labs(title = "Key summary results from CBA of a hypothetical project, with uncertainty built in")
 
-results$output_complex %>%
+p4 <- results$output_complex %>%
   filter(!grepl("^Cumulative", variable)) %>%
   ggplot(aes(x = year)) +
   facet_wrap(~variable, scales = "free_y") +
@@ -230,9 +248,11 @@ results$output_complex %>%
   geom_line(aes(y = mid)) +
   scale_y_continuous(label = dollar) +
   labs(x = "Year",
-       y = "Value")
+       y = "Value") +
+  labs(title = "Key time series results from CBA of a hypothetical project, with uncertainty built in",
+       subtitle = "80% credibility intervals shown")
 
-results$output_complex %>%
+p5 <- results$output_complex %>%
   filter(grepl("^Cumulative", variable)) %>%
   ggplot(aes(x = year)) +
   facet_wrap(~variable, scales = "fixed") +
@@ -240,4 +260,10 @@ results$output_complex %>%
   geom_line(aes(y = mid)) +
   scale_y_continuous(label = dollar) +
   labs(x = "Year",
-       y = "Value")
+       y = "Value") +
+  labs(title = "Cumulative costs and benefits from CBA of a hypothetical project, with uncertainty built in",
+       subtitle = "80% credibility intervals shown")
+
+svg_png(p3, "../img/0161-summaries", h = 3, w = 9)
+svg_png(p4, "../img/0161-cost-benefit", w = 9)
+svg_png(p5, "../img/0161-cumulative", h = 4, w = 9)
