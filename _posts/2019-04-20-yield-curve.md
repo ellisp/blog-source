@@ -1,14 +1,15 @@
 ---
 layout: post
 title: Animating the US Treasury yield curve rates
-date: 2019-04-14
+date: 2019-04-20
 tag: 
    - Visualisation
+   - Animations
    - Economics
    - R
-description: svglite is a great way for producing good graphics for the web but there's a small hack needed if you want to use web fonts with it.
+description: I ponder the limitations of animation, and how much work is needed to turn a fun animation into a great story.
 image: /img/0151-all-years-one-frame.svg
-socialimage: http://freerangestats.info/img/ozpolls/0151-all-years-one-frame.png
+socialimage: http://freerangestats.info/img/0151-all-years-one-frame.png
 category: R
 ---
 
@@ -20,15 +21,15 @@ The "yield curve" is the name given to the graphic showing the different annual 
 
 Anyway, here is my version of the animation, now with 29 years of daily data, streaming from You Tube (because it was too large to embed directly in my web page):
 
-   <iframe width="600" height="540 "
-src="http://www.youtube.com/embed/" frameborder="0" allowfullscreen="allowfullscreen">
+   <iframe width="600" height="450 "
+src="http://www.youtube.com/embed/fJ6BqrihUBA?autoplay=1" frameborder="0">
 </iframe>
 
 Alternatively, here's a streamlined social-media-friendly version (as a GIF) that has monthly averages and scoots through a bit quicker.
 
 <img src='/img/0151-yield-anim-monthly.gif' width='100%'>
 
-I'm not sure this is a great graphic. For one thing, with three frames for every day with data reported, the daily version is over 30,000 frames long and even at 25 frames per second that's a pretty tedious thing to watch. But more generally, it suffers from the common problems of animated statistical graphics
+I'm not sure these are great graphics. For one thing, with three frames for every day with data reported, the daily version is over 20,000 frames long and even at 25 frames per second that's a pretty tedious thing to watch - 14.5 minutes in fact. More generally, it suffers from the common problems of animated statistical graphics:
 
 - you have to be looking at just the right time to see the interesting things - like the yield inversion and other volatility in that 2006 to 2008 period
 - some changes over time are actually less obvious to the viewer than if they could be presented on a single page.
@@ -37,9 +38,9 @@ In the [original FT article](https://www.ft.com/content/cf9eb29a-5220-11e9-9c76-
 
 ## Static alternatives
 
-Animations aren't always the best. In fact, I loathe video tutorials because I can't flick my eye directly to the part I want but have to sit through the whole thing - even at high speed this is frustrating. Animations can have a similar problem.
+Animations aren't always the best. In fact, it's surely significant that I loathe video tutorials because I can't flick my eye directly to the part I want but have to sit through the whole thing - even at high speed this is frustrating. Animations can have a similar problem.
 
-For showing the longer history at a glance, consider this alternative presentation, still related to the animation's visual structure. This has all 10,000 yield curves from those 29 years on a single static chart, each one drawn with 10% opacity to avoid colouring the page solid.
+For showing the longer history at a glance, consider this alternative presentation, still related to the animation's visual structure. This has all 8,000 or so yield curves from those 29 years on a single static chart, each one drawn with 10% opacity to avoid colouring the page solid.
 
 <img src='/img/0151-all-years-one-frame.svg' width='100%'>
 
@@ -65,15 +66,15 @@ Finally, how about a much more traditional time series line chart. I actually fi
 
 So what do I think?
 
-> Sometimes static graphs are beter than animations. Sometimes an old fashioned time series plot is better than less standard innovations.
+> Sometimes static graphs are beter than animations. Sometimes an old fashioned time series plot is better than less standard innovations. To make an animation tell a good story you often need more polishing, annotation and framing, not less.
 
 More information on yield curves is easy to find on the Internet, and the [piece in the Financial Times that Wigglesworth was referring to](https://www.ft.com/content/cf9eb29a-5220-11e9-9c76-bf4a0ce37d49) is worth a read. Here's one of their very professional graphics:
 
-<a href = https://www.ft.com/content/cf9eb29a-5220-11e9-9c76-bf4a0ce37d49><img src='/img/0151-ft-timeseries.png' width='100%'></a>
+<a href = 'https://www.ft.com/content/cf9eb29a-5220-11e9-9c76-bf4a0ce37d49'><img src='/img/0151-ft-timeseries.png' width='100%'></a>
 
 One of the things that makes a difference to this, and to the animations in the same story, is the careful use of annotations to tell a story. That's definitely what it takes to get a graphic to the next level, but it's not something I've got time for right now.
 
-Here's the code for this (apart from that last one from the FT) - all pretty straightforward. Grabbing the data is easy with Wickham's `rvest` R package, and animations are so much easier than a few years ago thanks to Thomas Pedersen's `gganimate`. And let's not forget the Viridis colours, originally developed for Pyuthon by Nathaniel Smith and Stefan van der Walt, and ported into an R package by Simon Garnier. In these graphics I use three variants of the Viridis colour schemes to represent different variables - the difference between long and short term yields at any one point in time, year, and the term of the yield. In each case, the variable I am trying to show is fundamentally ordered, and Viridis is at its best in showing that ordered nature in its colour.
+Here's the code for this (apart from that last one from the FT) - all pretty straightforward. Grabbing the data is easy with Wickham's `rvest` R package, and animations are so much easier than a few years ago thanks to Thomas Pedersen's `gganimate`. And let's not forget the Viridis colours, originally developed for Python by Nathaniel Smith and Stefan van der Walt, and ported into an R package by Simon Garnier. In these graphics I use three variants of the Viridis colour schemes to represent different variables - the difference between long and short term yields at any one point in time, year, and the term of the yield. In each case, the variable I am trying to show is fundamentally ordered, and Viridis is at its best in showing that ordered nature in its colour.
 
 {% highlight R lineanchors %}
 
@@ -170,13 +171,19 @@ a <- d %>%
 
 
 
+# Save the frames in the file system and then manually knit into an animation, because
+# there are so many and so large that I like to keep control of the two steps:
 dir.create("tmp")
 res <- 150
 animate(a, nframes = length(unique(d$Date)) * 3, dev = "png", fps = 30,
         type = "cairo-png", antialias = "subpixel", 
         width = 6 * res, height =  4.3 * res, res = res,
-        renderer = file_renderer(dir = "tmp"))
-# use movie software to pin together the files into an animation outside of R
+        renderer = file_renderer(dir = "tmp", overwrite = TRUE))
+
+od <- setwd("tmp")
+system("ffmpeg -i gganim_plot%04d.png  -pix_fmt yuv420p -s 900x646 -c:v libx264 -r 30 movie.mp4")
+setwd(od)
+
 
 #----------------traditional time series version-----------
 p3 <- yields %>%
@@ -233,10 +240,49 @@ anim_save("0151-yield-anim150.gif")
 {% endhighlight %}
 
 {% highlight R lineanchors %}
-
+thankr::shoulders() %>% 
+  mutate(maintainer = str_squish(gsub("<.+>", "", maintainer)),
+         maintainer = ifelse(maintainer == "R-core", "R Core Team", maintainer)) %>%
+  group_by(maintainer) %>%
+  summarise(`Number packages` = sum(no_packages),
+            packages = paste(packages, collapse = ", ")) %>%
+  arrange(desc(`Number packages`)) %>%
+  knitr::kable() %>% 
+  clipr::write_clip()
 {% endhighlight %}
 
-
-{% highlight R lineanchors %}
-
-{% endhighlight %}
+|maintainer          | Number packages|packages                                                                                                                   |
+|:-------------------|---------------:|:--------------------------------------------------------------------------------------------------------------------------|
+|Hadley Wickham      |              15|assertthat, dplyr, forcats, ggplot2, gtable, haven, httr, lazyeval, modelr, plyr, rvest, scales, stringr, tidyr, tidyverse |
+|R Core Team         |              11|base, compiler, datasets, graphics, grDevices, grid, methods, stats, tools, utils, nlme                                    |
+|Gábor Csárdi        |               4|cli, crayon, pkgconfig, progress                                                                                           |
+|Kirill Müller       |               4|DBI, hms, pillar, tibble                                                                                                   |
+|Lionel Henry        |               4|purrr, rlang, svglite, tidyselect                                                                                          |
+|Winston Chang       |               4|extrafont, extrafontdb, R6, Rttf2pt1                                                                                       |
+|Yihui Xie           |               4|evaluate, knitr, rmarkdown, xfun                                                                                           |
+|Jim Hester          |               3|glue, withr, readr                                                                                                         |
+|Thomas Lin Pedersen |               3|farver, gganimate, tweenr                                                                                                  |
+|Yixuan Qiu          |               3|showtext, showtextdb, sysfonts                                                                                             |
+|Dirk Eddelbuettel   |               2|digest, Rcpp                                                                                                               |
+|Jennifer Bryan      |               2|cellranger, readxl                                                                                                         |
+|Simon Urbanek       |               2|audio, Cairo                                                                                                               |
+|Achim Zeileis       |               1|colorspace                                                                                                                 |
+|Alex Hayes          |               1|broom                                                                                                                      |
+|Charlotte Wickham   |               1|munsell                                                                                                                    |
+|David Gohel         |               1|gdtools                                                                                                                    |
+|Deepayan Sarkar     |               1|lattice                                                                                                                    |
+|Gabor Csardi        |               1|prettyunits                                                                                                                |
+|James Hester        |               1|xml2                                                                                                                       |
+|Jeremy Stephens     |               1|yaml                                                                                                                       |
+|Jeroen Ooms         |               1|jsonlite                                                                                                                   |
+|Joe Cheng           |               1|htmltools                                                                                                                  |
+|Kamil Slowikowski   |               1|ggrepel                                                                                                                    |
+|Kevin Ushey         |               1|rstudioapi                                                                                                                 |
+|Marek Gagolewski    |               1|stringi                                                                                                                    |
+|Matthew Lincoln     |               1|clipr                                                                                                                      |
+|Max Kuhn            |               1|generics                                                                                                                   |
+|Michel Lang         |               1|backports                                                                                                                  |
+|Peter Ellis         |               1|frs                                                                                                                        |
+|Rasmus Bååth        |               1|beepr                                                                                                                      |
+|Stefan Milton Bache |               1|magrittr                                                                                                                   |
+|Vitalie Spinu       |               1|lubridate                                                                                                                  |

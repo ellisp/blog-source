@@ -5,7 +5,7 @@ library(frs)       # for Elo functions
 library(Cairo)
 library(ggrepel)
 library(lubridate)
-
+library(beepr)
 
 update_geom_defaults("text_repel", list(colour = "brown", font = myfont ))
 the_caption <- "Source: afltables via fitZroy; analysis by freerangestats.info"
@@ -74,7 +74,13 @@ r2 <- r %>%
 #' @param new_round_factor how much to shrink Elo ratings towards 1500 in the first match of each season.
 #' 1 means no shrinkage, 0 means every team starts the season fresh with a rating of 1500 regardless of 
 #' past performance.
-afl_elos <- function(r, sc = 1, pred_margin = 30, margin_power = 1, experience = 100, new_round_factor = 1){
+afl_elos <- function(r, 
+                     sc = 1, 
+                     pred_margin = 30,
+                     margin_power = 1, 
+                     experience = 100, 
+                     new_round_factor = 1,
+                     home_sc = 1){
   r <- r %>%
     group_by(game) %>%
     arrange(date, game, desc(winner))
@@ -96,8 +102,8 @@ afl_elos <- function(r, sc = 1, pred_margin = 30, margin_power = 1, experience =
                      ml = (round(this_game[1, "margin"] / sc) ^ margin_power),
                      axp = experience,
                      bxp = experience,
-                     a_adv = this_game[1, "location_adjustment"],
-                     b_adv = this_game[2, "location_adjustment"])
+                     a_adv = this_game[1, "location_adjustment"] * home_sc,
+                     b_adv = this_game[2, "location_adjustment"] * home_sc)
     
     # er: calculate elo rating arising from this game to use for the prediction, for use in
     # measureing prediction success
@@ -132,7 +138,8 @@ best_params <- data.frame(
   pred_margin = 30,
   margin_power = 0.8333,
   experience = 100,
-  new_round_factor = 0.4
+  new_round_factor = 0.4,
+  home_sc = 0.7
 )
 
 
@@ -141,7 +148,8 @@ elos_best <- r2 %>%
            pred_margin      = best_params$pred_margin,
            margin_power     = best_params$margin_power,
            experience       = best_params$experience,
-           new_round_factor = best_params$new_round_factor)
+           new_round_factor = best_params$new_round_factor,
+           home_sc          = best_params$home_sc)
 
 
 
@@ -159,10 +167,24 @@ elos_latest <- elos_best %>%
 
 
 fixture <- tibble(
-  home = c("Sydney", "Collingwood", "Geelong", "Essendon", "Port Adelaide", "West Coast", 
-           "North Melbourne", "Gold Coast", "St Kilda"),
-  away = c("Melbourne", "Footscray", "GWS", "Brisbane Lions", "Richmond", "Fremantle", "Adelaide", 
-           "Carlton", "Hawthorn")
+  home = c("West Coast", 
+           "Sydney", 
+           "Hawthorn", 
+           "Essendon",
+           "Gold Coast",
+           "Geelong",
+           "Richmond",
+           "Footscray",
+           "Port Adelaide"),
+  away = c("Collingwood", 
+           "Carlton", 
+           "Fremantle",
+           "North Melbourne", 
+           "Adelaide", 
+           "St Kilda",
+           "GWS",
+           "Melbourne",
+           "Brisbane Lions")
 )
 
 fixture %>%
@@ -178,8 +200,10 @@ fixture %>%
   select(-location) %>%
   mutate(final_prob = elo_prob(home_elo, away_elo, 
                                ml = (best_params$pred_margin / best_params$sc) ^ best_params$margin_power, 
-                               a_adv = home_adjustment, 
-                               b_adv = away_adjustment),
+                               a_adv = home_adjustment * best_params$home_sc, 
+                               b_adv = away_adjustment * best_params$home_sc),
          winner = ifelse(final_prob > 0.5, home, away),
          fair_returns_home = 1/final_prob,
          fair_returns_away = 1/ (1- final_prob))
+
+beep()
