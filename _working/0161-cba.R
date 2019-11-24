@@ -158,6 +158,7 @@ cba_single <- function(
     'Discounted benefits' = benefits_discounted,
     'Cumulative discounted costs' = cumsum(costs_discounted),
     'Cumulative discounted benefits' = cumsum(benefits_discounted),
+    'Cumulative net value' = cumsum(benefits_discounted - costs_discounted),
     year = 0:end_year
   )
   
@@ -222,8 +223,19 @@ results$output_simple %>%
   geom_density(fill = "steelblue", alpha = 0.1)
 
 results$output_complex %>%
+  filter(!grepl("^Cumulative", variable)) %>%
   ggplot(aes(x = year)) +
   facet_wrap(~variable, scales = "free_y") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2) +
+  geom_line(aes(y = mid)) +
+  scale_y_continuous(label = dollar) +
+  labs(x = "Year",
+       y = "Value")
+
+results$output_complex %>%
+  filter(grepl("^Cumulative", variable)) %>%
+  ggplot(aes(x = year)) +
+  facet_wrap(~variable, scales = "fixed") +
   geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2) +
   geom_line(aes(y = mid)) +
   scale_y_continuous(label = dollar) +
