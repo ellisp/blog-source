@@ -17,7 +17,7 @@ nyc_taxi <- dbConnect(odbc(), "localhost", database = "nyc_taxi")
 #' Theme for dark background maps to be used later
 #'
 #' @author minimally  adapted from a Todd Schneider original
-theme_dark_map = function(base_size = 12, font_family = main_font){
+theme_dark_map <- function(base_size = 12, font_family = main_font){
   theme_bw(base_size) +
     theme(text = element_text(family = font_family, color = "#ffffff"),
           rect = element_rect(fill = "#000000", color = "#000000"),
@@ -29,6 +29,21 @@ theme_dark_map = function(base_size = 12, font_family = main_font){
           axis.text = element_blank(),
           axis.title = element_blank(),
           axis.ticks = element_blank())
+}
+
+theme_white_map <- function(base_size = 12, font_family = main_font){
+  theme_bw(base_size) +
+    theme(text = element_text(family = font_family, color = "#000000"),
+          rect = element_rect(fill = "#ffffff", color = "#ffffff"),
+          plot.background = element_rect(fill = "#ffffff", color = "#ffffff"),
+          panel.background = element_rect(fill = "#ffffff", color = "#ffffff"),
+          plot.title = element_text(family = font_family),
+          panel.grid = element_blank(),
+          panel.border = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          plot.caption = element_text(color = "grey50"))
 }
 
 the_caption <- "Analysis by http://freerangestats.info with data from NYC Taxi & Limousine Commission"
@@ -51,7 +66,7 @@ p1 <- pc_freq %>%
   scale_x_discrete(labels = sort(unique(pc_freq$passenger_count))) +
   labs(x = "Number of passengers (discrete scale - only values with at least one trip shown)",
        y = "Number of trips (log scale)",
-       title = "Number of passegers per trip",
+       title = "Number of passengers per trip",
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
        caption = the_caption)
 
@@ -83,7 +98,7 @@ p2 <- td_freq  %>%
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
        caption = the_caption)
 
-svg_png(p2, "../img/0162-trip-dist1", 12, 4)
+svg_png(p2, "../img/0162-trip-dist1", 10, 4)
 
 sql <- "
 SELECT 
@@ -107,7 +122,7 @@ p3 <- td_freq0  %>%
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
        caption = the_caption)
 
-svg_png(p3, "../img/0162-trip-dist0", 12, 4)
+svg_png(p3, "../img/0162-trip-dist0", 10, 4)
 
 
 #----------------------Single map--------------
@@ -263,6 +278,8 @@ p4 <- pickup_ts %>%
        subtitle = "Hourly observations 2009 to mid 2016") +
   theme(legend.position = c(0.85, 0.15))
 
+svg_png(p4, "../img/0162-hourly", 8, 6)
+
 p5 <- pickup_ts %>%
   group_by(yy, my) %>%
   summarise(freq = mean(freq)) %>%
@@ -278,7 +295,8 @@ p5 <- pickup_ts %>%
        subtitle = "Monthly averages based on hourly observations 2009 to mid 2016") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.minor = element_blank())
-p5
+
+svg_png(p5, "../img/0162-monthly", 8, 6)
 
 # add a labelled day of the week variable, still keeping the ordering
 pickup_ts2 <- pickup_ts %>%
@@ -298,7 +316,7 @@ p6 <- pickup_ts2 %>%
        fill = "Pickups\nper hour")+
   theme(legend.position = "right")
 
-p6
+svg_png(p6, "../img/0162-heatmap1", 9, 5)
 
 p7 <- pickup_ts2 %>%
   group_by(dwl, hd) %>%
@@ -314,10 +332,11 @@ p7 <- pickup_ts2 %>%
        fill = "fare\nper mile") +
   theme(legend.position = "right")
 
-p7
+svg_png(p7, "../img/0162-heatmap2", 9, 5)
 
-#-------------Analysis-------------------
+#-------------Modelling average fare by space-------------------
 
+# extract data
 sql <- "
 SELECT 
   AVG(fare_amt) AS fare_amt,
@@ -339,17 +358,10 @@ GROUP BY
 fare_rounded <- dbGetQuery(nyc_taxi, sql)  # takes a while - 10 minutes or so
 # about 95,000 observations
 
-fare_rounded %>%
-  ggplot(aes(x = fare_amt, weight = freq)) +
-  geom_density() +
-  geom_rug() +
-  scale_x_log10(label = dollar) +
-  coord_
-
-
+# Fit model
 model <- bam(fare_amt ~ s(start_lon, start_lat), weights = freq, data = fare_rounded)
 
-
+# predict values over a regular grid
 all_lons <-seq(from = -74.05, to = -73.75, length.out = 200)
 all_lats <- seq(from = 40.58, to = 40.90, length.out = 200)
 
@@ -360,14 +372,20 @@ the_grid <- expand.grid(
 
 predicted <- predict.bam(model, newdata = the_grid)
 
-nyc_map <- ggmap::get_stamenmap(bbox = c(-74.05, 40.58, -73.75, 40.80), maptype = "toner-background")
-
 d <- the_grid %>%
   as_tibble() %>%
   mutate(predicted_fare = predicted) %>%
   filter(start_lat < 40.8) 
 
 
+# get a background map
+marg <- 0.00
+nyc_map <- ggmap::get_stamenmap(bbox = c(-74.05 - marg, 40.58 - marg, 
+                                         -73.75 +marg, 40.80 + marg), 
+                                maptype = "toner-background")
+
+
+# draw a contour map over that background:
 m3 <- ggmap(nyc_map) +
   geom_raster(data = d,aes(x = start_lon,
                            y = start_lat,
@@ -379,14 +397,16 @@ m3 <- ggmap(nyc_map) +
                                   y = start_lat,
                                   z = predicted_fare),
                     colour = "white") +
-  theme_dark_map() +
+  theme_white_map() +
   scale_fill_viridis_c(option = "A", label = dollar) +
   # we need cartesian coordinates because of raster. Probably better ways to fix this:
   coord_cartesian() +
   labs(title = "Expected taxi fare by pick-up point in New York",
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
-       caption = the_caption,
+       caption = paste(the_caption, 
+                       "Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+                       sep = "\n"),
        fill = "Predicted\naverage fare")
 
-svg_png(m3, "../img/0162-fare-map", 9, 8)
+svg_png(m3, "../img/0162-fare-map", 9, 8.1)
 

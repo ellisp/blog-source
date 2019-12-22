@@ -15,7 +15,7 @@ The New York City Taxi & Limousine Commission's open data of taxi trip records i
 
 - The benchmark of interesting analysis is set by [Todd W Schneider's well-written and rightly famous blog post 'Analyzing 1.1 Billion NYC Taxi and Uber Trips, with a Vengeance'](https://toddwschneider.com/posts/analyzing-1-1-billion-nyc-taxi-and-uber-trips-with-a-vengeance/), for which he used PostgreSQL, PostGIS and R
 - [Mark Litwintschik provides benchmarks](https://tech.marksblogg.com/benchmarks.html) of four different queries of the data on different software and hardware setups, mostly clusters of computers operating big data software such as BrytlytDB, MapD, Redshift, BigQuery and Spark ([source code](https://tech.marksblogg.com/billion-nyc-taxi-rides-redshift.html))
-- Various providers use the data to show off the speed of their ingest and analysis tools eg [MemSQL](https://www.memsql.com/blog/nyc-taxi-data-ingested-into-memsql/) or [Ocean9](https://medium.com/@gopalaj61/analyzing-1-2-billion-nyc-taxi-rides-83ea8012827e)
+- Various providers use the data to show off the impressive speed of their ingest and analysis tools eg [MemSQL](https://www.memsql.com/blog/nyc-taxi-data-ingested-into-memsql/) or [Ocean9](https://medium.com/@gopalaj61/analyzing-1-2-billion-nyc-taxi-rides-83ea8012827e)
 
 A week or so ago there was a flurry in my corner of the twitterverse with people responding to a great blog post by Jovan Veljanoski [How to analyse 100 GB of data on your laptop with Python](https://towardsdatascience.com/how-to-analyse-100s-of-gbs-of-data-on-your-laptop-with-python-f83363dda94). Veljanoski is one of the co-founders of [vaex.io](http://vaex.io/). Vaex is a powerful Python library that empowers a data scientist with the convenient R-like DataFrame-based feel of Pandas for data that is too large to reside in memory. 
 
@@ -29,18 +29,18 @@ That's genuinely impressive, but how necessary is Vaex to analyse this sort of d
 
 As he points out, each of these comes with its disadvantages. But there's a glaring omission from the list - use a database! A good old-fashioned relational database management system is the tool invented for this sort of data, and today's database software is the highly optimised beneficiary of untold billions of dollars of investment from firms like IBM, Oracle and Microsoft (for example, Oracle alone spends about [$6 billion per year on research and development](https://www.statista.com/statistics/236990/research-and-development-spending-at-oracle/)). Schneider's post showed that open source relational database technology (PostgreSQL) is more than up to the job.  In fact, a number of the features of Vaex showcased in Veljanoski's blog post sound almost like a re-invention of some aspects of the database approach:
 
-- data held on disk can be inspected a few rows at once without loading it all into memory
-- the management system holds key metadata or indexes that let certain kinds of simpler analysis be performed via radical shortcuts
-- virtual views of the data can be created instantly as filtered subsets or with additional calculated columns, without copying the whole dataset
+- data held on disk can be inspected a few rows at once without loading it all into memory;
+- the management system holds key metadata or indexes that let certain kinds of simpler analysis be performed via radical shortcuts;
+- virtual views of the data can be created instantly as filtered subsets or with additional calculated columns, without copying the whole dataset.
 
 So out of curiousity I set out to see how the data can be handled by my unremarkable personal laptop and the software toolkit I most commonly use at the moment - R in combination with Microsoft SQL Server (which I chose because it's my most common database in work contexts, has a free developer edition, and has powerful columnstore indexes which I think will help handle this sized data). 
 
 What did I find?
 
-1. Even relatively tidy data is serious work to prepare for analysis - whether the prep is an extract-transform-load to a database, or conversion to HDF5
-2. The combination of a standard laptop, SQL Server (or other powerful database tool) and R is fine for dealing with data of several hundred gigabytes in size, but I would want a bigger computer and a large fast solid state drive for much bigger than this
-3. Most analysis on this sort of data has aggregation and summary operations as its first step, so by the time you hit a statistical model or a graphic you are likely working with a much smaller dataset than the original
-4. Most of the interesting things to say about the NYC taxi data have already been said
+1. Even relatively tidy data is serious work to prepare for analysis - whether the prep is an extract-transform-load to a database, or conversion to HDF5.
+2. The combination of a standard laptop, SQL Server (or other powerful database tool) and R is fine for dealing with data of several hundred gigabytes in size, but I would want a bigger computer and a large fast solid state drive for much bigger than this.
+3. Most analysis on this sort of data has aggregation and summary operations as its first step, so by the time you hit a statistical model or a graphic you are likely working with a much smaller dataset than the original.
+4. Most of the interesting things to say about the NYC taxi data have already been said.
 
 Let's see how that works out.
 
@@ -48,7 +48,7 @@ Let's see how that works out.
 
 > "80% of data scientists' work is managing, tidying and cleaning data. And most of the other 20% is complaining about it."
 
-<i>Source : I wouldn't know where to start to find who said this first</i>
+<i>Source : I wouldn't know where to start to find who said this first.</i>
 
 The original taxicab data can be downloaded, one CSV file per month, from the [New York City Taxi & Limousine Commission's website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page). The data are available to 2019, but the data model changed several times, and by the second half of 2016 latitude and longitude were not being reported as per the earlier detail, probably for belated privacy reasons. 
 If you're interested you can see the full load process in my [GitHub repo](https://github.com/ellisp/nyc-taxis). You could also see [Todd W Schneider's PostgreSQL and R version](https://github.com/toddwschneider/nyc-taxi-data) which I suspect is better managed.
@@ -69,7 +69,7 @@ But ultimately I got a working version of the data I'm fairly happy with. In the
 
 <img src='/img/0162-nyc-taxi-schema.png' width = '100%'>
 
-I'm satisfied its more analysis-ready than some of the alternative loads of this data I've seen out there. For example, I have all the codes built in to the database; no need to look up elsewhere that payment type 1 is cash, 2 is credit, etc. Plus my loading process standardises the different versions of vendor coding that are used - sometimes "1" and "2", sometimes "CMT", "VTS" and "DDS" (which seemed to disappear early in the series and isn't listed in the data dictionary). To give an idea of what this means in terms of code development, here is one step in the overall process. This chunk of code takes data from a staging table - `dbo.tripdata_0914`, with the raw data from the first six years when the column sequencing (but not names or coding) was consistent - and loads it into the evental target table `tripdata` in the `yellow` schema:
+I'm satisfied its more analysis-ready than some of the alternative loads of this data I've seen out there. For example, I have all the codes built in to the database; no need to look up elsewhere that payment type 1 is cash, 2 is credit, etc. Plus my loading process standardises the different versions of vendor coding that are used - sometimes "1" and "2", sometimes "CMT", "VTS" and "DDS" (which seemed to disappear early in the series and isn't listed in the data dictionary). To give an idea of what this means in terms of code development, here is one step in the overall process. This chunk of SQL code takes data from a staging table - `dbo.tripdata_0914`, with the raw data from the first six years when the column sequencing (but not names or coding) was consistent - and loads it into the evental target table `tripdata` in the `yellow` schema:
 
 {% highlight sql lineanchors %}
 -- First six years, with no surcharge data:
@@ -133,19 +133,19 @@ SELECT
 FROM dbo.tripdata_0914
 {% endhighlight %}
 
-You can see that I also handle issues such as the inconsistent coding of "payment type", and cut down the storage size of various numeric variables. For example, trip_distance was loaded into staging as 15 digit precision floating point data which takes up 8 bytes of space per observation; reducing this to `DECIMAL(9, 4)` saves 3 bytes per row of the data while still allowing plenty of range and precision - numbers of the format 99999.1234. 3 bytes per row adds up materially over 1+ billion rows. The `TRY_CAST()` functions are needed because many of these numeric variables have physically impossible values (eg longitudes with four or more digits left of the decimal point) which cause numeric overflow errors otherwise. 
+You can see that I also handle issues such as the inconsistent coding of "payment type", and cut down the storage size of various numeric variables. For example, trip_distance was loaded into my staging table as 15 digit precision floating point data which takes up 8 bytes of space per observation; reducing this to `DECIMAL(9, 4)` saves three bytes per row of the data while still allowing plenty of range and precision - numbers of the format 99999.1234. Three bytes per row adds up materially over 1+ billion rows. The `TRY_CAST()` functions are needed because many of these numeric variables have physically impossible values (eg longitudes with four or more digits left of the decimal point) which cause numeric overflow errors otherwise. 
 
 It's easy to see where that eight hours went... In contrast, I would say I have spent about four hours on analysis of any sort (mostly descriptive) and four hours on writing up this post. So the "80%" of time spent on data cleaning isn't quite right here - more like 50%. Noting that in this case, the data is *exceptionally* clean and tidy already - other than having direct access to a well-maintained warehouse, one will rarely get data as nicely released by the NYC Taxi & Limousine Commission.
 
 On the other hand, there's big economies of scale here. If I did another couple of blog posts on this data, that 50% or so of effort that was on data preparation would pretty quickly go down. Worth noting.
 
-With one of SQL Server's powerful, fast clustered columnstore indexes on the main table, the total data size is about 45 GB for main data and another 33 GB for an unclustered primary key identifying each row which I think is probably not needed and could be dropped. That 45GB is a lot of compression from the original size opf more than 200GB, but more importantly the columnstore approach makes analysis pretty fast for dealing with 1.2+ billion rows even on my poor underpowered laptop and its old-school mechanical hard disk drive.
+With one of SQL Server's powerful, fast clustered columnstore indexes on the main table, the total data size on disk is about 45 GB for main data and another 33 GB for an unclustered primary key identifying each row which I think is probably not needed and could be dropped. That 45GB is a lot of compression from the original size of more than 200GB, but more importantly the columnstore approach makes analysis pretty fast for dealing with 1.2+ billion rows even on my poor underpowered laptop and its old-school mechanical hard disk drive.
 
 ## Repeating previous analysis - maps and variable distribution
 
 ### Passenger counts distribution
 
-So, let's see what I can do. I repeated the first few bits of exploratory analysis from Veljanoski's article. For example, here is R code to set up an analytical session and explore the distribution of "number of passengers" on each trip:
+So, let's see what I can do now that the data's ready. I repeated the first few bits of exploratory analysis from Veljanoski's article. For example, here is R code to set up an analytical session and explore the distribution of "number of passengers" on each trip:
 
 {% highlight R lineanchors %}
 library(tidyverse)
@@ -164,7 +164,7 @@ nyc_taxi <- dbConnect(odbc(), "localhost", database = "nyc_taxi")
 #' Theme for dark background maps to be used later
 #'
 #' @author minimally  adapted from a Todd Schneider original
-theme_dark_map = function(base_size = 12, font_family = "Sans"){
+theme_dark_map <- function(base_size = 12, font_family = "Sans"){
   theme_bw(base_size) +
     theme(text = element_text(family = font_family, color = "#ffffff"),
           rect = element_rect(fill = "#000000", color = "#000000"),
@@ -177,6 +177,23 @@ theme_dark_map = function(base_size = 12, font_family = "Sans"){
           axis.title = element_blank(),
           axis.ticks = element_blank())
 }
+
+theme_white_map <- function(base_size = 12, font_family = main_font){
+  theme_bw(base_size) +
+    theme(text = element_text(family = font_family, color = "#000000"),
+          rect = element_rect(fill = "#ffffff", color = "#ffffff"),
+          plot.background = element_rect(fill = "#ffffff", color = "#ffffff"),
+          panel.background = element_rect(fill = "#ffffff", color = "#ffffff"),
+          plot.title = element_text(family = font_family),
+          panel.grid = element_blank(),
+          panel.border = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          plot.caption = element_text(color = "grey50"))
+}
+
+
 
 the_caption <- "Analysis by http://freerangestats.info with data from NYC Taxi & Limousine Commission"
 
@@ -198,7 +215,7 @@ pc_freq %>%
   scale_x_discrete(labels = sort(unique(pc_freq$passenger_count))) +
   labs(x = "Number of passengers (discrete scale - only values with at least one trip shown)",
        y = "Number of trips (log scale)",
-       title = "Number of passegers per trip",
+       title = "Number of passengers per trip",
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
        caption = the_caption)
 {% endhighlight %}
@@ -211,9 +228,9 @@ My code took less than five seconds to run in contrast to his 23 seconds with Va
 
 ### Trip distance distribution
 
-A very similar bit of SQL and R code gives us a similar plot for distribution of trip distance in miles, truncated at just those less than 250 miles. Because the trip distances are continuous variables, to show their distribution I'm going to need to do some kind of summary. With smaller data I would put all the observations into R and use `geom_density()` to do the work, but as this would mean transferring a billion observations from the database to R's environment for little gain, I opt to round the distances to the nearest tenth of a mile and aggregate them. In effect, I'm building my own fixed-width historgram. Here's my first go at that:
+A very similar bit of SQL and R code gives us a similar plot for distribution of trip distance in miles, truncated at just those less than 250 miles. Because the trip distances are continuous variables, to show their distribution I'm going to need to do some kind of summary. With smaller data I would put all the observations into R and use `geom_density()` to do the work, but as this would mean transferring a billion observations from the database to R's environment for little gain, I opt to round the distances to the nearest tenth of a mile and aggregate them. In effect, I'm building my own fixed-bin-width histogram. Here's my first go at that:
 
-<object type="image/svg+xml" data='/img/0162-trip-dist1.svg' width='100%'><img src='/img/0162-tip-dist1.png' width = '100%'></object>
+<object type="image/svg+xml" data='/img/0162-trip-dist1.svg' width='100%'><img src='/img/0162-trip-dist1.png' width = '100%'></object>
 
 ...produced with:
 
@@ -247,7 +264,7 @@ This looked quite markedly different from Veljanoski's original so I tried round
 
 <object type="image/svg+xml" data='/img/0162-trip-dist0.svg' width='100%'><img src='/img/0162-trip-dist0.png' width='100%'></object>
 
-Either effort gives a fair view of what is happening, but the second is probably better. We see a marked drop-off in distances at exactly 100 miles, which is almost certainly measurement error rather than a physical reality.
+Either of these charts gives a good indication of what is happening, but the second is probably better. We see a suspiciously marked drop-off in distances at exactly 100 miles, which is almost certainly measurement error rather than a physical reality.
 
 This time, my database was much slower than Valjanoski's Vaex/Python combination - 20 seconds versus one second.
 
@@ -269,7 +286,7 @@ Performance for producing this charts was acceptable but not that pleasant: abou
 
 ### The time element
 
-Let's look at ways of looking at our data that takes into account the element of time - particularly periodicity. I might come back to this later as the data is a nice example of multiple seasonalities in a time series. If we aggregate it by hour we have at least three seasonal patterns - hous in the day, days in the week, and the annual cycle.
+Let's look at ways of looking at our data that takes into account the element of time - particularly periodicity. I might come back to this later as the data is a nice example of multiple seasonalities in a time series. If we aggregate it by hour we have at least three seasonal patterns - hours in the day, days in the week, and the annual cycle.
 
 Again, we need some kind of aggregation before the billion taxi rides can be assimilated by the human eye. If we aggregate it up by hour it is still too dense to take in:
 
@@ -281,13 +298,19 @@ If we aggregate up to months we have lost most of the interest, but it's still a
 
 <object type="image/svg+xml" data='/img/0162-monthly.svg' width='100%'><img src='/img/0162-monthly.png' width = '100%'></object>
 
+There's a notable dip in taxi rides each winter.
+
 Most other blogs draw some day-of-week by hour-of-day heatmaps at this point, and there's good reason to - they're a great summary of this sort of data. Here's the most obvious one to draw - pure frequency of the start of taxi trips:
 
 <object type="image/svg+xml" data='/img/0162-heatmap1.svg' width='100%'><img src='/img/0162-heatmap1.png' width = '100%'></object>
 
-... and here's a replication of one of Veljanoski's plots, showing the differing average fare collected per mile travelled at different times
+All that yellow in the top right shows (unsuprisingly) more taxi activity in evenings, and on Wednesday, Thursday, Friday and Saturday rather than earlier in the week.
+
+Here's a replication of one of Veljanoski's plots, showing the differing average fare collected per mile travelled at different times
 
 <object type="image/svg+xml" data='/img/0162-heatmap2.svg' width='100%'><img src='/img/0162-heatmap2.png' width = '100%'></object>
+
+Shorter taxi rides have a higher fare per mile, and I suspect we get more short taxi rides in during working hours on working days, which would explain the yellow highlight in the middle of that chart.
 
 This analysis was easy to write with my database, but the performance was slower than Veljanoski's (while still being totally acceptable). Whether this is due to my slow disk drive or software differences I'm not sure. Here's the code for that data extract and analysis:
 
@@ -396,7 +419,9 @@ Finally, I wanted to go beyond simple exploratory analysis to at least touch on 
 
 <object type="image/svg+xml" data='/img/0162-fare-map.svg' width='100%'><img src='/img/0162-fare-map.png' width = '100%'></object>
 
-It's a nice illustration of how, even in primarily exploratory analysis, a statistical model can be powerful for helping shape thinking. In this case, the model is a generalized additive model, with the `mgcv::bam` which is optimised for working with larger data. Rather than fit the model to the original individual trip data I've taken average fares over a grid of about 100,000 observations and used that data, weighted by the number of observations at each point, to train my simple model. Here's this final bit of code for this analysis:
+It's a nice illustration of how, even in primarily exploratory analysis, a statistical model can be powerful for helping shape thinking. In this case, the model is a generalized additive model, fit to the data by the `mgcv::bam` function which is optimised for working with larger data. I commonly use a generalized additive model with a smoother over latitude and longitude (think a rubbery sheet in three dimensional space) as a way of dealing with spatially correlated data.
+
+In this case, rather than fit the model to the original individual trip data I've taken average fares over a grid of about 100,000 observations and used that data, weighted by the number of observations at each point, to train my simple model. Here's this final bit of code for this analysis:
 
 {% highlight R lineanchors %}
 #-------------Modelling average fare by space-------------------
@@ -444,7 +469,9 @@ d <- the_grid %>%
 
 
 # get a background map
-nyc_map <- ggmap::get_stamenmap(bbox = c(-74.05, 40.58, -73.75, 40.80), maptype = "toner-background")
+nyc_map <- ggmap::get_stamenmap(bbox = c(-74.05, 40.58, 
+                                         -73.75, 40.80), 
+                                maptype = "toner-background")
 
 
 # draw a contour map over that background:
@@ -459,13 +486,15 @@ ggmap(nyc_map) +
                                   y = start_lat,
                                   z = predicted_fare),
                     colour = "white") +
-  theme_dark_map() +
+  theme_white_map() +
   scale_fill_viridis_c(option = "A", label = dollar) +
   # we need cartesian coordinates because of raster. Probably better ways to fix this:
   coord_cartesian() +
   labs(title = "Expected taxi fare by pick-up point in New York",
        subtitle = "New York City yellow cabs January 2009 to mid 2016",
-       caption = the_caption,
+       caption = paste(the_caption, 
+                       "Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+                       sep = "\n"),
        fill = "Predicted\naverage fare")
 {% endhighlight %}
 
