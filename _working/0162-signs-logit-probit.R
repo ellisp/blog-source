@@ -27,7 +27,7 @@ simulator <- function(n = 100, b0 = 0, b1 = 0){
 }
 
 set.seed(123)
-nsim = 10000
+nsim = 100000
 b0 = rnorm(nsim)
 b1 = rnorm(nsim)
 n <- MASS::rnegbin(nsim, mu = 100, theta = 5)
@@ -42,3 +42,13 @@ full_results <- do.call(rbind, full_results_l)
 summary(full_results)
 
 full_results %>% filter(mod1 != mod2)
+
+full_results
+
+mod2 <- glm(mod1 ~ abs(b1) * n + abs(b0), family = quasibinomial, data = full_results)
+mod3 <- glm(mod1 ~ abs(b1) + n + abs(b0), family = quasibinomial, data = full_results)
+
+anova(mod2, mod3, test = "Chi")
+anova(mod2, test ="Chi")
+
+summary(mod2)
