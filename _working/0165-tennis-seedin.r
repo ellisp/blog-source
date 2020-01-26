@@ -1,34 +1,51 @@
+library(foreach)
+library(doParallel)
 library(tidyverse)
+library(scales)
+library(kableExtra)
+library(clipr)
 
-# deuce package by @skoval to get Elo ratings of real tennis players
-# My fork of Stephanie Kovalchik package of tennis data and analytical functions
-# devtools::install_github("ellisp/deuce")
+# deuce package by Stephanie Kovalchik to get Elo ratings of real tennis players
+# devtools::install_github("skoval/deuce")
 library(deuce)
 data(wta_elo)
 
-head(wta_elo)
 max(wta_elo$tourney_start_date) # 2018-09-17
 
-
+# Identify the top 128 women playing in 1990 and their last Elo rating that year
 women128 <- wta_elo %>%
-  # pick just the latest Elo rating
+  filter(year(tourney_start_date) == 1990) %>%
+  # pick just the highest Elo rating
   group_by(player_name) %>%
   arrange(desc(tourney_start_date)) %>%
   slice(1) %>%
   ungroup() %>%
   arrange(desc(overall_elo)) %>%
-  select(player_id, player_name, latest_elo_date = tourney_start_date, elo = overall_elo) %>%
+  dplyr::select(player_id, player_name, elo = overall_elo) %>%
   slice(1:128)
-  
 
-#' @source https://www.betfair.com.au/hub/tennis-elo-modelling/
-#' 
-#' @examples 
-#' # should be 24%
-#' pwin(1800, 2000)
-pwin <- function(a, b){
-  1 / (1 + 10 ^ ((b - a) / 400))
-}
+
+# Chance of beating Steffi Graf
+steffis_opponents <- c(2:5, 10, 20, 50, 128)
+
+y <- elo_prediction(women128[steffis_opponents, ]$elo, women128[1, ]$elo)
+
+the_caption <- "Source: http://freerangestats.info analysis based on 1990 WTA ratings in Stephanie Kovalchik's {deuce} R package."
+
+p1 <- cbind(women128[steffis_opponents, ], y, rank = steffis_opponents) %>%
+  mutate(lab = paste0(player_name, " (", rank, ")")) %>%
+  ggplot(aes(x = elo, y = y, label = lab)) +
+  geom_point() +
+  geom_text_repel(size = 3, colour = "steelblue") +
+  scale_y_continuous(label = percent) +
+  labs(title = "Probability of beating Steffi Graf at the end of 1990",
+       subtitle = "Various players from the top 128 WTA players, probability based only on Elo rating",
+       caption = the_caption,
+       x = "Elo rating of Ms Graf's hypothetical opponent (ranking shown in brackets)",
+       y = "Ms Graf's opponent's probability of winning")
+
+svg_png(p1, "../img/0165-playing-graf")
+
 
 #' Function to simulate the result of a tournament of 128 players
 #' 
@@ -45,8 +62,6 @@ simulate_tournament <- function(brackets){
   
   remaining_players <- brackets
   
-  filter(brackets, round == 32)
-  
   for(this_round in all_rounds){
     
     all_matchups <- remaining_players %>%
@@ -60,7 +75,7 @@ simulate_tournament <- function(brackets){
         filter(match == this_match) %>%
         select(player_id, elo)
       
-      prob_win <- pwin(these_players[1, ]$elo, these_players[2, ]$elo)
+      prob_win <- deuce::elo_prediction(these_players[1, ]$elo, these_players[2, ]$elo)
       a_wins <- rbinom(1, 1, prob = prob_win) == 1
       if(a_wins){
         update <- tibble(winner = these_players[1, ]$player_id, 
@@ -108,19 +123,26 @@ assign_rounds <- function(d){
     
 }
 
-results <- tibble(winner = numeric(), 
-                  loser = numeric(),
-                  round = numeric(),
-                  match = numeric(),
-                  sim = numeric(),
-                  method = character())
+n_sims <- 10000
 
-n_sims <- 1000
-set.seed(123)
+#-----------set up parallel processing-----------
+
+cluster <- makeCluster(7) # only any good if you have at least 7 processors :)
+registerDoParallel(cluster)
+
+clusterEvalQ(cluster, {
+  library(foreach)
+  library(tidyverse)
+  library(deuce)
+})
+
+clusterExport(cluster, c("women128", "assign_rounds", "simulate_tournament"))
+
 
 #-------------------unseeded tournament-------------------
-for(this_sim in 1:n_sims){
+r1 <- foreach(this_sim = 1:n_sims, .combine = rbind) %dopar% {
   
+  # new random positionining of all 128 players
   brackets <- women128 %>%
     sample_n(128) %>%
     select(player_id) %>%
@@ -129,10 +151,9 @@ for(this_sim in 1:n_sims){
   
   one_sim_results <- simulate_tournament(brackets)
   
-  results <- one_sim_results %>%
+  one_sim_results %>%
     mutate(sim = this_sim,
-           method = "No seeding") %>%
-    rbind(results)
+           method = "No seeding")
 }
 
 #------------------------seeded tournament-----------
@@ -145,22 +166,24 @@ round_of_32_seeding <- tibble(
 ) 
 stopifnot(all(1:32 %in% round_of_32_seeding$seed))
 
+# players and their position in the round of 32 bracket - doesn't change in each sim
 players <- women128 %>%
   arrange(desc(elo)) %>%
   mutate(ranking = 1:128,
          seed = ifelse(ranking <= 32, ranking, NA)) %>%
   left_join(round_of_32_seeding, by = "seed")
 
+clusterExport(cluster, "players")
 
 
-
-for(this_sim in 1:n_sims){
+r2 <- foreach(this_sim = 1:n_sims, .combine = rbind) %dopar% {
   unseeded <- players[-(1:32), ] %>%
     # in random order:
     sample_n(n()) %>%
     mutate(position32 = 1:n() %% 16 + 1) %>%
     arrange(position32)
   
+  # actual brackets change each sim for players who aren't one of the top 32 seeds
   brackets <- rbind(filter(players[, c("player_id", "position32")], !is.na(position32)), 
         unseeded[, c("player_id", "position32")]) %>%
     arrange(position32) %>%
@@ -171,19 +194,76 @@ for(this_sim in 1:n_sims){
   
   one_sim_results <- simulate_tournament(brackets)
   
-  results <- one_sim_results %>%
+  one_sim_results %>%
     mutate(sim = this_sim,
-           method = "Seeded (32 seeds)") %>%
-    rbind(results)
+           method = "Seeded (32 seeds)") 
 }
 
+results <- rbind(r1, r2) %>%
+  left_join(players, by = c("winner" = "player_id")) %>%
+  rename(winner_name = player_name)
+
+# Summarise the individual winners of the overall tournament:
 results %>%
   filter(round == 2) %>%
-  group_by(winner, method) %>%
+  group_by(winner_name, method, ranking) %>%
   summarise(wins = n()) %>%
-  left_join(players, by = c("winner" = "player_id")) %>%
   ungroup() %>%
-  select(player_name, method, wins) %>%
-  complete(player_name, method, fill = list(wins = 0)) %>%
+  select(winner_name, method, wins, `Actual ranking` = ranking) %>%
+  complete(winner_name, method, fill = list(wins = 0)) %>%
   pivot_wider(names_from = method, values_from = wins) %>%
-  arrange(desc(`Seeded (32 seeds)`))
+  arrange(desc(`Seeded (32 seeds)`)) %>%
+  slice(1:10) %>%
+  kable() %>%
+  kable_styling(full_width = FALSE) %>%
+  write_clip()
+
+#' Present the success rate of different simulated draw methods
+#' 
+#' @param results data frame of results as created earlier in this script
+#' @param women128 data frame with extra details on the 128 players in the tourname
+#' @param how many of the top players you want to compare the draw methods for. Must be a power of 2. 
+#' @details Very specific to this particular bit of analysis
+success_rate <- function(results, women128, top_x){
+ 
+  if(log(top_x, 2) != as.integer(log(top_x, 2))){
+    stop("top_x must be a power of 2")
+  }
+  
+  top_players <- women128[1:top_x, ]$player_name
+    
+  # we're going to count this by counting the winners in the previous round. eg to find if the top 2
+  # players are the final 2 in the competition, we see if they are in the winners from the round of 4:
+  tmp <- results %>%
+    filter(round == (top_x * 2)) %>%
+    arrange(sim, method, match) %>%
+    group_by(sim, method) %>%
+    summarise(best = all(winner_name %in% top_players)) %>%
+    group_by(method) %>%
+    summarise(best = mean(best)) %>%
+    mutate(top_x = top_x)
+
+  return(tmp)
+
+}
+
+p <- rbind(
+  success_rate(results, women128, top_x = 8),
+  success_rate(results, women128, top_x = 4),
+  success_rate(results, women128, top_x = 2),
+  success_rate(results, women128, top_x = 1)
+) %>%
+  ggplot(aes(x = as.ordered(top_x), y = best, colour = method)) +
+  geom_point() +
+  geom_line(aes(x = as.numeric(as.ordered(top_x)))) +
+  scale_y_continuous(label = percent) +
+  expand_limits(y = 0) +
+  labs(x = "Number of top players of interest",
+       y = "Chance of those players being the\nlast ones in the competition",
+       colour = "Method of allocating draw:",
+       title = "Impact of seeding on the better players' end results in a tennis tournament",
+       subtitle = "Seeding materially improves the chance of the best player winning or the best two players being in the 
+grand final,and impacts the semi- and quarter- finals even more.",
+       caption = the_caption)
+p
+svg_png(p, "../img/0165-tennis-seeding")
