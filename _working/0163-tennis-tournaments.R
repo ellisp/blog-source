@@ -1,3 +1,5 @@
+devtools::install_github('elishayer/mRchmadness') # no longer available on CRAN
+
 library(dplyr)
 
 n_players <- 64
