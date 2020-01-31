@@ -15,7 +15,7 @@ max(wta_elo$tourney_start_date) # 2018-09-17
 # Identify the top 128 women playing in 1990 and their last Elo rating that year
 women128 <- wta_elo %>%
   filter(year(tourney_start_date) == 1990) %>%
-  # pick just the highest Elo rating
+  # pick just the latest Elo rating
   group_by(player_name) %>%
   arrange(desc(tourney_start_date)) %>%
   slice(1) %>%
