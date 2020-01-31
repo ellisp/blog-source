@@ -1,63 +1,56 @@
-devtools::install_github('elishayer/mRchmadness') # no longer available on CRAN
+devtools::install_github("ellisp/deuce")
 
-library(dplyr)
+3library(tidyverse)
+library(deuce)
 
-n_players <- 64
+n_players <- 128
 
 players <- tibble(
-  player_id = 1:n_players,
+  player_id = str_pad(1:n_players, 4, side = "left", pad = "0"),
+  matches = 0,
   wins = 0,
   superiors = 0,
   elo = rnorm(n_players, 1500, 200)
 )
 
-direct_superiors <- tibble(
-  player_id = integer(),
-  superior_id = integer()
+match_wins <- tibble(
+  winner_id = character(),
+  loser_id = character(),
+  combo = character()
 )
 
-all_win_counts <- unique(players$wins)
+remaining_players <- players %>%
+  filter(superiors < 3) %>%
+  select(player_id, matches, elo) %>%
+  mutate(rnd = runif(n())) %>%
+  arrange(rnd)
 
-for(this_win_count in all_win_counts){
-  
+candidate_players <- remaining_players %>%
+  filter(matches <= min(matches))
 
-  these_players <- filter(players, wins == this_win_count) %>%
-    sample_n(n())
-  
-  number_matches <- nrow(these_players) / 2
-  
-  a <- these_players[1:number_matches, ] %>%
-    select(player_a = player_id,
-           elo_a = elo)
-  b <- these_players[(number_matches + 1):(number_matches * 2), ] %>%
-    select(player_b = player_id,
-           elo_b = elo)
-  
-  matchups <- cbind(a, b)
-  
-  for(i in 1:number_matches){
-    if(matchups[i, ]$elo_a > matchups[i, ]$elo_b){
-      players[players$player_id == matchups[i, "player_a"], "wins"] <-
-        players[players$player_id == matchups[i, "player_a"], "wins"] + 1
-      direct_superiors <- rbind(direct_superiors,
-                                tibble(player_id = matchups[i, "player_a"],
-                                       superior_id = matchups[i, "player_b"]))
-    } else {
-      players[players$player_id == matchups[i, "player_b"], "wins"] <-
-        players[players$player_id == matchups[i, "player_b"], "wins"] + 1
-      direct_superiors <- rbind(direct_superiors,
-                         tibble(player_id = matchups[i, "player_b"],
-                                superior_id = matchups[i, "player_a"]))
-        }
-  }
-}
+rpi <- candidate_players$player_id
 
-# end of round
-direct_superiors <- distinct(direct_superiors)
+the_match <- expand_grid(p1 = rpi, p2 = rpi) %>%
+  # limit to those with id 1 less than id 2 - just for sorting purposes
+  filter(p1 < p2) %>%
+  mutate(combo = paste(p1, p2)) %>%
+  # restrict to people who haven't played eachother:
+  anti_join(match_wins, by = "combo") %>%
+  sample_n(1)
 
-# need a trick to count not just those who have beaten you, but people
-# who have beaten those who beat you. Must be a common network problem!
 
-dsc <- direct_superiors %>%
-  group_by(player_id) %>%
-  summarise(count = n())
+
+
+
+# idea - instead of thinking in rounds, simply keep cycling through
+# until there are no more winners. Pick a game at random from people
+# who haven't played excessive games, add it to the results
+
+nm <- nrow(remaining_players) / 2
+
+tibble(
+  p1 = remaining_players[1:nm, ]$player_id,
+  p2 = remaining_players[(nm + 1):(nm * 2), ]$player_id
+  ) %>%
+  mutate(q1 = ifelse(p1 < p2, p1, p2),
+         q2 = ifelse(p1 < p2, p2, p1))
