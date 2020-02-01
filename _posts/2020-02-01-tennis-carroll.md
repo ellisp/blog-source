@@ -4,6 +4,7 @@ title: Lewis Carroll's proposed rules for tennis tournaments
 date: 2020-02-01
 tag: 
    - Tools
+   - Simulations
    - Games
    - R
 description: I put to the test a method of running a tennis tournament suggested by Lewis Carroll. It performs ok in allocating prizes fairly, although it takes about twice as many matches as a standard modern single-elimination. When there is realistic randomness in results it doesn't perform as well as Carroll argued it would on the unrealistic basis of deterministic match outcomes.
@@ -49,7 +50,7 @@ To check this out, I simulated Dodgson-style tournaments with the same 128 top w
 
 Of course, Dodgson was a highly accomplished mathematician so no surprise that he is correct that his method correctly allocates prizes in a 32 player competition with deterministic match outcomes. I *was* curious to see if it would work in a larger competition. I found that his rules (with minimal modifications discussed later in this post) returned the top three players with the top three prizes, in correct order, 100 times out of 100 different runs. 
 
-Of course, a correctly seeded single-elimination tournament with deterministic match outcomes will also return the top 4 players accurately 100% of the time. I think that Dodgson assumed there was no reliable prior knowledge of players' skill levels, ruling out the possibility of a seeded tournament; certainly he only compares his method to an unseeded draw.
+A correctly seeded single-elimination tournament with deterministic match outcomes will also return the top 4 players accurately 100% of the time. I think that Dodgson assumed there was no reliable prior knowledge of players' skill levels, ruling out the possibility of a seeded tournament; certainly he only compares his method to an unseeded draw.
 
 Note that a Dodgson tournament will take around twice as many matches (varying according to the efficiency of the draw, but around 240 matches was normal in my experiment) as a single-elimination tournament (which needs 127 matches for 128 players). 
 
@@ -91,9 +92,9 @@ It was interesting and non-trivial to implement Dodgson's rules in a way that wo
 
 All up, this was a fun exercise. I'm glad this approach to running a tournament works fairly well, even at the cost of roughly twice as many matches needed as in a seeded single-elimination. And it stands up not too badly even with realistically uncertain and inconsistent match outcomes. But of course, it's not as perfect as the ideal deterministic world described in Dodgson's original monograph. Things can get pretty complicated, as the above list of decisions and challenges begins to show. There are some quite awkward edge cases that I didn't stop to sort in detail.
 
-I'm not aware Dodgson's method has ever been used for a real life tournament schedule, although there have been a few simulation experiments similar to my own. I'm not sure how seriously he meant it to be taken; the same monograph proposing this method also suggests in passing tennis should get rid of sets altogether and replace them with a simpler method such as "he who first wins 14 games, or who gets 9 ahead, wins the match". I doubt he seriously expected that proposal to be taken up. But it's worth noting this monograph was published under his professional persona as recreational mathematics enthusiast, Charles Dodgson rather than as children's author Lewis Carroll. 
+I'm not aware Dodgson's method has ever been used for a real life tournament schedule, although there have been a few simulation experiments similar to my own. I'm not sure how seriously he meant it to be taken; the same monograph proposing this method also suggests in passing tennis should get rid of sets altogether and replace them with a simpler method such as "he who first wins 14 games, or who gets 9 ahead, wins the match". I doubt he seriously expected that proposal to be taken up. But it's worth noting this monograph was published under his professional persona as recreational mathematics enthusiast Charles Dodgson, rather than as children's author Lewis Carroll. 
 
-Let's just say that, like most of his other work, it's good he published this, although I would hesitate to recommend adopting it in toto!
+Let's just say that, like most of his other work, it's good he published this! But I would hesitate to recommend adopting it in toto.
 
 ### Code
 
@@ -132,7 +133,7 @@ one_match <- function(p1_elo, p2_elo, method = c("probabilistic", "deterministic
 }
 
 
-#' Play out a tournament along the lines of Lewis Carrolls' preferred methold
+#' Play out a tournament along the lines of Lewis Carroll's preferred methold
 #' 
 #' @param players a data frame or tibble with columns for player_id and Elo
 #' @param verbose Whether to print out the number of remaining players in each round
