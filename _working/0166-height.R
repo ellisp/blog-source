@@ -258,8 +258,6 @@ summary(model4)
 
 
 
-
-
 #--------------compare the 2.5 figures...-----------------------------
 
 
@@ -269,3 +267,18 @@ model5 <- lm(weight ~ I(height ^ 2.5) - 1, data = llcp_small)
 with(llcp_small, mean(weight / height ^ 2.5, na.rm = TRUE))
 with(llcp_small, mean(weight / height ^ 2, na.rm = TRUE))
      
+#-----------non-linear version - without log scale----------
+# The original blog post estimated the power by miniminisign the sum of squares of weight
+# on the log scale. What if we did that on the original scale (definite argument for this)
+
+library(nlme)
+
+?nls
+
+# luckily we get similar results when we try it like this:
+nls(weight ~ (b0 + 
+                b2 * (sex == "Male") + 
+                b3 * (race3 == "White, non-Hispanic") +
+                b4 * (age == "Age 18 to 64")
+              ) * height ^ b1, 
+    data = llcp_all)
