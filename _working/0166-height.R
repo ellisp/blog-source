@@ -239,24 +239,23 @@ exp(coef(model1))
 
 #--------------more stuff------------
 
-model2 <- lm(log(weight) ~ log(height) + sex + race + age + hhinc + education, data = llcp_small)
+model2 <- lm(log(weight) ~ log(height) + sex + race + age + hhinc + education, data = llcp_all)
 anova(model2)
 summary(model2)
 exp(coef(model2))
-# note that height ius now 5.11 ! how is this possible? Turns out height is correlated with income and eudcation
+
 
 llcp_small %>%
   drop_na() %>%
   ggplot(aes(y = height, colour = education, x = hhinc)) +
   geom_boxplot()
 
-model3 <- lm(log(height) ~ sex + age + race + hhinc + education, data = llcp_small)
-model4 <- lm(log(height) ~ age + race + sex * (hhinc + education), data = llcp_small)
+model3 <- lm(log(height) ~ sex + age + race + hhinc + education, data = llcp_all)
+model4 <- lm(log(height) ~ age + race + sex * (hhinc + education), data = llcp_all)
 anova(model3, model4)
 summary(model4)
 
 
-model4 <- svyglm(log(height))
 
 
 
