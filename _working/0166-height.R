@@ -97,7 +97,9 @@ code_vars <- function(d){
     education = fct_reorder(education, EDUCA)) %>%
     # remove people taller than the world record height:
     filter(height < 2.72) %>%
-    dplyr::select(height, weight, sex, race, race2, race3, age, hhinc, education, bmi, `_LLCPWT`)
+    rename(psu = `_PSU`,
+           survey_weight = `_LLCPWT`) %>%
+    dplyr::select(height, weight, sex, race, race2, race3, age, hhinc, education, bmi, psu, survey_weight)
 }
 
 the_caption = "Source: http://freerangestats.info analysis of the US CDC Behavioral Risk Factor Surveillance System Survey for 2018"
@@ -107,47 +109,72 @@ llcp_small <- llcp %>%
   sample_n(20000, weight = `_LLCPWT`, replace = TRUE) %>%
   code_vars() 
 
-nrow(distinct(llcp_small)) # 17,369 - remembering higher weight observations likely to be resampled twice, and dropping NAs
+nrow(distinct(llcp_small)) # 17,370 - remembering higher weight observations likely to be resampled twice, and dropping NAs
 
 llcp_all <- llcp %>%
   code_vars()
 
-p1 <- llcp_small %>%
-  dplyr::select(height, weight, sex, age, race3) %>%
-  drop_na() %>%
-  ggplot(aes(x = height, y = weight, colour = sex)) +
-  facet_grid(age ~ race3) +
-  geom_jitter(alpha = 0.2) +
-  geom_smooth(method = "rlm", se = FALSE) +
-  scale_x_log10(breaks = c(0.9, 1.1, 1.4, 1.8, 2.3)) + 
-  scale_y_log10() +
-  theme(panel.grid.minor = element_blank()) +
-  labs(title = "Relationship between weight and height in USA adults",
-       subtitle = "Subset of 20,000 observations resampled to simulate a simple random sample.",
-       x = "Height (m)",
-       y = "Weight (kg)",
-       caption = the_caption,
-       colour = "")
 
-svg_png(p1, "../img/0166-20000",w = 12, h = 7)
 
-# Make a data frame to get around problems with rectangles and log axes. See
+# Make a data frame for shading of healthy BMI, to get around problems with rectangles and log axes. See
 # https://stackoverflow.com/questions/52007187/background-fill-via-geom-rect-is-removed-after-scale-y-log10-transformation
 healthy <- tibble(
   xmin = 0.9,
   xmax = 2.6,
   ymin = 18.5,
   ymax = 25,
-  race2 = unique(llcp_small$race2)
-)
+  race3 = unique(llcp_small$race3)
+) %>%
+  drop_na()
+
+
+# data frame to use for shading of healthy weight implied by BMI
+healthy_by_height <- healthy %>%
+  dplyr::select(ymin, ymax, race3) %>%
+  gather(variable, bmi, -race3) %>%
+  mutate(link = 1) %>%
+  full_join(tibble(height = seq(from = 0.9, to = 2.3, length.out = 100), link = 1), by = "link") %>%
+  mutate(weight = bmi * height ^ 2) %>% 
+  dplyr::select(-link, -bmi) %>%
+  spread(variable, weight)
+
+
+p1b <- llcp_all %>%
+  dplyr::select(height, weight, sex, age, race3, survey_weight) %>%
+  drop_na() %>%
+  ggplot(aes(x = height)) +
+  facet_grid(age ~ race3) +
+  geom_ribbon(data = healthy_by_height, aes(ymin = ymin, ymax = ymax),
+              colour = NA, fill = "grey90") +
+  geom_jitter(alpha = 0.02, aes(y = weight, colour = sex, size = survey_weight)) +
+  geom_smooth(method = "rlm", se = FALSE, aes(y = weight, colour = sex)) +
+  #scale_x_log10(breaks = c(0.9, 1.1, 1.4, 1.8, 2.3)) + 
+  #scale_y_log10() +
+  scale_size_area(label = comma) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title = "Relationship between self-reported weight and height in USA adults",
+       subtitle = "Men's weight is more dependent on their height than is the case for women.
+Grey ribbon shows WHO-recommended healthy weight. Straight lines show empirical relationship of weight and height.",
+       x = "Height (m)",
+       y = "Weight (kg)",
+       caption = the_caption,
+       colour = "",
+       size = "Each point represents X Americans:") +
+  guides(size = guide_legend(override.aes = list(alpha = 1)))
+
+png("../img/0166-full-data-weight.png", 12 * 600, 7 * 600, res = 600, type = "cairo-png")
+  print(p1b) 
+dev.off()
+
+
 
 p3 <- llcp_all %>%
   drop_na() %>%
   ggplot(aes(x = height, y = bmi, colour = sex)) +
-  facet_grid(age ~ str_wrap(race2, 20)) +
+  facet_grid(age ~ race3) +
   geom_rect(data = healthy, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), 
             colour = NA, fill = "grey90", inherit.aes = FALSE) +
-  geom_jitter(alpha = 0.02, aes(size = `_LLCPWT`)) +
+  geom_jitter(alpha = 0.02, aes(size = survey_weight)) +
   geom_smooth(method = "rlm", se = FALSE, size = 0.5) +
   scale_size_area(label = comma) + 
   scale_x_log10(breaks = c(0.9, 1.1, 1.4, 1.8, 2.3)) + 
@@ -159,29 +186,58 @@ p3 <- llcp_all %>%
        y = bquote("Body Mass Index: "~frac(weight,  height ^ 2)~", logarithmic scale"),
        caption = the_caption, 
        colour = "",
-       size = "Survey weight")
+       size = "Each point represents X Americans:") +
+  guides(size = guide_legend(override.aes = list(alpha = 1)))
 
 png("../img/0166-full-data-bmi-log.png", 12 * 600, 7 * 600, res = 600, type = "cairo-png")
   print(p3) 
 dev.off()
 
 
+#------------
+
+p4 <- llcp_all %>%
+  mutate(h2 = height ^ 2,
+         h2.5 = height ^ 2.5) %>%
+  dplyr::select(h2, h2.5, weight, survey_weight) %>%
+  drop_na() %>%
+  gather(variable, value, -weight, -survey_weight) %>%
+  mutate(variable = gsub("h2", expression(height^2), variable)) %>%
+  ggplot(aes(x = value, y = weight)) +
+  facet_wrap(~variable, scales = "free_x") +
+  geom_jitter(alpha = 0.02, aes(size = survey_weight)) +
+  geom_smooth(method = 'gam', formula = y ~ s(x, k = 5)) +
+  scale_size_area(label = comma) +
+  labs(title = bquote("Weight compared to "~height^2~"and"~height^2.5),
+       subtitle = "It's not possible to choose visually which of the two better expresses the relationship.",
+       y = "Weight (kg)",
+       x = "Height to the power of 2.0 or 2.5",
+       size = "Each point represents X Americans:") +
+  guides(size = guide_legend(override.aes = list(alpha = 1)))
+  
+
+png("../img/0166-power-scatter.png", 12 * 600, 7 * 600, res = 600, type = "cairo-png")
+  print(p4) 
+dev.off()
+
 #-------Models---------------
-model0 <- lm(log(weight) ~ log(height), data = llcp_small)
-summary(mod)
-# now the best exponent for height is 1.95! how do we explain this
+llcp_svy <- svydesign(~psu, weights = ~survey_weight, data = llcp_all)
+
+model0 <- svyglm(log(weight) ~ log(height), design = llcp_svy)
 
 
-model1 <- lm(log(weight) ~ log(height) + sex + race + age, data = llcp_small)
+model1 <- svyglm(log(weight) ~ log(height) + sex + race + age, design = llcp_svy)
 
 anova(model1)
 summary(model1)
 exp(coef(model1))
-# best exponent for height is 1.65, not 2 (this is the raw coefficient for height)
-# men weigh 5% more than women (exp(0.0499))
-# Asians weight 89% of white non-hispanic
+# best exponent for height is 1.55, not 2 (this is the raw coefficient for height)
+# men of the same race, age and height weigh 6% more than women (exp(0.056))
+# Asians weight 89% of white non-hispanic of same sex and age
 # old people weight 99% of 18-64 year old (prob a cohort effect)
 
+
+#--------------more stuff------------
 
 model2 <- lm(log(weight) ~ log(height) + sex + race + age + hhinc + education, data = llcp_small)
 anova(model2)
@@ -205,7 +261,7 @@ model4 <- svyglm(log(height))
 
 
 
-#--------------compare the 2.5 guy-----------------------------
+#--------------compare the 2.5 figures...-----------------------------
 
 
 model5 <- lm(weight ~ I(height ^ 2.5) - 1, data = llcp_small)
