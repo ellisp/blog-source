@@ -6,6 +6,8 @@ library(MASS)
 library(rio)
 library(survey)
 library(Cairo)
+library(broom)
+
 
 #--------------CDC annual Behavioral Risk Factor Surveillance System (BRFSS)  survey-
 
@@ -266,19 +268,179 @@ model5 <- lm(weight ~ I(height ^ 2.5) - 1, data = llcp_small)
 
 with(llcp_small, mean(weight / height ^ 2.5, na.rm = TRUE))
 with(llcp_small, mean(weight / height ^ 2, na.rm = TRUE))
+
+#===========================Episode 2=============================
      
-#-----------non-linear version - without log scale----------
-# The original blog post estimated the power by miniminisign the sum of squares of weight
-# on the log scale. What if we did that on the original scale (definite argument for this)
 
-library(nlme)
 
-?nls
+#-------------prep - small additions to last week--------
+library(broom)
+library(ggExtra)
 
-# luckily we get similar results when we try it like this:
-nls(weight ~ (b0 + 
-                b2 * (sex == "Male") + 
-                b3 * (race3 == "White, non-Hispanic") +
-                b4 * (age == "Age 18 to 64")
-              ) * height ^ b1, 
-    data = llcp_all)
+llcp_releveled <- llcp_all %>%
+  mutate(hhinc = fct_explicit_na(hhinc),
+         education = fct_explicit_na(education),
+         race = fct_explicit_na(race),
+         age = fct_explicit_na(age)) %>%
+  mutate(hhinc = fct_relevel(hhinc, "$25k to $35k"),
+         education = fct_relevel(education, "Grade 12 GED"))
+
+llcp_svy <- svydesign(~psu, weights = ~survey_weight, data = llcp_releveled)
+
+
+#----reminders----------
+
+p20 <- llcp_small %>%
+  ggplot(aes(x = height, y = weight)) +
+  geom_jitter(size = 1, alpha = 0.2) +
+  geom_smooth(method = "gam", se = FALSE) +
+  labs(title = "A non-linear relationship, and heteroskedastic response variable",
+       subtitle = "A standard challenge for the assumptions justifying ordinary least squares as an estimation method.",
+       caption = the_caption,
+       x = "Height (m)",
+       y = "Weight (kg)")
+
+p21 <- function(){print(ggMarginal(p20, fill = "steelblue", alpha = 0.5, colour = "white"))}
+svg_png(p21, "../img/0167-scatter", w = 10, h = 7)
+
+p22 <- p20 +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(title = "Log-log transformations can fix two problems at once",
+       subtitle = "Marginal densities are now symmetrical and closer to Normal; a linear relationship now shows elasticity.",
+       x = "Height (m) (logarithmic scale)",
+       y = "Weight (kg) (logarithmic scale)")
+
+p23 <- function(){print(ggMarginal(p22, fill = "steelblue", alpha = 0.5, colour = "white"))}
+svg_png(p23, "../img/0167-scatter-log", w = 10, h = 7)
+
+
+#------------------Different error structure---
+
+model1 <- svyglm(log(weight) ~ log(height) + sex + race + age, design = llcp_svy)
+
+model12 <- svyglm(weight ~ log(height) + sex + race + age, design = llcp_svy,
+                  family = quasi(link = "log", variance = "mu"))
+
+tibble(
+  Variable = names(coef(model1)),
+  `Log - Log Gaussian` = coef(model1),
+  `Quasi GLM with log link and mu variance` = coef(model12)
+) %>%
+  knitr::kable() %>%
+  kableExtra::kable_styling() %>%
+  clipr::write_clip()
+
+
+#-----------------income and education impacting on height-------------
+# First, is height really dependent on (or at least correlated with) income and education?
+
+
+#' Extract and relabel effects from a model. Very specific to today's problem.
+get_ready <- function(m){
+  # remove intercept:
+  d <- suppressWarnings(tidy(confint(m))[-1, ])  %>%
+    # remove height - as a continuous variable it doesn't work well
+    filter(!grepl("log(height)", .rownames, fixed = TRUE)) %>%
+    rename(variable = .rownames) %>%
+    mutate(var_type = case_when(
+      grepl("^education", variable) ~ "Education",
+      grepl("^hhinc", variable) ~ "Household Income",
+      grepl("^race", variable) ~ "Race",
+      grepl("^sex", variable) ~ "Sex",
+      grepl("^age", variable) ~ "Age"
+    )) %>%
+    mutate(variable = gsub("^education", "", variable),
+           variable = gsub("^hhinc", "", variable),
+           variable = gsub("^race", "", variable),
+           variable = gsub("^sex", "", variable),
+           variable = gsub("^age", "", variable)) %>%
+    mutate(var_seq = 1:n()) 
+}
+
+
+
+model13 <- svyglm(height ~ sex + race + hhinc + education + age, design = llcp_svy,
+                  family = quasi(link = "identity", variance = "mu"))
+
+d13 <- get_ready(model13)
+  
+p13 <- d13 %>% ggplot(aes(x = X2.5..*100, xend = X97.5..*100, 
+                 y = var_seq, yend = var_seq, 
+                 colour = var_type,
+                 alpha = I(variable == "(Missing)"))) +
+  geom_vline(colour = "black", xintercept = 0) +
+  geom_segment(size = 3) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_alpha_manual(values = c(1, 0.2), guide = "none") +
+  labs(x = "95% confidence interval of average difference in height (cm)\nCompared to a white, 18-64yrs, non-Hispanic woman with Year 12 education, household income $25k-$35k",
+       colour = "",
+       y = "",
+       caption = the_caption,
+       title = "Income and education are related to height even after controlling for sex, age and race",
+       subtitle = "The 'effects' of today's income and education are likely to actually be indicators of socioeconomic status while young,
+impacting on both height and economic outcomes.") +
+  scale_y_continuous(breaks = d13$var_seq, labels = d13$variable) +
+  theme(panel.grid.minor = element_blank())
+
+svg_png(p13, "../img/0167-height-class", w = 11, h = 6)
+
+#---------------Height / weight---------
+
+model14 <- svyglm(weight ~ log(height) + sex + race + hhinc + education + age, 
+                  design = llcp_svy,
+                  family = quasi(link = "log", variance = "mu"))
+
+d14 <- get_ready(model14)
+  
+
+p14 <- d14 %>% ggplot(aes(x = exp(X2.5..), xend = exp(X97.5..), 
+                 y = var_seq, yend = var_seq, 
+                 colour = var_type,
+                 alpha = I(variable == "(Missing)"))) +
+  geom_segment(size = 3) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_alpha_manual(values = c(1, 0.2), guide = "none") +
+  geom_vline(colour = "black", xintercept = 1) +
+  annotate("text", x= 0.92, y = 9,
+           label = bquote(~weight%prop%height^1.6~"(not shown on chart)")
+           ) +
+  labs(x = "95% confidence interval of impact on weight (expressed as a multiplier)\nCompared to a white non-Hispanic woman with Year 12 education, household income $25k-$35k",
+       colour = "",
+       y = "",
+       caption = the_caption,
+       title = "Income and education are related to weight after controlling for sex, height and race",
+       subtitle = "The effects are complex, but the groups with most education and highest income have the lower weights.") +
+  scale_y_continuous(breaks = d14$var_seq, labels = d14$variable) +
+  theme(panel.grid.minor = element_blank()) 
+
+svg_png(p14, "../img/0167-weight-class", w = 11, h = 6)
+
+
+#-------Impact on BMI--------------
+# this chart actually looks very similar to the previous one modelling weight on height etc,
+#
+
+model15 <- svyglm(bmi ~ log(height) + sex + race + hhinc + education + age, design = llcp_svy,
+                  family = quasi(link = "identity", variance = "mu"))
+
+d15 <- get_ready(model15)
+  
+p15 <- d15 %>%  ggplot(aes(x = X2.5.., xend = X97.5.., 
+                  y = var_seq, yend = var_seq, 
+                  colour = var_type,
+                  alpha = I(variable == "(Missing)"))) +
+  geom_segment(size = 3) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_alpha_manual(values = c(1, 0.2), guide = "none") +
+  labs(x = "95% confidence interval of impact on Body Mass Index\nCompared to a white non-Hispanic woman with Year 12 education, household income $25k-$35k",
+       colour = "",
+       y = "",
+       caption = the_caption,
+       title = "Income and education are related to weight after controlling for sex, height and race",
+       subtitle = "The effects are complex, but the groups with most education and highest income have the lower weights") +
+  scale_y_continuous(breaks = d15$var_seq, labels = d15$variable) +
+  theme(panel.grid.minor = element_blank())
+
+svg_png(p15, "../img/0167-bmi-class", w = 11, h = 6)
+
