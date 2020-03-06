@@ -55,7 +55,7 @@ for people with different <i>combinations</i> of variables, check out this web a
     # Show a plot of the generated distribution
     mainPanel(
        htmlOutput('the_heading'),
-       dataTableOutput('the_table')
+       DT::dataTableOutput('the_table')
     )
   )
 ))

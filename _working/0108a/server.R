@@ -108,7 +108,7 @@ shinyServer(function(input, output, session) {
      
    })
    
-   output$the_table <- renderDataTable(my_dt())
+   output$the_table <- DT::renderDataTable(my_dt())
    
    output$the_heading <- renderText(paste0("<h3>", input$variable, "</h3>"))
 
