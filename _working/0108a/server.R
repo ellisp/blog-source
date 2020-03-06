@@ -16,7 +16,7 @@
     return(tmp)
   })
   
-  
+
   #--------------Identify weights, variable for columns, and value for cells---
   the_weight_var <- reactive({
     if(input$weight_type == "Original NZES weights"){
@@ -54,12 +54,27 @@
   
   #-------------dynamic explanatory text------------------------
   
+  pop_text <- reactive({
+    tmp <- paste0("<p>The survey was drawn from the population of XXXX people on the electoral
+                  roll at the time of the ", input$year, " election</p>")
+    if(input$year == 2017){
+      tmp <- gsub("XXXX", "4,244,355", tmp)
+    }
+    if(input$year == 2014){
+      tmp <- gsub("XXXX", "3,140,417", tmp)
+    }
+    return(tmp)
+  })
+  output$pop_text <- renderText(pop_text())
+  
   output$app_heading <- renderText(paste0("<h1>Party vote characteristics at the New Zealand General Election ",
                                           input$year, "</h1>"))
   output$table_heading <- renderText(paste0("<h3>", input$variable, "</h3>"))
   
   #-------------------Create the actual table-------------------
    my_table <- reactive({
+     validate(need(row_var() %in% names(the_data()) , "Waiting"))
+     
      tab <- the_data() %>%
        mutate_("myweight" = the_weight_var()) %>%
        group_by_(the_var(), row_var()) %>%
@@ -78,14 +93,6 @@
            group_by_(row_var()) %>%
            mutate(weighted = weighted / sum(weighted) * 100)
        }
-     }
-     
-     if(input$value == "Margin of error"){
-       tab <- tab %>%
-         ungroup() %>%
-         mutate(p = pmax(0.05, weighted / sum(weighted)),
-                rme = round(1.96 * sqrt(p * (1 - p) / pmax(1, unweighted)) / p * 100))
-         
      }
      
      tab <- tab %>%
@@ -128,6 +135,7 @@
    })
   
    my_dt <- reactive({
+     validate(need(nrow(my_table()) > 0 , "Waiting"))
      tmp <- datatable(my_table(), options = list(dom = 't')) %>%
        formatStyle(names(my_table())[-1], backgroundColor = styleInterval(breaks(), colours()))
      

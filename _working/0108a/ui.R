@@ -11,8 +11,8 @@ shinyUI(fluidPage(
       radioButtons("year", "Election year", choices = c(2014, 2017), selected = 2017, inline = TRUE),
       selectizeInput("variable", 
                      "Choose a variable", 
-                     choices = vars14_list,
-                     selected = sample(as.character(vars14), 1),
+                     choices = vars17_list,
+                     selected = sample(as.character(vars17), 1),
                      multiple = FALSE),
       radioButtons("value", "Choose to show",
                   c("Number (thousands of people)", "Percentage", "Pearson residuals", "Sample size"),
@@ -25,8 +25,9 @@ shinyUI(fluidPage(
       radioButtons("weight_type", "Choose which survey weights to use",
                   c("Calibrated to party vote totals", "Original NZES weights"),
                   select = "Calibrated to party vote totals"),
-      p("The population the survey was drawn from was the 3,140,417 people on the electoral roll 
-at the time of the 2014 election."),
+      
+      
+      htmlOutput("pop_text"),
       
       conditionalPanel("input.value == 'Margin of error'",
                        HTML("<p>The <b>margin of error</b> indicates the uncertainty of a particular number in the table.
@@ -45,13 +46,13 @@ paid to the broad patterns than to any individual values.</p>")
 combination of party vote and the other variable, compared to what would be expected if there were no relationship 
 between the two questions.  It is defined as (observed - expected) / sqrt(expected).<p>")),
     
-    HTML("<p>This cross-tab tool was built by <a href='http://ellisp.github.io'>Peter's Stats Stuff</a> with
+    HTML("<p>This cross-tab tool was built by <a href='http://freerangestats.info'>Free Range Statistics</a> with
 data from the <a href='http://www.nzes.org/'>New Zealand Election Study</a> but is not affiliated with that
 Study.</p><p>Use at your own risk.</p>
-<p><a href='https://github.com/ellisp/ellisp.github.io/tree/source/_working/0108'>Source code is on GitHub.</a></p>
-<P>For a more complex multivariate exploration of the probability of voting for different parties
-for people with different <i>combinations</i> of variables, check out this web app on <a href ='https://ellisp.shinyapps.io/individual-vote-nzes/'>
-         Modelled individual party vote</a>.")
+<p><a href='https://github.com/ellisp/ellisp.github.io/tree/source/_working/0108a'>Source code is on GitHub.</a></p>
+<P>This webpage is only a side project for me. My day job is as Chief Data Scientist at 
+         <a href='https://nousgroup.com.au'>Nous Group</a>,
+         Australia's largest home-grown management consultancy firm.</p>")
     ),
     
     # Show a plot of the generated distribution

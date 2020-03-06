@@ -204,8 +204,9 @@ nzes17 <- nzes17_orig %>%
   mutate(rsex = ifelse(rsex == "Transsexual or transgender", "Gender-diverse", as.character(rsex)),
          rsex = fct_infreq(rsex)) %>%
   
-  # lump up party vote:
+  # tidy party names and lump up party vote:
   mutate(partyvote = ifelse(is.na(rpartyvote), "Did not vote", as.character(rpartyvote)),
+         partyvote = gsub("[0-9]+\\. ", "", partyvote),
          partyvote = gsub("net.Man", "net-Man", partyvote),
          partyvote = fct_lump(partyvote, 10, other_level = "Another party"),
          partyvote = fct_infreq(partyvote),
