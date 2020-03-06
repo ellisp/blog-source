@@ -36,6 +36,12 @@ _working/d_responses.txt
 _working/d_respondents.txt
 _working/f_wvs.txt
 
+*.sav
+*.zip
+*.ASC
+*.XPT
+*.xlsx
+
 
 # gEcon crap
 *SW_03*
