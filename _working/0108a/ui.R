@@ -2,11 +2,13 @@
 shinyUI(fluidPage(
   
   # Application title
-  titlePanel("Party vote characteristics at the New Zealand General Election 2014"),
+  htmlOutput('app_heading'),
   
-  # Sidebar with a slider input for number of bins 
+  
+  # Sidebar
   sidebarLayout(
     sidebarPanel(
+      radioButtons("year", "Election year", choices = c(2014, 2017), selected = 2017, inline = TRUE),
       selectizeInput("variable", 
                      "Choose a variable", 
                      choices = vars14_list,
@@ -54,7 +56,7 @@ for people with different <i>combinations</i> of variables, check out this web a
     
     # Show a plot of the generated distribution
     mainPanel(
-       htmlOutput('the_heading'),
+       htmlOutput('table_heading'),
        DT::dataTableOutput('the_table')
     )
   )

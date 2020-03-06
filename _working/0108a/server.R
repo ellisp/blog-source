@@ -2,8 +2,22 @@
 # prep is in the ./_working/0108a-nzes-prep.R script, one folder up from where this server.R resides.
 
 
-
-shinyServer(function(input, output, session) {
+  
+  shinyServer(function(input, output, session) {
+  #------------Reactive things that change depending on the election year--------------------
+  the_data <- reactive({
+    if(input$year == 2014){
+      tmp <- nzes14
+      updateSelectInput(session, "variable", choices = vars14_list)
+    } else {
+      tmp <- nzes17
+      updateSelectInput(session, "variable", choices = vars17_list)
+    }
+    return(tmp)
+  })
+  
+  
+  #--------------Identify weights, variable for columns, and value for cells---
   the_weight_var <- reactive({
     if(input$weight_type == "Original NZES weights"){
       tmp <- "dwtfin"
@@ -14,7 +28,13 @@ shinyServer(function(input, output, session) {
   })
   
   the_var <- reactive({
-    names(vars14)[as.character(vars14) == input$variable]
+    if(input$year == 2014){
+      tmp <- names(vars14)[as.character(vars14) == input$variable]
+    }
+    if(input$year == 2017){
+      tmp <- names(vars17)[as.character(vars17) == input$variable]
+    }
+    return(tmp)
   }) 
   
   row_var <- reactive({
@@ -32,8 +52,15 @@ shinyServer(function(input, output, session) {
     return(tmp)
   })
   
+  #-------------dynamic explanatory text------------------------
+  
+  output$app_heading <- renderText(paste0("<h1>Party vote characteristics at the New Zealand General Election ",
+                                          input$year, "</h1>"))
+  output$table_heading <- renderText(paste0("<h3>", input$variable, "</h3>"))
+  
+  #-------------------Create the actual table-------------------
    my_table <- reactive({
-     tab <- nzes14 %>%
+     tab <- the_data() %>%
        mutate_("myweight" = the_weight_var()) %>%
        group_by_(the_var(), row_var()) %>%
        summarise(weighted = sum(myweight),
@@ -103,13 +130,13 @@ shinyServer(function(input, output, session) {
    my_dt <- reactive({
      tmp <- datatable(my_table(), options = list(dom = 't')) %>%
        formatStyle(names(my_table())[-1], backgroundColor = styleInterval(breaks(), colours()))
-     print(tmp)
+     
      return(tmp)
      
    })
    
    output$the_table <- DT::renderDataTable(my_dt())
    
-   output$the_heading <- renderText(paste0("<h3>", input$variable, "</h3>"))
+   
 
 })
