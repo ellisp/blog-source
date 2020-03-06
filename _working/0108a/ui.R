@@ -1,7 +1,3 @@
-library(shiny)
-library(DT)
-load("vars.rda")
-load("vars_list.rda")
 
 shinyUI(fluidPage(
   
@@ -13,8 +9,8 @@ shinyUI(fluidPage(
     sidebarPanel(
       selectizeInput("variable", 
                      "Choose a variable", 
-                     choices = vars_list,
-                     selected = sample(as.character(vars), 1),
+                     choices = vars14_list,
+                     selected = sample(as.character(vars14), 1),
                      multiple = FALSE),
       radioButtons("value", "Choose to show",
                   c("Number (thousands of people)", "Percentage", "Pearson residuals", "Sample size"),

@@ -1,13 +1,6 @@
 # Source code for the web tool at XXXXXX
-# prep is in the ./_working/0108-nzes-prep.R script, one folder up from where this server.R resides.
+# prep is in the ./_working/0108a-nzes-prep.R script, one folder up from where this server.R resides.
 
-library(shiny)
-library(DT)
-library(dplyr)
-library(tidyr)
-
-load("nzes.rda")
-load("vars.rda")
 
 
 shinyServer(function(input, output, session) {
@@ -21,7 +14,7 @@ shinyServer(function(input, output, session) {
   })
   
   the_var <- reactive({
-    names(vars)[as.character(vars) == input$variable]
+    names(vars14)[as.character(vars14) == input$variable]
   }) 
   
   row_var <- reactive({
@@ -40,7 +33,7 @@ shinyServer(function(input, output, session) {
   })
   
    my_table <- reactive({
-     tab <- nzes %>%
+     tab <- nzes14 %>%
        mutate_("myweight" = the_weight_var()) %>%
        group_by_(the_var(), row_var()) %>%
        summarise(weighted = sum(myweight),
@@ -108,8 +101,10 @@ shinyServer(function(input, output, session) {
    })
   
    my_dt <- reactive({
-     datatable(my_table(), options = list(dom = 't')) %>%
+     tmp <- datatable(my_table(), options = list(dom = 't')) %>%
        formatStyle(names(my_table())[-1], backgroundColor = styleInterval(breaks(), colours()))
+     print(tmp)
+     return(tmp)
      
    })
    
