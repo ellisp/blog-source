@@ -100,7 +100,7 @@
     tmp <- paste0("<p>The survey was drawn from the population of XXXX people on the electoral
                   roll at the time of the ", input$year, " election.</p>")
     if(input$year == 2017){
-      tmp <- gsub("XXXX", "4,244,355", tmp)
+      tmp <- gsub("XXXX", "3,298,009", tmp)
     }
     if(input$year == 2014){
       tmp <- gsub("XXXX", "3,140,417", tmp)

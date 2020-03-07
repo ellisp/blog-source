@@ -216,9 +216,9 @@ nzes17 <- nzes17_orig %>%
          partyvote = gsub("net.Man", "net-Man", partyvote),
          partyvote = fct_lump(partyvote, 10, other_level = "Another party"),
          partyvote = fct_infreq(partyvote),
-         # This magic constant, 4244355 was the size of the electoral roll at the time of election;
+         # This magic constant, 3298009 was the size of the electoral roll at the time of election;
          # see https://www.electionresults.govt.nz/electionresults_2017/statistics/index.html
-         dwtfin = rwt * 4244.355 / sum(rwt) ) 
+         dwtfin = rwt * 3298.009 / sum(rwt) ) 
 
 nzes17 <- nzes17[ ,c(names(vars17), "partyvote", "dwtfin")]
 
