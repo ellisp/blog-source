@@ -8,10 +8,12 @@
   the_data <- reactive({
     if(input$year == 2014){
       tmp <- nzes14
-      updatePickerInput(session, "variable", choices = vars14_list)
+      updatePickerInput(session, "variable", choices = vars14_list,
+                        selected = sample(unlist(vars14_list), 1))
     } else {
       tmp <- nzes17
-      updatePickerInput(session, "variable", choices = vars17_list)
+      updatePickerInput(session, "variable", choices = vars17_list,
+                        selected = sample(unlist(vars17_list), 1))
     }
     return(tmp)
   })
@@ -44,11 +46,9 @@
   the_value_var <- reactive({
     if(input$value == "Sample size"){
       tmp <- "unweighted"
-    } else if(input$value != "Margin of error"){
-      tmp <- "weighted"
     } else {
-      tmp <- "rme"
-    }
+      tmp <- "weighted"
+    } 
     return(tmp)
   })
   
@@ -59,9 +59,9 @@
           "</b> in each cell of the table. ")
     if(input$value == "Percentage"){
       tmp <- paste0(tmp,
-                    "The percentages add up to 100 in each ",
+                    "The percentages add up to 100 in each <b>",
                     tolower(str_sub(input$percent_type, end = -2)),
-                    ". This is effective for seeing, for a given "
+                    "</b>. This is effective for seeing, for a given "
       )
       if(input$percent_type == "Columns"){
         tmp <- paste0(tmp, " answer to '", 
@@ -75,6 +75,21 @@
       
     }
     
+    if(input$value == "Number (thousands of people)"){
+      if(input$weight_type == "Calibrated to party vote totals"){
+        tmp <- paste0(tmp, 
+                      "</p><p>Because the weights have been re-calibrated for this particular purpose,
+                      the numbers in each row will add up to the correct number of voters for that party 
+                      in the actual election.")
+      }
+      if(input$weight_type == "Original NZES weights"){
+        tmp <- paste0(tmp, 
+                      "</p><p>Because the weights are not calibrated to party vote,
+                      the numbers in each row will <i>not</i> add up to the correct number of voters for that party 
+                      in the actual election.")
+      }
+    }
+    
     tmp <- paste0(tmp, "</p>")
     return(tmp)
   })
@@ -83,7 +98,7 @@
   
   pop_text <- reactive({
     tmp <- paste0("<p>The survey was drawn from the population of XXXX people on the electoral
-                  roll at the time of the ", input$year, " election</p>")
+                  roll at the time of the ", input$year, " election.</p>")
     if(input$year == 2017){
       tmp <- gsub("XXXX", "4,244,355", tmp)
     }

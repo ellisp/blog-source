@@ -45,7 +45,7 @@ data from the <a href='http://www.nzes.org/'>New Zealand Election Study</a> but 
 Study.</p><p>Use at your own risk.</p>
 <p><a href='https://github.com/ellisp/blog-source/tree/master/_working/0108a'>Source code is on GitHub.</a></p>
 <P>This webpage is only a side project and might lack a little polish. My day job is as Chief Data Scientist at 
-         <a href='https://nousgroup.com.au'>Nous Group</a>,
+         <a href='http://nousgroup.com.au'>Nous Group</a>,
          Australia's largest home-grown management consultancy firm.</p>")
     ),
     
