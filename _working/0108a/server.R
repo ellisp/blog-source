@@ -8,10 +8,10 @@
   the_data <- reactive({
     if(input$year == 2014){
       tmp <- nzes14
-      updateSelectInput(session, "variable", choices = vars14_list)
+      updatePickerInput(session, "variable", choices = vars14_list)
     } else {
       tmp <- nzes17
-      updateSelectInput(session, "variable", choices = vars17_list)
+      updatePickerInput(session, "variable", choices = vars17_list)
     }
     return(tmp)
   })
@@ -53,6 +53,33 @@
   })
   
   #-------------dynamic explanatory text------------------------
+  now_showing <- reactive({
+    tmp <- paste0("<p>Currently showing <b>",
+          input$value,
+          "</b> in each cell of the table. ")
+    if(input$value == "Percentage"){
+      tmp <- paste0(tmp,
+                    "The percentages add up to 100 in each ",
+                    tolower(str_sub(input$percent_type, end = -2)),
+                    ". This is effective for seeing, for a given "
+      )
+      if(input$percent_type == "Columns"){
+        tmp <- paste0(tmp, " answer to '", 
+                      input$variable,
+                      "', what proportion of people voted for each party.")
+      } else {
+        tmp <- paste0(tmp, " set of party voters, what proportion answered differently to '", 
+                      input$variable,
+                      "'.")
+      }
+      
+    }
+    
+    tmp <- paste0(tmp, "</p>")
+    return(tmp)
+  })
+  
+  output$now_showing <- renderText(now_showing())
   
   pop_text <- reactive({
     tmp <- paste0("<p>The survey was drawn from the population of XXXX people on the electoral
@@ -74,6 +101,7 @@
   #-------------------Create the actual table-------------------
    my_table <- reactive({
      validate(need(row_var() %in% names(the_data()) , "Waiting"))
+     validate(need(the_var() %in% names(the_data()) , "Waiting"))
      
      tab <- the_data() %>%
        mutate_("myweight" = the_weight_var()) %>%
@@ -136,7 +164,8 @@
   
    my_dt <- reactive({
      validate(need(nrow(my_table()) > 0 , "Waiting"))
-     tmp <- datatable(my_table(), options = list(dom = 't')) %>%
+     
+     tmp <- datatable(my_table(), options = list(dom = 't'), rownames = FALSE) %>%
        formatStyle(names(my_table())[-1], backgroundColor = styleInterval(breaks(), colours()))
      
      return(tmp)

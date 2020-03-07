@@ -1,6 +1,14 @@
 
 shinyUI(fluidPage(
   
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+  ),
+  
+  
+  use_googlefont("Prosto One"),
+  use_googlefont("Sarala"),
+  
   # Application title
   htmlOutput('app_heading'),
   
@@ -9,11 +17,12 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       radioButtons("year", "Election year", choices = c(2014, 2017), selected = 2017, inline = TRUE),
-      selectizeInput("variable", 
-                     "Choose a variable", 
-                     choices = vars17_list,
-                     selected = sample(as.character(vars17), 1),
-                     multiple = FALSE),
+      pickerInput("variable", 
+                  "Choose a variable", 
+                  choices = vars17_list,
+                  options = list(
+                    `live-search` = TRUE
+                  )),
       radioButtons("value", "Choose to show",
                   c("Number (thousands of people)", "Percentage", "Pearson residuals", "Sample size"),
                   selected = "Percentage"),
@@ -29,28 +38,13 @@ shinyUI(fluidPage(
       
       htmlOutput("pop_text"),
       
-      conditionalPanel("input.value == 'Margin of error'",
-                       HTML("<p>The <b>margin of error</b> indicates the uncertainty of a particular number in the table.
-Technically, it shows the half width of a 95% confidence interval for the value
-in <i>that particular cell</i> of the table, expressed as a percentage of the original value.  They can exceed 100% 
-particularly for small estimates, which have more 'upwards' uncertainty than downwards (as zero is the bottom limit). 
-In general, the margins of error are very high, showing you should be uncertain
-about any particular value.  More sophisticated analysis and collapsing of categories would
-yield more useful results for individual values. In the absence of that approach, more attention should be
-paid to the broad patterns than to any individual values.</p>")
-                       ),
       
-      conditionalPanel("input.value == 'Pearson residuals'",
-                       HTML("<p>The <b>Pearson residual</b> is a statistical construct giving an indication of how
-<i>suprising</i> the value in a particular cell is.  Values over 2 (or under -2) can be interpreted as unusually high (or low) for that
-combination of party vote and the other variable, compared to what would be expected if there were no relationship 
-between the two questions.  It is defined as (observed - expected) / sqrt(expected).<p>")),
     
     HTML("<p>This cross-tab tool was built by <a href='http://freerangestats.info'>Free Range Statistics</a> with
 data from the <a href='http://www.nzes.org/'>New Zealand Election Study</a> but is not affiliated with that
 Study.</p><p>Use at your own risk.</p>
-<p><a href='https://github.com/ellisp/ellisp.github.io/tree/source/_working/0108a'>Source code is on GitHub.</a></p>
-<P>This webpage is only a side project for me. My day job is as Chief Data Scientist at 
+<p><a href='https://github.com/ellisp/blog-source/tree/master/_working/0108a'>Source code is on GitHub.</a></p>
+<P>This webpage is only a side project and might lack a little polish. My day job is as Chief Data Scientist at 
          <a href='https://nousgroup.com.au'>Nous Group</a>,
          Australia's largest home-grown management consultancy firm.</p>")
     ),
@@ -58,7 +52,14 @@ Study.</p><p>Use at your own risk.</p>
     # Show a plot of the generated distribution
     mainPanel(
        htmlOutput('table_heading'),
-       DT::dataTableOutput('the_table')
+       DT::dataTableOutput('the_table'),
+       hr(),
+       htmlOutput('now_showing'),
+       conditionalPanel("input.value == 'Pearson residuals'",
+                        HTML("<p>The <b>Pearson residual</b> is a statistical construct giving an indication of how
+<i>suprising</i> the value in a particular cell is.  Values over 2 (or under -2) can be interpreted as unusually high (or low) for that
+combination of party vote and the other variable, compared to what would be expected if there were no relationship 
+between the two questions.  It is defined as (observed - expected) / sqrt(expected).<p>"))
     )
   )
 ))

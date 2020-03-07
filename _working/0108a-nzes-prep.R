@@ -10,6 +10,8 @@ library(survey)
 library(rsconnect)
 library(frs)
 
+maori <- "M\U0101ori"
+
 #----------------------2014----------------------
 # Import the New Zealand Election Study data:
 nzes14_orig <- read.spss("NZES2014GeneralReleaseApril16.sav", 
@@ -21,10 +23,10 @@ varlab14 <- cbind(attributes(nzes14_orig)$variable.labels)
 # subset which variables we want
 vars14 <- varlab14[c(10:22, 94:99, 178:212, 261, 270:288, 308:324, 331, 341:343,
                  351:358, 362:381, 385:403), ] 
-vars14 <- gsub("M.ori", "Māori", vars14)
+vars14 <- gsub("M.ori", maori, vars14)
 
 # View(data.frame(as.character(vars14)))
-vc14 <- as.character(vars14)
+vc14 <- enc2utf8(as.character(vars14))
 vars14_list <- list(
   "Political engagement" = vc14[c(1:8, 14:19, 56:66)],
   "Views on spending" = vc14[20:30],
@@ -38,7 +40,7 @@ nzes14 <- nzes14_orig %>%
   # Fix M?ori in any levels of factors:
   map_df(function(x){
     if(is.factor(x)){
-      levels(x) <-  gsub("M.ori", "Māori", levels(x))
+      levels(x) <-  gsub("M.ori", maori, levels(x))
       x
     } else {
       x
@@ -96,6 +98,8 @@ nzes14 <- nzes14 %>%
 
 #------------2014 actual outcomes----------------
 # http://www.elections.org.nz/news-media/new-zealand-2014-general-election-official-results
+# This is calibration of the larger votes to their actual votes. Recommended for our purposes,
+# as we want the reported votes to be actual numbers sometimes.
 actual_vote_2014 <- tibble(
   partyvote2014 = c("National", "Labour", "Green", "NZ First", "Other", "Did not vote"),
   Freq = c(1131501, 604534, 257356, 208300, 
@@ -150,16 +154,18 @@ varlab17 <- attributes(nzes17_orig)$variable.labels
 # subset which variables we want
 vars17 <- varlab17[c(18:42, 91:96, 98:155, 192:245,297:341, 342, 344, 356, 
                      357:360, 361, 365:377, 379:398, 406:440,466:485)] 
-vars17 <- gsub("M.ori", "Māori", vars17)
+vars17 <- gsub("M.ori", maori, vars17)
+vars17 <- gsub("MÄ\u0081ori", maori, vars17)
+vars17 <- gsub("2014â€“2017", "2014-2017", vars17)
 
-vc17 <- as.character(vars17)
+vc17 <- enc2utf8(as.character(vars17))
 vars17_list <- list(
   "Political engagement" = vc17[c(284, 1:2, 8:31, 150:161)],
   "Views on spending" = vc17[c(98:108)],
   "Other economic views" = vc17[c(54:71, 109:112, 136:143)],
   "Other attitudes" = vc17[c(92:97, 113:134, 164:172)],
   "Views on governance" = vc17[c(32:53, 72:91, 135, 144:149, 162:163, 173:188)],
-  "About you" = vc17[c(189:264, 276:283, 3:7)]
+  "About you" = vc17[c(189:208, 210:261, 263:264, 273:274,276:283, 3:7)]
 )
 
 
@@ -169,7 +175,7 @@ nzes17 <- nzes17_orig %>%
   # Fix M?ori in any levels of factors:
   map_df(function(x){
     if(is.factor(x)){
-      levels(x) <-  gsub("M.ori", "Māori", levels(x))
+      levels(x) <-  gsub("M.ori", maori, levels(x))
       x
     } else {
       x
