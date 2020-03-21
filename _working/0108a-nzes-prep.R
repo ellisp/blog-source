@@ -163,7 +163,7 @@ vars17_list <- list(
   "Political engagement" = vc17[c(284, 1:2, 8:31, 150:161)],
   "Views on spending" = vc17[c(98:108)],
   "Other economic views" = vc17[c(54:71, 109:112, 136:143)],
-  "Other attitudes" = vc17[c(92:97, 113:134, 164:172)],
+  "Other attitudes" = vc17[c(94:97, 113:134, 164:172)],
   "Views on governance" = vc17[c(32:53, 72:91, 135, 144:149, 162:163, 173:188)],
   "About you" = vc17[c(189:208, 210:261, 263:264, 273:274,276:283, 3:7)]
 )
