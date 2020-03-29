@@ -2,11 +2,19 @@ devtools::install_github("RamiKrispin/coronavirus")
 
 library(tidyverse)
 library(coronavirus)
-library(glogis)
 library(nlme)
 library(mgcv)
 library(AICcmodavg) # for predictSE to work with gls
 library(forecast)
+library(growthrates)
+
+fr <- function(x, scale = "log"){
+  if(scale == "log"){
+    x <- exp(x)
+  }
+  format(signif(x, 3), big.mark = ",", scientific = FALSE)
+}
+
 
 #-----------data prep--------------
 
@@ -119,18 +127,12 @@ for(the_country in all_countries){
     best_lambda <- BoxCox.lambda(y_ts)
     mod_aa <- auto.arima(y_ts, lambda = best_lambda)
     
-    fr <- function(x, scale = "log"){
-      if(scale == "log"){
-        x <- exp(x)
-      }
-      format(signif(x, 3), big.mark = ",", scientific = FALSE)
-    }
+    two_weeks_out <- max(the_data$days_since) + 14
+    
     confint_nls <- try(confint(mod_nls, level = 0.8))
     pred_exp <- try(predictSE(mod_exp, newdata = data.frame(days_since = two_weeks_out)))
     
     if(!"try-error" %in% class(confint_nls)){
-      
-      two_weeks_out <- max(the_data$days_since) + 14
       
       ci1 <- pmax(max(log(the_data$cum_cases)), 
                   confint_nls[1, ])
@@ -182,6 +184,7 @@ for(the_country in all_countries){
       
       print(p)
     }
+  }
 }
 dev.off()
 
@@ -214,18 +217,13 @@ for(the_country in all_countries){
     best_lambda <- BoxCox.lambda(y_ts)
     mod_aa <- auto.arima(y_ts, lambda = best_lambda)
     
-    fr <- function(x, scale = "log"){
-      if(scale == "log"){
-        x <- exp(x)
-      }
-      format(signif(x, 3), big.mark = ",", scientific = FALSE)
-    }
+    two_weeks_out <- max(the_data$days_since) + 14
+    
     confint_nls <- try(confint(mod_nls, level = 0.8))
     pred_exp <- try(predictSE(mod_exp, newdata = data.frame(days_since = two_weeks_out)))
     
     if(!"try-error" %in% class(confint_nls)){
       
-      two_weeks_out <- max(the_data$days_since) + 14
       
       ci1 <- pmax(max(log(the_data$cum_cases)), 
                   confint_nls[1, ])
