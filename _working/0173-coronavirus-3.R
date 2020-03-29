@@ -34,28 +34,28 @@ deaths <- covid_country_wid %>%
   rename(country = location) %>%
   group_by(country, date) %>%
   summarise(cases = sum(new_deaths),
-            cum_cases = max(total_deaths)) %>%
+            c_cases = max(total_deaths)) %>%
   group_by(country) %>%
   arrange(date) %>%
-  mutate(growth = cases / lag(cum_cases),
-         days_since = date - min(date[cum_cases >= 10])) %>%
+  mutate(growth = cases / lag(c_cases),
+         days_since = date - min(date[c_cases >= 10])) %>%
   filter(days_since >=0 )
   
 confirmed <- covid_country_wid %>%
   rename(country = location) %>%
   group_by(country, date) %>%
   summarise(cases = sum(new_cases),
-            cum_cases = max(total_cases)) %>%
+            c_cases = max(total_cases)) %>%
   group_by(country) %>%
   arrange(date) %>%
-  mutate(growth = cases / lag(cum_cases),
-         days_since = date - min(date[cum_cases >= 100])) %>%
+  mutate(growth = cases / lag(c_cases),
+         days_since = date - min(date[c_cases >= 100])) %>%
   filter(days_since >=0 )
 
   
 # that famous chart...  
 deaths %>%
-  ggplot(aes(x = days_since, y = cum_cases, colour = country)) +
+  ggplot(aes(x = days_since, y = c_cases, colour = country)) +
   geom_line() +
   geom_text(data = filter(deaths, date == max(date) & 
                             (country == "Australia" | days_since >= 10)), 
@@ -68,7 +68,7 @@ deaths %>%
 
 
 confirmed %>%
-  ggplot(aes(x = days_since, y = cum_cases, colour = country)) +
+  ggplot(aes(x = days_since, y = c_cases, colour = country)) +
   geom_line() +
   geom_text(data = filter(confirmed, date == max(date) & 
                             (country == "Australia" | days_since >= 20)), 
@@ -123,12 +123,12 @@ for(the_country in all_countries){
   if(nrow(the_data) >= 10){
     
     # Logistic
-    mod_nls <- try(gnls(log(cum_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
+    mod_nls <- try(gnls(log(c_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
                     data = the_data, correlation = corAR1(), 
-                    start = list(Asym = log(max(the_data$cum_cases)), xmid = 6, scal = 5)))
+                    start = list(Asym = log(max(the_data$c_cases)), xmid = 6, scal = 5)))
     if("try-error" %in% class(mod_nls)){
-      mod_nls <- try(nls(log(cum_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
-                     data = the_data, start = list(Asym = log(max(the_data$cum_cases)), xmid = 6, scal = 5),
+      mod_nls <- try(nls(log(c_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
+                     data = the_data, start = list(Asym = log(max(the_data$c_cases)), xmid = 6, scal = 5),
                        control = nls.control(
                        maxiter = 100, warnOnly = TRUE)))
     }
@@ -137,26 +137,26 @@ for(the_country in all_countries){
     
     
     # Exponential
-    mod_exp <- gls(log(cum_cases) ~ days_since, data = the_data, correlation = corAR1())
+    mod_exp <- gls(log(c_cases) ~ days_since, data = the_data, correlation = corAR1())
     
     # ARIMA
-    y_ts <- with(the_data, ts(cum_cases))
+    y_ts <- with(the_data, ts(c_cases))
     best_lambda <- BoxCox.lambda(y_ts)
     mod_aa <- auto.arima(y_ts, lambda = best_lambda)
     
     # Generalized Logistic growth
-    p <- c(y0 = min(log(the_data$cum_cases)),
+    p <- c(y0 = min(log(the_data$c_cases)),
            mumax = 0.2, 
-           K = max(log(the_data$cum_cases)),
+           K = max(log(the_data$c_cases)),
            alpha = 1, beta = 1, gamma = 1)
     
     # caution - these need to be in the same order as p!
-    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$cum_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
+    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$c_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
     upper <- c(y0 = 10, mumax = 0.5, K = 18, alpha = 1.4, beta = 1.4, gamma = 1.4)
     
     mod_glg <-  fit_growthmodel(FUN = grow_genlogistic, p = p, 
                                 time = the_data$days_since, 
-                                y = log(the_data$cum_cases), lower = lower, upper = upper)
+                                y = log(the_data$c_cases), lower = lower, upper = upper)
     
     
     
@@ -167,10 +167,10 @@ for(the_country in all_countries){
     
     if(!"try-error" %in% class(confint_nls)){
       
-      ci1 <- pmax(max(log(the_data$cum_cases)), 
+      ci1 <- pmax(max(log(the_data$c_cases)), 
                   confint_nls[1, ])
       
-      ci2 <- pmax(max(log(the_data$cum_cases)), 
+      ci2 <- pmax(max(log(the_data$c_cases)), 
                   pred_exp$fit + c(qnorm(0.1), -qnorm(0.1)) * sqrt((pred_exp$se.fit ^ 2 + mod_exp$sigma ^ 2)))
       
       f_aa <- forecast(mod_aa, h = 14, lambda = best_lambda, biasadj = TRUE)
@@ -182,12 +182,12 @@ for(the_country in all_countries){
       ci3 <- pmin(ci3, 1e9) %>% replace_na(log(1e9))
       
       # Must be at least as much as the current cases:
-      ci3 <- pmax(max(the_data$cum_cases), ci3)
+      ci3 <- pmax(max(the_data$c_cases), ci3)
           
       the_data$predicted_nls <- exp(predict(mod_nls))
       the_data$predicted_exp <- exp(predict(mod_exp))
       the_data$predicted_aa <- fitted(mod_aa)
-      the_data$predicted_glg <- exp(log(the_data$cum_cases) + residuals(mod_glg))
+      the_data$predicted_glg <- exp(log(the_data$c_cases) + residuals(mod_glg))
       
       preds <- the_data %>%
         select(days_since, 
@@ -195,7 +195,7 @@ for(the_country in all_countries){
                `Logistic` = predicted_nls, 
                `ARIMA` = predicted_aa,
                `Generalized Logistic` = predicted_glg)  %>%
-        gather(growth_type, cum_cases, -days_since)
+        gather(growth_type, c_cases, -days_since)
       
       st0 <- paste0("Estimated eventual cases of ", fr(mod_glg@par[["K"]]), 
                     " with generalized logistic growth model.")
@@ -207,7 +207,7 @@ for(the_country in all_countries){
                     fr(ci3[1], "original"), " and ", fr(ci3[2], scale = "original"), 
                     " with ARIMA model.")
       
-      p <- ggplot(the_data, aes(x = days_since, y = cum_cases)) +
+      p <- ggplot(the_data, aes(x = days_since, y = c_cases)) +
         geom_point() +
         geom_line(data = preds, aes(colour = growth_type)) +
         scale_y_continuous(label = comma) +
@@ -242,39 +242,39 @@ for(the_country in all_countries){
   if(nrow(the_data) >= 10){
   
     # Logistic growth
-    mod_nls <- try(gnls(log(cum_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
+    mod_nls <- try(gnls(log(c_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
                         data = the_data, correlation = corAR1(), 
-                   start = list(Asym = log(max(the_data$cum_cases)), xmid = 15, scal = 5))
+                   start = list(Asym = log(max(the_data$c_cases)), xmid = 15, scal = 5))
                    )
     if("try-error" %in% class(mod_nls)){
-      mod_nls <- try(nls(log(cum_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
+      mod_nls <- try(nls(log(c_cases) ~ SSlogis(days_since, Asym, xmid, scal), 
                          data = the_data, 
-                         start = list(Asym = log(max(the_data$cum_cases)), xmid = 15, scal = 5)))
+                         start = list(Asym = log(max(the_data$c_cases)), xmid = 15, scal = 5)))
     }
     
     
     # Exponential
-    mod_exp <- gls(log(cum_cases) ~ days_since, data = the_data, correlation = corAR1())
+    mod_exp <- gls(log(c_cases) ~ days_since, data = the_data, correlation = corAR1())
     
     # ARIMA
-    y_ts <- with(the_data, ts(cum_cases))
+    y_ts <- with(the_data, ts(c_cases))
     best_lambda <- BoxCox.lambda(y_ts)
     mod_aa <- auto.arima(y_ts, lambda = best_lambda)
     
     
     # Generalized Logistic growth
-    p <- c(y0 = min(log(the_data$cum_cases)),
+    p <- c(y0 = min(log(the_data$c_cases)),
            mumax = 0.2, 
-           K = max(log(the_data$cum_cases)),
+           K = max(log(the_data$c_cases)),
            alpha = 1, beta = 1, gamma = 1)
     
     # caution - these need to be in the same order as p!
-    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$cum_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
+    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$c_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
     upper <- c(y0 = 10, mumax = 0.5, K = 20, alpha = 1.5, beta = 1.5, gamma = 1.5)
     
     mod_glg <-  fit_growthmodel(FUN = grow_genlogistic, p = p, 
                                time = the_data$days_since, 
-                                  y = log(the_data$cum_cases), lower = lower, upper = upper)
+                                  y = log(the_data$c_cases), lower = lower, upper = upper)
     
     two_weeks_out <- max(the_data$days_since) + 14
     
@@ -284,10 +284,10 @@ for(the_country in all_countries){
     if(!"try-error" %in% class(confint_nls)){
       
       
-      ci1 <- pmax(max(log(the_data$cum_cases)), 
+      ci1 <- pmax(max(log(the_data$c_cases)), 
                   confint_nls[1, ])
       
-      ci2 <- pmax(max(log(the_data$cum_cases)), 
+      ci2 <- pmax(max(log(the_data$c_cases)), 
                   pred_exp$fit + c(qnorm(0.1), -qnorm(0.1)) * sqrt((pred_exp$se.fit ^ 2 + mod_exp$sigma ^ 2)))
       
       f_aa <- forecast(mod_aa, h = 14, lambda = best_lambda, biasadj = TRUE)
@@ -299,12 +299,12 @@ for(the_country in all_countries){
       ci3 <- pmin(ci3, 1e9)
       
       # Must be at least as much as the current cases:
-      ci3 <- pmax(max(the_data$cum_cases), ci3)
+      ci3 <- pmax(max(the_data$c_cases), ci3)
       
       the_data$predicted_nls <- exp(predict(mod_nls))
       the_data$predicted_exp <- exp(predict(mod_exp))
       the_data$predicted_aa <- fitted(mod_aa)
-      the_data$predicted_glg <- exp(log(the_data$cum_cases) + residuals(mod_glg))
+      the_data$predicted_glg <- exp(log(the_data$c_cases) + residuals(mod_glg))
       
       preds <- the_data %>%
         select(days_since, 
@@ -312,7 +312,7 @@ for(the_country in all_countries){
                `Logistic` = predicted_nls, 
                `ARIMA` = predicted_aa,
                `Generalized Logistic` = predicted_glg)  %>%
-        gather(growth_type, cum_cases, -days_since)
+        gather(growth_type, c_cases, -days_since)
       
       st0 <- paste0("Estimated eventual deaths of ", fr(mod_glg@par[["K"]]), 
                     " with generalized logistic growth model.")
@@ -325,7 +325,7 @@ for(the_country in all_countries){
                     fr(ci3[1], "original"), " and ", fr(ci3[2], scale = "original"), 
                     " with ARIMA model.")
       
-      p <- ggplot(the_data, aes(x = days_since, y = cum_cases)) +
+      p <- ggplot(the_data, aes(x = days_since, y = c_cases)) +
         geom_point() +
         geom_line(data = preds, aes(colour = growth_type)) +
         scale_y_continuous(label = comma) +
