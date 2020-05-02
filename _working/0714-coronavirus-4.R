@@ -3,7 +3,7 @@ library(scales)
 library(googlesheets4)
 library(propagate)
 library(forecast)
-
+library(patchwork)
 
 url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
 
@@ -29,23 +29,47 @@ mod_nls <- try(nls(log(c_cases) ~ SSlogis(days_since, Asym, xmid, scal),
                    control = nls.control(
                      maxiter = 100, warnOnly = TRUE)))
 
-nd <- tibble(days_since = 20:26)
+exp(confint(mod_nls))
+
+nd <- tibble(days_since = 20:50)
 
 pred_nls <- predictNLS(mod_nls, newdata = nd, interval = "prediction", alpha = 0.2)
 
 
-cbind(nd, exp(pred_nls$summary)) %>%
-  ggplot(aes(x = days_since)) +
-  geom_line(aes(y = Prop.Mean.2)) +
-  geom_line(data = the_data, aes(y = c_cases)) +
-  geom_ribbon(aes(ymin = `Prop.10%`, ymax = `Prop.90%`), alpha = 0.5) +
-  scale_y_continuous(label = comma)
-
 y_ts <- ts(the_data$c_cases)
 best_lambda <- BoxCox.lambda(y_ts)
 mod_aa <- auto.arima(y_ts, lambda = best_lambda)
-fc_aa <- forecast(mod_aa, h = 7, biasadj = TRUE)
-autoplot(fc_aa) +
-  scale_y_continuous(label = comma) +
-  labs(x = "Days since 100 cases",
-       y = "Cumulative number of cases")
+fc_aa <- forecast(mod_aa, h = 31, biasadj = TRUE, level = 80)
+
+p1 <- cbind(nd, exp(pred_nls$summary)) %>%
+  ggplot(aes(x = days_since + 1)) +
+  geom_line(aes(y = Prop.Mean.2), colour = "steelblue") +
+  geom_line(data = the_data, aes(y = c_cases)) +
+  geom_ribbon(aes(ymin = `Prop.10%`, ymax = `Prop.90%`), alpha = 0.4, fill = "steelblue") +
+  scale_y_continuous(label = comma, limits = c(0, 3e5)) +
+  theme(panel.grid.minor.y =  element_blank()) +
+  labs(x = "Days since 100th confirmed case",
+       y = "Cumulative number of cases",
+       title = "30 day scenario for country X",
+       subtitle = "Logistic growth model - flattening curve to an asymptote",
+       caption = "Difference between the forecasts is not just a modelling decision but a real world choice")
+
+
+
+p2 <-autoplot(fc_aa, fcol = "steelblue") +
+  scale_y_continuous(label = comma, limits = c(0, 3e5)) +
+  theme(panel.grid.minor.y =  element_blank()) +
+  labs(x = "Days since 100th confirmed case",
+       y = "Shaded area shows 80% prediction interval",
+       title = "Scenario choices drive modelling results",
+       subtitle = "Time series model - things continue to grow as they have",
+       caption = "freerangestats.info")
+
+p3 <- p1 + p2
+
+
+logy <- scale_y_log10(label = comma, limits = c(100, 3e5))
+p4 <- p1 +  logy + labs(y = "Cumulative number of cases (log scale)") + p2 + logy
+
+svg_png(p3, "../img/0174-linear",w = 10, h = 5)
+svg_png(p4, "../img/0174-log",w = 10, h = 5)

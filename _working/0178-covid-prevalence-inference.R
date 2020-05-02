@@ -3,6 +3,7 @@ library(janitor)
 library(scales)
 library(Cairo)
 library(mgcv)
+library(EpiEstim)
 
 CairoWin()
 
@@ -30,7 +31,14 @@ states12 <- states %>%
   slice(1:12) %>%
   inner_join(states, by = "state") %>%
   # state has to be a factor for use in mgcv::gam:
-  mutate(state_name = fct_reorder(state_name, positive, .fun = sum)) 
+  mutate(state_name = fct_reorder(state_name, positive, .fun = sum)) %>%
+  # we want deaths in 7-14 days time as a crude indicator of cases now, for use later
+  # Tried various methods and 7 was best. Obviously, if doing this 'for real', 7 should
+  # be a parameter we estimate from the data
+  group_by(state) %>%
+  arrange(date) %>%
+  mutate(deaths_x_days_later = lead(death_increase, 7)) %>%
+  ungroup()
 
 #-----------------Smooth the positive test rates-----------
 mod <- gam(pos_rate ~ state_name + s(date_n, by = state_name), 
@@ -50,6 +58,9 @@ states12 %>%
   scale_size_area(label = comma, max_size = 12) +
   labs(size = "Number of daily tests")
 
+
+
+
 #==========================Exploring my model================
 
 increase_cases <- function(observed_cases, pos_rate, m, k){
@@ -59,17 +70,32 @@ increase_cases <- function(observed_cases, pos_rate, m, k){
 
 the_data <- states12 %>%
   filter(state_name == "New York") %>%
-  mutate(`Simple multiplier\n(confirmed x 10)` = increase_cases(positive_increase, pos_rate_smoothed, m = 10, k = 0),
-         `Ratio multiplier` = increase_cases(positive_increase, pos_rate_smoothed, m = 0.273, k = 1),
-         `Generalized adjustment` = increase_cases(positive_increase, pos_rate_smoothed, m = 1.667, k = 0.5))  %>%
+  mutate(`Simple multiplier\n(confirmed x 6)` = increase_cases(positive_increase, pos_rate_smoothed, m = 6, k = 0),
+         `Deaths 7 days later x 100` = deaths_x_days_later * 100,
+         `Ratio multiplier` = increase_cases(positive_increase, pos_rate_smoothed, m = 0.164, k = 1),
+         `Generalized adjustment` = increase_cases(positive_increase, pos_rate_smoothed, m = 1, k = 0.5))  %>%
   select(date, `Confirmed cases` = positive_increase, 
-         `Simple multiplier\n(confirmed x 10)`:`Generalized adjustment`) %>%
+         `Simple multiplier\n(confirmed x 6)`:`Generalized adjustment`) %>%
   gather(variable, value, -date) %>%
-  mutate(variable = fct_reorder(variable, -value, .fun = last))
+  mutate(variable = fct_reorder(variable, -value, .fun = last),
+         variable = fct_relevel(variable, "Confirmed cases", after = Inf))
 
 the_data %>%
   ggplot(aes(x = date, y = value, colour = variable)) +
   geom_line() +
+  theme(legend.position = "right") +
+  scale_y_continuous(label = comma ) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(colour = "Adjustment method",
+       title = "Different methods of adjusting the raw observed daily COVID-19 case count in New York",
+       subtitle = "Comparing a simple 'times 10' multiplier with methods that adjust for the ratio of positive test rates.
+The 'simple multiplier' method probably overestimates cases when testing is good, and underestimates it when testing is inadequate.",
+       y = "Daily new cases",
+       x = "")
+
+the_data %>%
+  ggplot(aes(x = date, y = value, colour = variable)) +
+  geom_smooth(method = "loess", se = FALSE, span = 0.5) +
   theme(legend.position = "right") +
   scale_y_continuous(label = comma ) +
   scale_colour_brewer(palette = "Set1") +
@@ -90,8 +116,87 @@ the_data %>%
   scale_x_continuous(label = comma) +
   labs(title = "Different methods of adjusting the raw observed daily COVID-19 case count in New York",
        subtitle = "Comparing a simple 'times 10' multiplier with methods that adjust for the ratio of positive test rates.
-The three adjustment methods have been calibrated to deliver similar total results for illustrative purposes.",
+The four adjustment methods have been calibrated to deliver similar total results for illustrative purposes.",
        y = "Adjustment method",
        x = "Total cases to 1 May 2020") +
   theme(legend.position = "none")
 
+
+#================Estimating Reff================
+
+# Get the data on
+source("https://raw.githubusercontent.com/CBDRH/ozcoviz/master/get_nishiura_si_sample.R")
+
+get_nishiura_si_sample()
+
+
+
+
+
+
+
+
+
+
+
+#====================Modelling========================
+# 
+# # an ok prior for the infection fatality rate
+# x <- 1:299 /9000
+# plot(x, dbeta(x, 2, 200), type = "l")
+# 
+# #---------------brute force--------------
+# 
+# mod_data <- states12 %>%
+#   filter(state_name == "New York") %>%
+#   mutate(cfr = deaths_x_days_later / positive_increase) %>%
+#   mutate(cfr = ifelse(is.nan(cfr), NA, cfr)) %>%
+#   select(date, deaths_x_days_later, positive_increase, pos_rate_smoothed) %>%
+#   drop_na()
+#   
+# 
+# 
+# compare_methods <- function(par, other_method, observed_cases, pos_rate){
+#   par[1] <- logistic(par[1])
+#   y1 <- other_method
+#   y2 <- increase_cases(observed_cases, pos_rate, k = par[1], m = par[2])
+#   return(sum((y1 - y2) ^ 2))
+# }
+# 
+# res_l <- lapply(1:100, function(i){
+#        tmp <- optim(c(k = 0.5, m = 1), 
+#         fn = compare_methods, 
+#         other_method = mod_data$deaths_x_days_later / rbeta(1,2,200), 
+#         observed_cases = mod_data$positive_increase,
+#         pos_rate = mod_data$pos_rate_smoothed)
+#        
+#        estimates <- tmp$par
+#        estimates[1] <- logistic(estimates[1])
+#        
+#        return(estimates)}) 
+# 
+# res_df <- do.call("rbind", res_l) %>%
+#   as_tibble()
+# 
+# pairs(res_df)
+# 
+# #-----------Stan-------------------
+# 
+# stan_data <- states12 %>%
+#   filter(state_name == "New York") %>%
+#   mutate(cfr = deaths_x_days_later / positive_increase) %>%
+#   mutate(cfr = ifelse(is.nan(cfr), NA, cfr)) %>%
+#   fill(cfr, deaths_x_days_later, .direction = "downup") %>%
+#   filter(cfr >0)
+# 
+# 
+# stan_list <- list(
+#   n = nrow(stan_data),
+#   cfr = stan_data$cfr,
+#   leading_deaths = stan_data$deaths_x_days_later
+#   
+# )
+# 
+# fit <- stan("0178-covid-prevalence.stan", data = stan_list, cores = 4)
+# 
+# fit

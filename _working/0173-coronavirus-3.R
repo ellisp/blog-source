@@ -1,5 +1,4 @@
 library(tidyverse)
-library(coronavirus)
 library(nlme)
 library(mgcv)
 library(AICcmodavg) # for predictSE to work with gls
@@ -114,7 +113,7 @@ deaths %>%
 
 all_countries <- sort(unique(confirmed$country))
 
-CairoPDF("../img/0173-all-countries-cases.pdf", 11, 8)
+CairoPDF(paste0("../img/0173-all-countries-cases", Sys.Date(), ".pdf"), 11, 8)
 for(the_country in all_countries){
   the_data <- filter(confirmed, country == the_country) %>% 
     ungroup() %>%
@@ -152,7 +151,7 @@ for(the_country in all_countries){
     
     # caution - these need to be in the same order as p!
     lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$c_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
-    upper <- c(y0 = 10, mumax = 0.5, K = 18, alpha = 1.4, beta = 1.4, gamma = 1.4)
+    upper <- c(y0 = min(log(the_data$c_cases)), mumax = 0.5, K = 18, alpha = 1.4, beta = 1.4, gamma = 1.4)
     
     mod_glg <-  fit_growthmodel(FUN = grow_genlogistic, p = p, 
                                 time = the_data$days_since, 
@@ -191,13 +190,16 @@ for(the_country in all_countries){
       
       preds <- the_data %>%
         select(days_since, 
-               `Exponential` = predicted_exp, 
+               # `Exponential` = predicted_exp, 
                `Logistic` = predicted_nls, 
                `ARIMA` = predicted_aa,
                `Generalized Logistic` = predicted_glg)  %>%
         gather(growth_type, c_cases, -days_since)
       
-      st0 <- paste0("Estimated eventual cases of ", fr(mod_glg@par[["K"]]), 
+      glg_max <- fr(max(predict(mod_glg, newdata = data.frame(time = 1:120))[ ,2], na.rm = TRUE))
+      
+      
+      st0 <- paste0("Estimated eventual deaths of ", glg_max, 
                     " with generalized logistic growth model.")
       st1 <- paste0("Estimated eventual cases between ", fr(ci1[1]), " and ", fr(ci1[2]), 
                     " with logistic growth model.")
@@ -222,7 +224,8 @@ for(the_country in all_countries){
       print(p)
     }
   }
-}
+
+  }
 dev.off()
 
 
@@ -232,7 +235,7 @@ dev.off()
 
 
 
-CairoPDF("../img/0173-all-countries-deaths.pdf", 11, 8)
+CairoPDF(paste0("../img/0173-all-countries-deaths", Sys.Date(), ".pdf"), 11, 8)
 for(the_country in all_countries){
   print(the_country)
   the_data <- filter(deaths, country == the_country) %>% 
@@ -269,13 +272,15 @@ for(the_country in all_countries){
            alpha = 1, beta = 1, gamma = 1)
     
     # caution - these need to be in the same order as p!
-    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$c_cases)) - 1, alpha = 0.5, beta = 0.5, gamma = 0.5)
-    upper <- c(y0 = 10, mumax = 0.5, K = 20, alpha = 1.5, beta = 1.5, gamma = 1.5)
+    lower <- c(y0 = 0, mumax = 0.05, K = max(log(the_data$c_cases)) - 1, alpha = 0.1, beta = 0.1, gamma = 0.1)
+    upper <- c(y0 = 10, mumax = 0.5, K = 20, alpha = 3, beta = 3, gamma = 3)
     
     mod_glg <-  fit_growthmodel(FUN = grow_genlogistic, p = p, 
                                time = the_data$days_since, 
                                   y = log(the_data$c_cases), lower = lower, upper = upper)
     
+    mod_glg@fit$par
+    # china has mumax of 0.499, alpha 0.106, beta 0.846, gamma 0.841
     two_weeks_out <- max(the_data$days_since) + 14
     
     confint_nls <- try(confint(mod_nls, level = 0.8))
@@ -294,9 +299,11 @@ for(the_country in all_countries){
       ci3 <- c(f_aa$lower[14, 1], f_aa$upper[14, 1])
       
       # limit to one billion at most:
+      ci3 <- ifelse(is.na(ci3), Inf, ci3)
       ci1 <- pmin(ci1, log(1e9))
       ci2 <- pmin(ci2, log(1e9))
       ci3 <- pmin(ci3, 1e9)
+      
       
       # Must be at least as much as the current cases:
       ci3 <- pmax(max(the_data$c_cases), ci3)
@@ -308,13 +315,16 @@ for(the_country in all_countries){
       
       preds <- the_data %>%
         select(days_since, 
-               `Exponential` = predicted_exp, 
+      #         `Exponential` = predicted_exp, 
                `Logistic` = predicted_nls, 
                `ARIMA` = predicted_aa,
                `Generalized Logistic` = predicted_glg)  %>%
         gather(growth_type, c_cases, -days_since)
       
-      st0 <- paste0("Estimated eventual deaths of ", fr(mod_glg@par[["K"]]), 
+      glg_max <- fr(max(predict(mod_glg, newdata = data.frame(time = 1:120))[ ,2], na.rm = TRUE))
+                  
+      
+      st0 <- paste0("Estimated eventual deaths of ", glg_max, 
                     " with generalized logistic growth model.")
       
       st1 <- paste0("Estimated eventual deaths between ", fr(ci1[1]), " and ", fr(ci1[2]), 
