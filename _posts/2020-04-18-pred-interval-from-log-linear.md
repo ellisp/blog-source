@@ -78,7 +78,7 @@ A prediction interval differs from a confidence interval in that it includes ind
 
 Creating a prediction interval from the log-transformed OLS model is a standard Regression 101 exercise. The variance of the estimate for any individual is the sum of the variance of our estimated curve at that point and the residual variance of individuals. Take the square root and you get the standard deviation; assume normality and multiply by 1.96 to get a 95% prediction interval; back transform to the original scale (note that there are bias-adjustment complications we could worry about here but will ignore for today's purposes).
 
-<img src='/img/0177-log-transform.svg' width='100%' align='right'>
+<object type="image/svg+xml" data='/img/0177-log-transform.svg' width='100%'><img src='/img/0177-log-transform.png' width='100%'></object>
 
 ... generated with this code:
 
@@ -122,7 +122,7 @@ ggplot(d, aes(x = x)) +
 
 And here we go:
 
-<img src='/img/0177-quasi-glm.svg' width='100%' align='right'>
+<object type="image/svg+xml" data='/img/0177-quasi-glm.svg' width='100%'><img src='/img/0177-quasi-glm.png' width='100%'></object>
 
 Seems simple once you know.
 
