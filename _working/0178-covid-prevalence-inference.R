@@ -168,12 +168,12 @@ mp <- ggplot(mod_data, aes(x = tpr)) +
                   aes(y = cmcr, label = village)) +
   coord_cartesian(ylim = c(0, 300)) +
   scale_x_continuous(label = percent) +
-  labs(x = "Test-Positivity Rate",
+  labs(x = "Test Positivity Rate",
        y = "Confirmed Malaria Case Rate\nFrom health system case records (per thousand)",
        title = "Non-linear relationship of test positivity and malaria incidence in 15 Ugandan villages",
        subtitle = "Shaded area shows 95% confidence interval and 95% prediction interval.
 Labelled villages are outliers due to data issues discussed in the original article.",
-       caption = "Source: Boyce et al, 'Practical Implications of the Non-Linar Relationship between the Test Positivity Rate and Malaria Incidence'
+       caption = "Source: Boyce et al, 'Practical Implications of the Non-Linear Relationship between the Test Positivity Rate and Malaria Incidence'
 Original article at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4809590/; graphic by http://freerangestats.info")
   
 
@@ -230,7 +230,7 @@ p1 <- states12 %>%
   labs(size = "Number of daily tests", 
        x = "",
        y = "",
-       title = "Test-positivity rates for COVID-19 in 12 US states",
+       title = "Test positivity rates for COVID-19 in 12 US states",
        caption = "Source: covidtracking.com, smoothing by freerangestats.info") +
   scale_y_continuous(label = percent, limits = c(0, 1))
 
@@ -256,11 +256,17 @@ the_data <- states12 %>%
   mutate(variable = fct_reorder(variable, -value, .fun = last),
          variable = fct_relevel(variable, "Confirmed cases", after = Inf))
 
+var_cols <- RColorBrewer::brewer.pal(length(unique(the_data$variable)), name = "Set1")
+names(var_cols) <- unique(the_data$variable)
+
+
+
 p2 <- the_data %>%
   ggplot(aes(x = date, y = value, colour = variable)) +
   theme(legend.position = "right") +
   scale_y_continuous(label = comma ) +
-  scale_colour_brewer(palette = "Set1") +
+  scale_colour_manual(values = var_cols) +
+  theme(axis.text.y = element_blank()) +
   labs(colour = "Adjustment method",
        title = "Different methods of adjusting the raw observed daily COVID-19 case count in New York",
        subtitle = "Comparing a simple 'times 10' multiplier with methods that adjust for the ratio of positive test rates.
@@ -271,10 +277,13 @@ The 'simple multiplier' method probably overestimates cases when testing is good
 
 p2a <- p2 + geom_line()
 p2b <- p2 + geom_smooth(method = "loess", se = FALSE, span = 0.5)
+
+p2c <- p2 %+% filter(the_data, variable %in% c("Ratio multiplier", "Generalized adjustment")) + geom_line()
   
 
 svg_png(p2a, "../img/0178-diff-methods", 10, 6)
 svg_png(p2b, "../img/0178-diff-methods-smoothed", 10, 6)
+svg_png(p2c, "../img/0178-two-methods-smoothed", 10, 6)
 
 p3 <- the_data %>%
   group_by(variable) %>%
@@ -341,7 +350,7 @@ for(i in 1:length(all_variables)){
   p$labels$title <- all_variables[i]
   p$labels$x <- ""
   p$labels$y <- "Estimated R for COVID-19 in New York"
-  plots[[i]] <- p
+  plots[[i]] <- p + coord_cartesian(ylim = c(0, 7) )
   
 }
 
@@ -359,10 +368,16 @@ annotation_plot <- ggplot() +
   labs(title = str_wrap("These charts show attempts to adjust the estimation of reproduction 
                         number by scaling up case numbers with a high test positivity.", 70))
 
-draw_plots <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + annotation_plot
+draw_plots <- plots[[1]] + plots[[2]] +plots[[3]] +plots[[4]] + plots[[5]] + annotation_plot
 
 frs::svg_png(draw_plots, "../img/0178-r-methods", w= 15, h = 8)
 
+draw_plots2 <- plots[[1]] + plots[[5]] + annotate("text", x = as.Date("2020-04-1"), y = 5, label = str_wrap(
+                                                    "Adjusting case numbers for test positivity makes estimates of
+                                                  R more realistic but cannot make up for the poor data quality in 
+                                                  March.", 40), hjust = 0)
+
+frs::svg_png(draw_plots2, "../img/0178-two-r-methods", w= 10, h = 5)
 
 
 
