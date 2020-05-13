@@ -68,7 +68,7 @@ for(i in 1:length(all_states)){
   the_data <- states_d %>%
     filter(state == the_state) %>%
     select(dates = date,
-           I = cumul) %>%
+           I = daily) %>%
     complete(dates) %>%
     arrange(dates) %>%
     filter(dates >= as.Date("2020-03-01"))
