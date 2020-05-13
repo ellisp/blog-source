@@ -6,6 +6,10 @@ library(tidygraph)
 library(ggraph)
 library(Cairo)
 CairoWin()
+
+# TODO - a problem with lines 6380:6381 which has a stage direction across two lines.
+
+
 #' Replace NA values in a vector with counting from the previous value
 #' 
 #' @param x a vector character
@@ -109,7 +113,7 @@ personae <- tribble(~speaker, ~speaker_abb, ~speaker_sh,
                      "Ghost of Hamlet's Father.", "Ghost.", "Ghost",
                      "Gertrude, Queen of Denmark, and Mother of Hamlet.", "Queen.", "Gertrude",
                      "Ophelia, Daughter to Polonius.", "Oph.", "Ophelia",
-                     "Prologue to The Murder of Gonzago, a play within a play", "Pro.", "Prologue",
+                     "Prologue to The Murder of Gonzago, a play within a play", "Pro.", "Player prologue",
                       "King in The Murder of Gonzago, a play within a play", "P. King.", "Player King",
                     "Queen in The Murder of Gonzago, a play within a play", "P. Queen.", "Player Queen",
                       "Lucianus, nephew to the King in play within a play", "Luc.", "Lucianus",
@@ -197,6 +201,9 @@ hamlet_lines <- hamlet %>%
 # Number of lines per scene
 hamlet_lines %>%
   count(act, scene)
+
+#filter(hamlet_lines, speaker_sh == "Lord")
+#filter(hamlet_lines, original_line_number %in% 6300:6400) %>% View
 
 # concept of stopwords seems a bit arbitrary. Why aren't "shall", "go", "us" and "one" 
 # already stopwords in the snowball lexicon whereas "i", "our" are?
@@ -333,7 +340,7 @@ d1 <- d %>%
   group_by(from, to) %>%
   summarise(n = sum(n)) %>%
   filter(from < to)
-
+# to do = tidy up Marcellus and Bernardo here
 
 d2 <-as_tbl_graph(d1) %>%
   activate(nodes) %>%
