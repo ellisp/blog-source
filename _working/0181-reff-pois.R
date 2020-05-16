@@ -61,14 +61,6 @@ res <- stan("0181-reff-pois.stan",
             iter = 500,
             control = list(max_treedepth = 15))
 
-res
-
-names(res)
-slotNames(res)
-
-res@
-
-mean(stan_data$y)
 
 x <- 1:99 / 100
 plot(x, dbeta(x, 2, 5))
