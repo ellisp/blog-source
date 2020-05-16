@@ -55,9 +55,21 @@ stan_data <- list(
   y =  d$daily
 )  
 
-res <- stan("0181-reff-pois.stan", data = stan_data, chains = 4,
+res <- stan("0181-reff-pois.stan", 
+            data = stan_data, 
+            chains = 4,
+            iter = 500,
             control = list(max_treedepth = 15))
-summary(res)
+
+res
+
+names(res)
+slotNames(res)
+
+res@
+
 mean(stan_data$y)
 
+x <- 1:99 / 100
+plot(x, dbeta(x, 2, 5))
 
