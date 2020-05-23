@@ -58,10 +58,10 @@ stan_data <- list(
 res <- stan("0181-reff-pois.stan", 
             data = stan_data, 
             chains = 4,
-            iter = 500,
+            iter = 2000,
             control = list(max_treedepth = 15))
 
-
+res
 x <- 1:99 / 100
 plot(x, dbeta(x, 2, 5))
 
