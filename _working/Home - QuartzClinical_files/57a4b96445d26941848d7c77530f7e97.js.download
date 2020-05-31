@@ -1,0 +1,2 @@
+/**handles:b4st-js**/
+!function(t){"use strict";t(document).ready(function(){t(".commentlist li").addClass("card"),t(".comment-reply-link").addClass("btn btn-secondary"),t("select, input[type=text], input[type=email], input[type=password], textarea").addClass("form-control"),t("input[type=submit]").addClass("btn btn-primary"),t(".pagination .dots").addClass("page-link").parent().addClass("disabled")})}(jQuery);
