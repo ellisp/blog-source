@@ -39,4 +39,4 @@ update_geom_defaults("text_repel", list(family = main_font))
 update_geom_defaults("label", list(family = main_font))
 
 # update the "most popular" pages page
-#source("../_R/_analytics.R")
+source("../_R/_analytics.R")
