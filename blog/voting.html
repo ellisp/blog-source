@@ -4,6 +4,15 @@ title: Posts that use voting behaviour data
 image: /img/0098-vote.png
 nametype: index
 ---
+<div>
+<h2>Election forecasts</h2>
+<p>
+   In addition to the blog posts listed in the section below, you may be looking for the <a href="elections/index.html">election forecasts page</a>.
+</p>
+
+<h2>Blog posts</h2>
+</div>
+
    
    {% for post in site.posts %}
    {% if post.tags[0] == "VotingBehaviour" or post.tags[1] == "VotingBehaviour" or post.tags[2] == "VotingBehaviour" or post.tags[3] == "VotingBehaviour" or post.tags[4] == "VotingBehaviour" or post.tags[5] == "VotingBehaviour"%}
@@ -23,6 +32,5 @@ nametype: index
 	{% endif %}
 
    {% endfor %}
-
 
 
