@@ -5,6 +5,7 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
+
 ## Welcome
 
 This page is simply an index to some election forecasts I have done as a side project. After trying several different avenues, my preferred method of forecasting elections is to develop a weak prior based on a "political science model" (for example, estimating a distribution for the government party's vote given economic conditions) and updating that prior with a Baysian state space model which allows for different pollsters' tendency to under- or over-estimate each parties' vote. This let's me generate a forecast of vote like this:
