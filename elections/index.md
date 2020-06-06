@@ -18,7 +18,7 @@ This page is simply an index to some election forecasts I have done as a side pr
 
 - [New Zealand 2020](/elections/nz-2020/index.html) (updating regularly)
 - [Australia 2019](/elections/oz-2019/index.html)
-- [New Zealand 2016](/elections/nz-2016/elections.html)
+- [New Zealand 2017](/elections/nz-2017/elections.html)
 
 ## Reflections
 

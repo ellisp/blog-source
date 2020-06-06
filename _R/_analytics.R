@@ -4,7 +4,7 @@ library(tidyverse)
 library(googleAnalyticsR)
 
 ## authenticate via web browser
-ga_auth()
+ga_auth(email = "peter.ellis2013nz@gmail.com")
 
 ga_id <- 106185571
 my_quandl_key <- "Gdtn2-hLnax_T98RqDfx" 
@@ -38,7 +38,8 @@ pages <- pages_orig %>%
   mutate(pagePath = gsub("/$", "", pagePath)) %>%
   ungroup() %>%
   mutate(pageViews_prop = pageViews / sum(pageViews)) %>%
-  filter(pageViews > 30) 
+  filter(pageViews > 30) %>%
+  arrange(desc(pageViews))
  
 
 #=========Image for 'most popular' page========
