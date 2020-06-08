@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Science isn't broken, but journals are
-date: 2020-06-07
+date: 2020-06-08
 tag: 
    - Metascience
 description: A joint solution is emerging for disparate problems of access, quality control and replicability in scientific publishing.
