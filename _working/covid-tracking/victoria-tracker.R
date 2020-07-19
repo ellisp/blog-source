@@ -70,7 +70,7 @@ d <- gd_orig %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
 
 
-the_caption <- "Data gathered by The Guardian; analysis by http://freerangestats.info"  
+the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 
 #------------Estimating R with EpiNow2---------------------
@@ -111,6 +111,12 @@ pc2 <- my_plot_estimates(estimates2,
                          extra_title = " and positivity",
                          caption = the_caption,
                          y_max = 1500)
-svg_png(pc2, "../img/covid-tracking/0189-combined-2", h = 10, w = 10)
+svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
-svg_png(pc2, "../_site/img/covid-tracking/0189-combined-2", h = 10, w = 10)
+svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
+
+wd <- setwd("../_site")
+system("git add img/covid-tracking/victoria-latest.*")
+system("git commit -m 'latest covid plot'")
+system("git push origin master")
+setwd(wd)
