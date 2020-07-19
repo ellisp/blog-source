@@ -10,7 +10,7 @@ tag:
 description: There is a fast growing body of knowledge and tools to help estimate effective reproduction number of an epidemic in real time; I have a go at applying the latest EpiNow2 R package to data for Covid-19 cases in Victoria, Australia.
 image: /img/0189-combined-2.svg
 socialimage: http://freerangestats.info/img/0189-combined-2.png
-category: Other
+category: R
 ---
 
 This [great preprint](https://www.medrxiv.org/content/10.1101/2020.06.18.20134858v2) recently came out from a team of Katelyn Gostic and others. It uses simulations to test various methods of estimating the effective reproduction number $$R_t$$. If you are following the Covid-19 pandemic from a data angle at all, you will no doubt have come across the effective reproduction number and will know that it is an estimate, at a point in time, of the average number of people an infected person infects in turn. It drives the exponential growth of an epidemic, and the way it varies over time is a clear, interpretable way of understanding how that growth rate gets under control, or doesn't.
@@ -399,19 +399,19 @@ As can be seen, several sets of estimates are returned. Panel B is important - i
 
 From panel B, the estimates of instantaneous reproduction number follow in straightforward fashion, as seen in the bottom panel. I've opted to only show the estimates of $$R_t$$ from late April onwards because prior to that the cases were dominated by international arrivals. While methods exist to estimate reproduction number appropriately in this circumstance, I'm not sufficiently interested in that bit of history (*months* ago now...) to go to the effort to do it.
 
-Of course, this chart is great news for Victorians. The brown 'nowcasting' segment of the plot shows a decided downwards trend in estimated infections, timing closely with the extra shutdown and distancing measures brought in just under two weeks ago. And it shows the best estimate of today's effective reproduction number to be (just) less than 1. Let's hope that stays the case.
+Of course, this chart is cautiously good news for Victorians. The brown 'nowcasting' segment of the plot shows a decided downwards trend in estimated infections, timing closely with the extra shutdown and distancing measures brought in just under two weeks ago. And it shows the best estimate of today's effective reproduction number to be (just) less than 1. Let's hope that stays the case.
 
-That first fit was with the confirmed case numbers directly from The Guardian. If I instead apply them to the numbers after my mild correction for test positivity, we see a similar picture. Recent estimated case numbers are higher because of the higher test positivity, but the estimate of $$R_t$$ today is similar - still just below 1.0, and on its way down (albeit with massive uncertainty).
+That first fit was with the confirmed case numbers directly from The Guardian. If I instead apply them to the numbers after my mild correction for test positivity, we see a similar picture. Recent estimated case numbers are higher because of the higher test positivity, but the estimate of $$R_t$$ today is similar - still just below 1.0, and on its way down (albeit with lots of uncertainty).
 
 <object type="image/svg+xml" data='/img/0189-combined-2.svg' width='100%'><img src='/img/0189-combined-2.png' width='100%'></object>
 
-That uncertainty issue is actual one of my main motivators for writing this blog. The fact is, we don't know what's going to happen here. This is definitely on of those cases when one of the most useful things a forecast or nowcast can do is highlight the range of possibilities that are consistent with the data we have. And critically, what happens in the future - that big blue credibility interval in the last couple of charts - depends on actual people's actual decisions and actions.
+That uncertainty issue is actual one of my main motivators for writing this blog. The fact is, we don't know what's going to happen here. This is definitely one of those cases when one of the most useful things a forecast or nowcast can do is highlight the range of possibilities that are consistent with the data we have. And critically, what happens in the future - that big blue credibility interval in the last couple of charts - depends on actual people's actual decisions and actions.
 
 > "The fault, dear Brutus, is not in our stars, but in ourselves"
 
 That reminds me, a Shakespearean blog post really is on the way.
 
-So the situation in Melbourne is clearly on a knife edge. Today's numbers (Saturday 18 July) are good, but we know not to pay too much attention to one point in these noisy processes. In a week's time, any number of cases per day from zero to more than 1,000 (the chart is cut off well below its top point) is possible. Let's remember those big, uncertain prediction intervals; not be too confident about which way things are headed; and do our best to point them in the right direction by our own behaviour. Stay safe out there!
+So the situation in Melbourne is clearly on a knife edge. Today's numbers (Saturday 18 July) are good (in fact exactly what and when would be hoped if the suppression strategy is doing its job), but we know not to pay too much attention to one point in these noisy processes. In a week's time, any number of cases per day from zero to more than 1,000 (the chart is cut off well below its top point) is possible. Let's remember those big, uncertain prediction intervals; not be too confident about which way things are headed; and do our best to point them in the right direction by our own behaviour. Stay safe out there! Practice social distancing, stay at home as much as possible, wear a mask when going out, and pay attention to your local public health experts. New Zealanders are excluded the first three of those four things, because they did the fourth one reasonably well.
 
 Anyway, here's the code for those final bits of analysis. Running the estimation processes took several hours each on my laptop:
 
