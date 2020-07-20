@@ -5,7 +5,7 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
-**Last updated 31 May 2020**
+**Last updated 28 June 2020**
 
 ## Strong likelihood of a Labour-led government after 2020 election
 
