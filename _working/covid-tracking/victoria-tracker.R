@@ -28,7 +28,8 @@ if(max(tmp$Date) < Sys.Date()){
 }
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-20"),   275
+                          as.Date("2020-07-20"),   275,
+                          as.Date("2020-07-21"),   375
                           ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
