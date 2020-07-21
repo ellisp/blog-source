@@ -1,4 +1,4 @@
-my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max = 1500){
+my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max = 1500, location = " in Victoria"){
   my_theme <- my_theme +
     theme(axis.text.x = element_text(angle = 45, size = 8, hjust = 1)) 
   
@@ -10,7 +10,7 @@ my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max =
     theme(legend.position = "none",
           panel.grid.minor = element_blank()) +
     coord_cartesian(ylim = c(0, y_max)) +
-    labs(title = glue("Estimated infections based on confirmed cases{extra_title}"),
+    labs(title = glue("Estimated infections{location} based on confirmed cases{extra_title}"),
          x = "") +
     scale_x_date(date_breaks = "1 week", date_labels = "%d %b", limits = range(p$data$date))
   
@@ -20,7 +20,7 @@ my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max =
     theme(legend.position = "none",
           panel.grid.minor = element_blank()) +
     coord_cartesian(ylim = c(0, y_max)) +
-    labs(title = glue("Estimated infections taking delay{extra_title} into account"),
+    labs(title = glue("Estimated infections{location} taking delay{extra_title} into account"),
          x = "") +
     scale_x_date(date_breaks = "1 week", date_labels = "%d %b", limits = range(p$data$date))
   

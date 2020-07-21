@@ -16,6 +16,8 @@ source("covid-tracking/plot_estimates.R")
 
 url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
 
+k <- 0.1
+
 gs4_deauth()
 gd_orig <- read_sheet(url) 
 
@@ -28,8 +30,7 @@ if(max(tmp$Date) < Sys.Date()){
 }
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-20"),   275,
-                          as.Date("2020-07-21"),   375
+                          as.Date("2020-07-22"),   300
                           ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -68,12 +69,30 @@ d <- gd_orig %>%
   fill(positivity, .direction = "downup") %>%
   mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
          ps2 = fitted(loess(positivity ~ numeric_date, data = ., span = 0.1)),
-         cases_corrected = confirm * ps1 ^ 0.1 / min(ps1 ^ 0.1)) %>%
+         cases_corrected = confirm * ps1 ^ k / min(ps1 ^ k)) %>%
   ungroup() %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
 
 
 the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+
+#-----------------Positivity plot------------------
+pos_line <- d %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = ps1), colour = "steelblue") +
+  geom_point(aes(y = pos_raw)) +
+  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  labs(x = "",
+       y = "",
+       title = "Covid-19 test positivity in Victoria, Australia, 2020",
+       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
+       and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
+       The lowest rate is {percent(min(d$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
+       adjusted case numbers being {comma((0.015 / min(d$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
+
+svg_png(pos_line, "../img/covid-tracking/victoria-positivity", h = 5, w = 9)
+
+svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 9)
 
 
 #------------Estimating R with EpiNow2---------------------
@@ -121,6 +140,8 @@ svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
 wd <- setwd("../_site")
 
 system('git add img/covid-tracking/victoria-latest.*')
+system('git add img/covid-tracking/victoria-positivity.*')
+
 
 system('git config --global user.email "peter.ellis2013nz@gmail.com"')
 system('git config --global user.name "Peter Ellis"')
