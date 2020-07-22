@@ -30,7 +30,7 @@ if(max(tmp$Date) < Sys.Date()){
 }
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-22"),   300
+                          #as.Date("2020-07-22"),   484
                           ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -132,7 +132,7 @@ estimates2 <- EpiNow2::epinow(reported_cases = d2,
 pc2 <- my_plot_estimates(estimates2, 
                          extra_title = " and positivity",
                          caption = the_caption,
-                         y_max = 1500)
+                         y_max = 2000)
 svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)

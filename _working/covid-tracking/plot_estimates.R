@@ -1,4 +1,8 @@
-my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max = 1500, location = " in Victoria"){
+my_plot_estimates <- function(estimates, 
+                              extra_title = "", 
+                              caption = "", 
+                              y_max = 1500, 
+                              location = " in Victoria"){
   my_theme <- my_theme +
     theme(axis.text.x = element_text(angle = 45, size = 8, hjust = 1)) 
   
@@ -24,9 +28,16 @@ my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max =
          x = "") +
     scale_x_date(date_breaks = "1 week", date_labels = "%d %b", limits = range(p$data$date))
   
+  todays_r <- p$data %>%
+    filter(date == Sys.Date())
+  st <- str_wrap(glue("Estimated R on {format(Sys.Date(), format = '%d %B')} 
+             is between {round(todays_r$lower, 2)} and 
+             {round(todays_r$upper, 2)}. The best point estimate is 
+              {round(todays_r$mean, 2)}."), 100)
+  
+  
   p3 <- p$data %>% 
-    filter(date > as.Date("2020-04-20")) %>%
-    ggplot(aes(x = date, y = median, fill = type)) +
+    ggplot(aes(x = date, y = mean, fill = type)) +
     my_theme +
     geom_hline(yintercept = 1, colour = "steelblue") +
     geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5) +
@@ -36,6 +47,7 @@ my_plot_estimates <- function(estimates, extra_title = "", caption = "", y_max =
           panel.grid.minor = element_blank()) +
     ggplot2::scale_fill_brewer(palette = "Dark2") +
     labs(title = glue("Effective Reproduction Number, correcting for both delay and right truncation{extra_title}"),
+         subtitle = st,
          y = bquote("Estimated" ~ R[t]),
          x = "",
          caption = caption)  +
