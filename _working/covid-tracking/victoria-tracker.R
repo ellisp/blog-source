@@ -20,7 +20,7 @@ gs4_deauth()
 gd_orig <- read_sheet(url) 
 
 # check by hand to see if we need to add today's news in
-tmp <- filter(gd_orig, State == "VIC") 
+tmp <- filter(gd_orig, State == "VIC") %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
 tail(tmp)
 
 if(max(tmp$Date) < Sys.Date()){
@@ -28,14 +28,17 @@ if(max(tmp$Date) < Sys.Date()){
 }
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-19"),   363
+                          as.Date("2020-07-20"),   275,
+                          as.Date("2020-07-21"),   375
                           ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
          test_increase = NA,
          pos_raw = NA)
   
-
+if(max(tmp$Date) >= min(latest_by_hand$date)){
+  stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
+}
 
 d <- gd_orig %>%
   clean_names() %>% 
@@ -116,7 +119,12 @@ svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 wd <- setwd("../_site")
-system("git add img/covid-tracking/victoria-latest.*")
-system("git commit -m 'latest covid plot'")
-system("git push origin master")
+
+system('git add img/covid-tracking/victoria-latest.*')
+
+system('git config --global user.email "peter.ellis2013nz@gmail.com"')
+system('git config --global user.name "Peter Ellis"')
+
+system('git commit -m "latest covid plot"')
+system('git push origin master')
 setwd(wd)
