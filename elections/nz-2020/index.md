@@ -5,13 +5,15 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
-**Last updated 28 June 2020**
+**Last updated 27 July 2020**
 
-## Strong likelihood of a Labour-led government after 2020 election
+## Near-certainty of a Labour-led government after 2020 election
 
 This chart shows the estimated probability of the key possible governing combinations after the coming New Zealand general election, which will be held on Saturday 19 September  2020.
 
 <object type="image/svg+xml" data='/img/nz-elections-2020/state-space-final-chances-bar.svg' width='100%'><img src='/img/nz-elections-2020/state-space-final-chances-bar.png' width='100%'></object>
+
+Barring a major polling error or a historically rapid change of public mood, the new government will be Labour-led and not need New Zealand First as part of their coalition (of course, they may negotiate a broader coalition than needed anyway). There is a strong chance that Labour will not need the Greens in a coalition.
 
 Those chances are based on the possibility of a combination of parties having a majority in Parliament. There will probably be 120 seats in Parliament, but there is a possibility of an additional seat under certain combinations of circumstances, which are dealt with in the model. The chart below shows the full distribution of results for selected possible combinations of parties:
 
@@ -40,6 +42,13 @@ The Bayesian method used to estimate this model allows the "house effects" of ea
 <object type="image/svg+xml" data='/img/nz-elections-2020/state-space-house-effects.svg' width='100%'><img src='/img/nz-elections-2020/state-space-house-effects.png' width='100%'></object>
 
 One of the strongest trends in house effects is that opinion polls tend to overestimate the actual vote for the Green Party.
+
+## More detailed seat distribution for individual parties and combinations
+
+This final chart shows the distribution of seats expected for a wider range of parties and combinations than the first few visualisations presnted earlier.
+
+<object type="image/svg+xml" data='/img/nz-elections-2020/state-space-final-chances-histogram.svg' width='100%'><img src='/img/nz-elections-2020/state-space-final-chances-histogram.png' width='100%'></object>
+
 
 ## Source code and thanks
 
