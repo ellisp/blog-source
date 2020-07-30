@@ -33,6 +33,9 @@ nsw_incidence_by_source <- read_csv(nsw_incidence_by_source_url,
   summarise(cases = n()) %>%
   ungroup()
   
+if(max(nsw_incidence_by_source$notification_date) < Sys.Date()){
+  warning("No data yet for today")
+}
 
 
 
@@ -51,7 +54,7 @@ cases_total <- nsw_incidence_by_source %>%
   summarise(cases = sum(cases))
   
 
-d <- gd_orig %>%
+positivity <- gd_orig %>%
   clean_names() %>% 
   filter(state == "NSW") %>%
   # deal with problem of multiple observations some days:
@@ -74,19 +77,16 @@ d <- gd_orig %>%
          pos_raw = cases/ test_increase,
          positivity = pmin(0.1, pos_raw)) %>%
   fill(positivity, .direction = "downup") %>%
-  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
-         cases_corrected = cases * ps1 ^ k / min(ps1 ^ k)) %>%
-  ungroup() 
+  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson"))) %>%
+  ungroup()  %>%
+  select(date, ps1, pos_raw, positivity)
 
-if(max(d$date) < Sys.Date()){
-  stop("No data yet for today")
-}
 
 
 the_caption <- glue("Data from NSW Health and gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 #-----------------Positivity plot------------------
-pos_line <- d %>%
+pos_line <- positivity %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
@@ -105,14 +105,28 @@ svg_png(pos_line, "../img/covid-tracking/nsw-positivity", h = 5, w = 9)
 svg_png(pos_line, "../_site/img/covid-tracking/nsw-positivity", h = 5, w = 9)
 
 
+#------------Positivity-adjusted-----
+
+d <- nsw_incidence_by_source %>%
+  rename(date = notification_date) %>%
+  left_join(positivity, by = "date") %>%
+  mutate(adjusted_cases = round(cases * ps1 ^ k / min(ps1 ^ k))) %>%
+  select(date, adjusted_cases, sum_source) %>%
+  spread(sum_source, adjusted_cases)
 
 
 
 #---------Estimate Reff-------------
-
+# See issue logged with EpiNow2 - not sure we can distinguish between local and imported cases.
+# For now we'll fit to jsut the local cases. This seems definitely wrong, as it will make it look
+# like all the new local cases were infected by the old ones, not by interstate or international
+# imports who then infected people. Probably would be better to do some other way.... Note that 
+# EpiEstim lets you distinguish, but does not have the adjustment for delays etc necessary.
+# EpiNow will do it, but then why did they dump EpiNow and start again with EpiNow2...
+# Another alternative would be the epidemia package https://imperialcollegelondon.github.io/epidemia/
+# - not sure if this can handle the imported v local thing.
 d2 <- d %>%
-  mutate(confirm = round(cases_corrected) ) %>%
-  select(date, confirm)
+  select(date, confirm = nsw)
 
 estimates2 <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
