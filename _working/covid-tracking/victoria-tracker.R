@@ -1,5 +1,4 @@
 
-
 source("covid-tracking/covid-setup.R")
 
 #-----------------the Victoria data--------------
@@ -11,22 +10,28 @@ k <- 0.1
 gs4_deauth()
 gd_orig <- read_sheet(url) 
 
+# optional: remove today's data so we can pout it in by hand including positivity
+gd_orig <- filter(gd_orig, Date != Sys.Date())
+
+
 # check by hand to see if we need to add today's news in
 tmp <- filter(gd_orig, State == "VIC") %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
 tail(tmp)
 
 if(max(tmp$Date) < Sys.Date()){
-  warning("No data yet for today")
+  warning("No data yet for today (perhaps you deleted it yourself?)")
 }
 
+
+
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          #as.Date("2020-07-22"),   484
-                          ) %>%
+                          as.Date("2020-07-30"),   723
+) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
          test_increase = NA,
-         pos_raw = NA)
-  
+         pos_raw = NA / NA)
+
 if(max(tmp$Date) >= min(latest_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
 }
@@ -64,6 +69,11 @@ d <- gd_orig %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
 
 
+if(max(d$date) < Sys.Date()){
+  stop("No data yet for today")
+}
+
+
 the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 #-----------------Positivity plot------------------
@@ -74,6 +84,7 @@ pos_line <- d %>%
   scale_y_continuous(label = percent_format(accuracy = 0.1)) +
   labs(x = "",
        y = "",
+       caption = the_caption,
        title = "Covid-19 test positivity in Victoria, Australia, 2020",
        subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
        and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
@@ -88,12 +99,11 @@ svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 
 
 
 
+#---------Estimate Reff-------------
 
-
-#---------Based on positivity-adjusted-------------
-
-d2 <- select(d, date, cases_corrected) %>%
-  mutate(confirm = round(cases_corrected) )
+d2 <- d %>%
+  mutate(confirm = round(cases_corrected) ) %>%
+  select(date, confirm)
 
 estimates2 <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
@@ -107,6 +117,7 @@ pc2 <- my_plot_estimates(estimates2,
                          extra_title = " and positivity",
                          caption = the_caption,
                          y_max = 2000)
+
 svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
