@@ -3,7 +3,41 @@ source("covid-tracking/covid-setup.R")
 
 #-----------------the NSW data--------------
 
-# Probably will want to shift this to use the official data source
+# Adapted from https://github.com/CBDRH/ozcoviz/blob/master/get_nsw_data.R,
+# Thanks Nicholas Tierney and Tim Churches
+
+nsw_incidence_by_source_url <- paste0("https://data.nsw.gov.au/data/dataset",
+                                      "/c647a815-5eb7-4df6-8c88-f9c537a4f21e",
+                                      "/resource/2f1ba0f3-8c21-4a86-acaf-444be4401a6d",
+                                      "/download/covid-19-cases-by-notification-date",
+                                      "-and-likely-source-of-infection.csv")
+
+colspec <- cols(notification_date = col_date(format = ""),
+                likely_source_of_infection = col_character())
+
+nsw_incidence_by_source <- read_csv(nsw_incidence_by_source_url,
+                                    col_types = colspec) %>%
+  rename(source = likely_source_of_infection) %>%
+  mutate(source = case_when(
+    source == paste0("Locally acquired - contact of a ",
+                     "confirmed case and/or in a known cluster") ~ "LC",
+    source == "Locally acquired - contact not identified" ~ "LNC",
+    source == "Overseas" ~ "OS",
+    source == "Interstate" ~ "IS",
+    source == "Under investigation" ~ "UIX",
+    TRUE ~ "OTH")) %>%
+  mutate(sum_source = case_when(source %in% c("IS", "OS") ~ "not_nsw",
+                                TRUE ~ "nsw")
+         ) %>%
+  group_by(notification_date, sum_source) %>%
+  summarise(cases = n()) %>%
+  ungroup()
+  
+
+
+
+
+#----------------test numbers----------
 url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
 
 k <- 0.1
@@ -11,31 +45,11 @@ k <- 0.1
 gs4_deauth()
 gd_orig <- read_sheet(url) 
 
-# optional: remove today's data so we can pout it in by hand including positivity
-gd_orig <- filter(gd_orig, Date != Sys.Date())
-
-
-# check by hand to see if we need to add today's news in
-tmp <- filter(gd_orig, State == "NSW") %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
-tail(tmp)
-
-if(max(tmp$Date) < Sys.Date()){
-  warning("No data yet for today (perhaps you deleted it yourself?)")
-}
-
-
-
-latest_by_hand <- tribble(~date,                  ~confirm,
-#                          as.Date("2020-07-30"),   723
-) %>%
-  mutate(tests_conducted_total = NA,
-         cumulative_case_count = NA,
-         test_increase = NA,
-         pos_raw = NA / NA)
-
-if(max(tmp$Date) >= min(latest_by_hand$date)){
-  stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
-}
+# For positivity, we don't care which source it is from
+cases_total <- nsw_incidence_by_source %>%
+  group_by(notification_date) %>%
+  summarise(cases = sum(cases))
+  
 
 d <- gd_orig %>%
   clean_names() %>% 
@@ -43,45 +57,40 @@ d <- gd_orig %>%
   # deal with problem of multiple observations some days:
   mutate(date = as.Date(date)) %>%
   group_by(date) %>%
-  summarise(tests_conducted_total = max(tests_conducted_total, na.rm = TRUE),
-            cumulative_case_count = max(cumulative_case_count, na.rm = TRUE)) %>%
-  mutate(tests_conducted_total  = ifelse(tests_conducted_total < 0, NA, tests_conducted_total),
-         cumulative_case_count = ifelse(cumulative_case_count < 0, NA, cumulative_case_count)) %>%
+  summarise(tests_conducted_total = max(tests_conducted_total, na.rm = TRUE)) %>%
+  filter(tests_conducted_total > 0) %>%
   ungroup() %>%
   # remove two bad dates 
-  filter(!date %in% as.Date(c("2020-07-03"))) %>%
+  filter(date != as.Date("2020-07-03")) %>%
+  filter(date >= as.Date(c("2020-03-09"))) %>%
   mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
-         test_increase = pmax(10, test_increase),
-         confirm = c(cumulative_case_count[1], diff(cumulative_case_count)),
-         confirm = pmax(0, confirm),
-         pos_raw = pmin(1, confirm / test_increase)) %>%
-  rbind(latest_by_hand) %>%
+         test_increase = pmax(10, test_increase)) %>%
   complete(date = seq.Date(min(date), max(date), by="day"), 
            fill = list(confirm = 0)) %>%
-  mutate(numeric_date = as.numeric(date),
-         positivity = pos_raw) %>%
-  filter(date > as.Date("2020-05-01")) %>%
+  mutate(numeric_date = as.numeric(date)) %>%
+  left_join(cases_total, by = c("date" = "notification_date")) %>%
+  filter(date <= max(cases_total$notification_date)) %>%
+  mutate(cases = replace_na(cases, 0),
+         pos_raw = cases/ test_increase,
+         positivity = pmin(0.1, pos_raw)) %>%
   fill(positivity, .direction = "downup") %>%
   mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
-         ps2 = fitted(loess(positivity ~ numeric_date, data = ., span = 0.1)),
-         cases_corrected = confirm * ps1 ^ k / min(ps1 ^ k)) %>%
-  ungroup() %>%
-  mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
-
+         cases_corrected = cases * ps1 ^ k / min(ps1 ^ k)) %>%
+  ungroup() 
 
 if(max(d$date) < Sys.Date()){
   stop("No data yet for today")
 }
 
 
-the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+the_caption <- glue("Data from NSW Health and gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 #-----------------Positivity plot------------------
 pos_line <- d %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
-  scale_y_continuous(label = percent_format(accuracy = 0.01)) +
+  scale_y_continuous(label = percent_format(accuracy = 0.1), limits = c(0, 0.1)) +
   labs(x = "",
        y = "",
        caption = the_caption,
@@ -116,6 +125,7 @@ estimates2 <- EpiNow2::epinow(reported_cases = d2,
 pc2 <- my_plot_estimates(estimates2, 
                          extra_title = " and positivity",
                          caption = the_caption,
+                         location = " in New South Wales",
                          y_max = 2000)
 
 svg_png(pc2, "../img/covid-tracking/nsw-latest", h = 10, w = 10)
