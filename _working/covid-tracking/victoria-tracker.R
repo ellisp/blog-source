@@ -22,7 +22,7 @@ gs4_deauth()
 gd_orig <- read_sheet(url) 
 
 # optional: remove today's data so we can pout it in by hand including positivity
-#gd_orig <- filter(gd_orig, Date != Sys.Date())
+gd_orig <- filter(gd_orig, Date != Sys.Date())
 
 
 # check by hand to see if we need to add today's news in
@@ -36,12 +36,12 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-28"),   380
+                          as.Date("2020-07-30"),   723
                           ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
          test_increase = NA,
-         pos_raw = NA)
+         pos_raw = NA / NA)
   
 if(max(tmp$Date) >= min(latest_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
@@ -146,6 +146,7 @@ pc2 <- my_plot_estimates(estimates2,
                          extra_title = " and positivity",
                          caption = the_caption,
                          y_max = 2000)
+
 svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
