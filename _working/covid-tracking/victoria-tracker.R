@@ -1,5 +1,4 @@
 
-
 source("covid-tracking/covid-setup.R")
 
 #-----------------the Victoria data--------------
@@ -27,12 +26,12 @@ if(max(tmp$Date) < Sys.Date()){
 
 latest_by_hand <- tribble(~date,                  ~confirm,
                           as.Date("2020-07-30"),   723
-                          ) %>%
+) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
          test_increase = NA,
          pos_raw = NA / NA)
-  
+
 if(max(tmp$Date) >= min(latest_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
 }
@@ -100,9 +99,7 @@ svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 
 
 
 
-
-
-#---------Based on positivity-adjusted-------------
+#---------Estimate Reff-------------
 
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
