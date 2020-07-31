@@ -5,9 +5,6 @@ source("covid-tracking/covid-setup.R")
 
 k <- 0.1
 
-gs4_deauth()
-gd_orig <- read_sheet(guardian_url) 
-
 # optional: remove today's data so we can pout it in by hand including positivity
 # gd_orig <- filter(gd_orig, Date != Sys.Date())
 

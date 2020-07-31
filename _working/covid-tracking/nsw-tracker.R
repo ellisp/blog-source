@@ -43,9 +43,6 @@ if(max(nsw_incidence_by_source$notification_date) < Sys.Date()){
 #----------------test numbers----------
 k <- 0.1
 
-gs4_deauth()
-gd_orig <- read_sheet(guardian_url) 
-
 # For positivity, we don't care which source it is from
 cases_total <- nsw_incidence_by_source %>%
   group_by(notification_date) %>%
