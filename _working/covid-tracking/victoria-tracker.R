@@ -11,7 +11,7 @@ gs4_deauth()
 gd_orig <- read_sheet(url) 
 
 # optional: remove today's data so we can pout it in by hand including positivity
-gd_orig <- filter(gd_orig, Date != Sys.Date())
+# gd_orig <- filter(gd_orig, Date != Sys.Date())
 
 
 # check by hand to see if we need to add today's news in
@@ -25,7 +25,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                          as.Date("2020-07-30"),   723
+#                          as.Date("2020-07-31"),   627
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -81,9 +81,9 @@ pos_line <- d %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
-  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  scale_y_log10(label = percent_format(accuracy = 0.1)) +
   labs(x = "",
-       y = "",
+       y = "Test positivity (log scale)",
        caption = the_caption,
        title = "Covid-19 test positivity in Victoria, Australia, 2020",
        subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
@@ -105,7 +105,7 @@ d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
   select(date, confirm)
 
-estimates2 <- EpiNow2::epinow(reported_cases = d2, 
+estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
                               delays = list(incubation_period, reporting_delay),
                               horizon = 7, samples = 3000, warmup = 600, 
@@ -113,14 +113,14 @@ estimates2 <- EpiNow2::epinow(reported_cases = d2,
                               adapt_delta = 0.95)
 
 
-pc2 <- my_plot_estimates(estimates2, 
+pc_vic <- my_plot_estimates(estimates_vic, 
                          extra_title = " and positivity",
                          caption = the_caption,
                          y_max = 2000)
 
-svg_png(pc2, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
+svg_png(pc_vic, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
-svg_png(pc2, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
+svg_png(pc_vic, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 wd <- setwd("../_site")
 

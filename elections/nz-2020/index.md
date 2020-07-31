@@ -5,7 +5,7 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
-**Last updated 27 July 2020**
+**Last updated 31 July 2020**
 
 ## Near-certainty of a Labour-led government after 2020 election
 
@@ -21,9 +21,7 @@ Those chances are based on the possibility of a combination of parties having a 
 
 ## Trends in latent voting intention
 
-The forecast starts with a loose prior (t distribution with one degree of freedom) for the vote for the Labour Party. My starting position, before any polling data is in, is that the swing against the party with the incumbent Prime Minister will be drawn from the historical distribution of that swing: about 1.3% drop in vote for their party with a standard deviation of about 3.2%. The fat-tailed t distribution means we should expect outliers up to 4 standard deviations from this mean swing without being terribly surprised.
-
-<i>**Important note:** I am probably going to tighten up that prior because it seems to me that the current prediction - almost certainty of a Labour victory - is *too* certain. My intuitive diagnosis for what is wrong in the model is that my prior expectation is tighter than the t distribution with 1 degree of freedom represents. I've changed this to 4 degrees of freedom, which tightens the prior expectation and will bring Labour's election day vote down a bit. But this model hasn't been run at the time of writing (31 May 2020).</i>
+The forecast starts with a loose prior (t distribution with four degrees of freedom) for the vote for the Labour Party. My starting position, before any polling data is in, is that the swing against the party with the incumbent Prime Minister will be drawn from the historical distribution of that swing: about 1.3% drop in vote for their party with a standard deviation of about 3.2%. The fat-tailed t distribution means we should expect outliers up to three standard deviations from this mean swing without being terribly surprised.
 
 When that prior is combined with a latent state space model based on polling data, we see this trend, and an expected range of voting possibilities  by election day:
 

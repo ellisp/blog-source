@@ -14,7 +14,7 @@ my_plot_estimates <- function(estimates,
     theme(legend.position = "none",
           panel.grid.minor = element_blank()) +
     coord_cartesian(ylim = c(0, y_max)) +
-    labs(title = glue("Estimated infections{location} based on confirmed cases{extra_title}"),
+    labs(title = glue("Estimated expected incidence{location} based on confirmations{extra_title}"),
          x = "") +
     scale_x_date(date_breaks = "1 week", date_labels = "%d %b", limits = range(p$data$date))
   
@@ -33,11 +33,11 @@ my_plot_estimates <- function(estimates,
   st <- str_wrap(glue("Estimated R on {format(Sys.Date(), format = '%d %B')} 
              is between {round(todays_r$lower, 2)} and 
              {round(todays_r$upper, 2)}. The best point estimate is 
-              {round(todays_r$mean, 2)}."), 100)
+              {round(todays_r$median, 2)}."), 100)
   
   
   p3 <- p$data %>% 
-    ggplot(aes(x = date, y = mean, fill = type)) +
+    ggplot(aes(x = date, y = median, fill = type)) +
     my_theme +
     geom_hline(yintercept = 1, colour = "steelblue") +
     geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5) +
