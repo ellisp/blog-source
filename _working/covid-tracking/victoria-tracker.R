@@ -3,12 +3,10 @@ source("covid-tracking/covid-setup.R")
 
 #-----------------the Victoria data--------------
 
-url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
-
 k <- 0.1
 
 gs4_deauth()
-gd_orig <- read_sheet(url) 
+gd_orig <- read_sheet(guardian_url) 
 
 # optional: remove today's data so we can pout it in by hand including positivity
 # gd_orig <- filter(gd_orig, Date != Sys.Date())

@@ -11,6 +11,8 @@ library(glue)
 
 source("covid-tracking/plot_estimates.R")
 
+guardian_url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
+
 
 
 
