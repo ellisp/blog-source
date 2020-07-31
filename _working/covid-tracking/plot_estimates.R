@@ -33,11 +33,11 @@ my_plot_estimates <- function(estimates,
   st <- str_wrap(glue("Estimated R on {format(Sys.Date(), format = '%d %B')} 
              is between {round(todays_r$lower, 2)} and 
              {round(todays_r$upper, 2)}. The best point estimate is 
-              {round(todays_r$mean, 2)}."), 100)
+              {round(todays_r$median, 2)}."), 100)
   
   
   p3 <- p$data %>% 
-    ggplot(aes(x = date, y = mean, fill = type)) +
+    ggplot(aes(x = date, y = median, fill = type)) +
     my_theme +
     geom_hline(yintercept = 1, colour = "steelblue") +
     geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5) +

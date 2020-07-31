@@ -77,28 +77,29 @@ positivity <- gd_orig %>%
          pos_raw = cases/ test_increase,
          positivity = pmin(0.1, pos_raw)) %>%
   fill(positivity, .direction = "downup") %>%
-  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson"))) %>%
+  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
+         ps2 = fitted(loess(positivity ~ numeric_date), data = .)) %>%
   ungroup()  %>%
   select(date, ps1, pos_raw, positivity)
 
 
 
-the_caption <- glue("Data from NSW Health and gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+the_caption <- glue("Data from NSW Health and The Guardian; analysis by http://freerangestats.info. Latest data is {max(positivity$date)}."  )
 
 #-----------------Positivity plot------------------
 pos_line <- positivity %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
-  scale_y_continuous(label = percent_format(accuracy = 0.1), limits = c(0, 0.1)) +
+  scale_y_log10(label = percent_format(accuracy = 0.1), limits = c(0.0001, 0.11)) +
   labs(x = "",
-       y = "",
+       y = "Test positivity (log scale)",
        caption = the_caption,
        title = "Covid-19 test positivity in New South Wales, Australia, 2020",
        subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
        and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
-       The lowest rate is {percent(min(d$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
-       adjusted case numbers being {comma((0.015 / min(d$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
+       The lowest rate is {percent(min(positivity$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
+       adjusted case numbers being {comma((0.015 / min(positivity$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
 
 svg_png(pos_line, "../img/covid-tracking/nsw-positivity", h = 5, w = 9)
 
@@ -107,28 +108,31 @@ svg_png(pos_line, "../_site/img/covid-tracking/nsw-positivity", h = 5, w = 9)
 
 #------------Positivity-adjusted-----
 
+
+
 d <- nsw_incidence_by_source %>%
   rename(date = notification_date) %>%
   left_join(positivity, by = "date") %>%
-  mutate(adjusted_cases = round(cases * ps1 ^ k / min(ps1 ^ k))) %>%
+  mutate(adjusted_cases = cases * ps1 ^ k / min(ps1 ^ k)) %>%
   select(date, adjusted_cases, sum_source) %>%
-  spread(sum_source, adjusted_cases)
+  spread(sum_source, adjusted_cases, fill = 0)
 
 
 
 #---------Estimate Reff-------------
 # See issue logged with EpiNow2 - not sure we can distinguish between local and imported cases.
-# For now we'll fit to jsut the local cases. This seems definitely wrong, as it will make it look
-# like all the new local cases were infected by the old ones, not by interstate or international
-# imports who then infected people. Probably would be better to do some other way.... Note that 
+# For now we'll fit to jsut the combined total cases..... Note that 
 # EpiEstim lets you distinguish, but does not have the adjustment for delays etc necessary.
 # EpiNow will do it, but then why did they dump EpiNow and start again with EpiNow2...
+# Discussion on the issue on GitHub suggests they think the benefits of better dealing with
+# delays outweigh the cost of import / local distinction (which will hopefully come back alter)
 # Another alternative would be the epidemia package https://imperialcollegelondon.github.io/epidemia/
-# - not sure if this can handle the imported v local thing.
+# - not sure if this can handle the imported v local thing but I think not.
 d2 <- d %>%
-  select(date, confirm = nsw)
+  mutate(confirm = round(not_nsw + nsw)) %>%
+  select(date, confirm)
 
-estimates2 <- EpiNow2::epinow(reported_cases = d2, 
+estimates_nsw <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
                               delays = list(incubation_period, reporting_delay),
                               horizon = 7, samples = 3000, warmup = 600, 
@@ -136,15 +140,15 @@ estimates2 <- EpiNow2::epinow(reported_cases = d2,
                               adapt_delta = 0.95)
 
 
-pc2 <- my_plot_estimates(estimates2, 
+pc_nsw <- my_plot_estimates(estimates_nsw, 
                          extra_title = " and positivity",
                          caption = the_caption,
                          location = " in New South Wales",
-                         y_max = 2000)
+                         y_max = 500)
 
-svg_png(pc2, "../img/covid-tracking/nsw-latest", h = 10, w = 10)
+svg_png(pc_nsw, "../img/covid-tracking/nsw-latest", h = 10, w = 10)
 
-svg_png(pc2, "../_site/img/covid-tracking/nsw-latest", h = 10, w = 10)
+svg_png(pc_nsw, "../_site/img/covid-tracking/nsw-latest", h = 10, w = 10)
 
 wd <- setwd("../_site")
 
@@ -158,3 +162,4 @@ system('git config --global user.name "Peter Ellis"')
 system('git commit -m "latest covid plot"')
 system('git push origin master')
 setwd(wd)
+
