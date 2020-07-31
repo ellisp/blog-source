@@ -72,7 +72,7 @@ positivity <- gd_orig %>%
          pos_raw = cases/ test_increase,
          positivity = pmin(0.1, pos_raw)) %>%
   fill(positivity, .direction = "downup") %>%
-  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
+  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasibinomial")),
          ps2 = fitted(loess(positivity ~ numeric_date), data = .)) %>%
   ungroup()  %>%
   select(date, ps1, pos_raw, positivity)
@@ -91,7 +91,7 @@ pos_line <- positivity %>%
        y = "Test positivity (log scale)",
        caption = the_caption,
        title = "Covid-19 test positivity in New South Wales, Australia, 2020",
-       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
+       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model, 
        and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
        The lowest rate is {percent(min(positivity$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
        adjusted case numbers being {comma((0.015 / min(positivity$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
