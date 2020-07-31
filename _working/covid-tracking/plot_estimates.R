@@ -14,7 +14,7 @@ my_plot_estimates <- function(estimates,
     theme(legend.position = "none",
           panel.grid.minor = element_blank()) +
     coord_cartesian(ylim = c(0, y_max)) +
-    labs(title = glue("Estimated infections{location} based on confirmed cases{extra_title}"),
+    labs(title = glue("Estimated expected incidence{location} based on confirmations{extra_title}"),
          x = "") +
     scale_x_date(date_breaks = "1 week", date_labels = "%d %b", limits = range(p$data$date))
   
