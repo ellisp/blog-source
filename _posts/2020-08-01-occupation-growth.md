@@ -6,20 +6,20 @@ tag:
    - Health
    - Visualisation
 description: There is a fast growing body of knowledge and tools to help estimate effective reproduction number of an epidemic in real time; I have a go at applying the latest EpiNow2 R package to data for Covid-19 cases in Victoria, Australia.
-image: /img/0190-combined-2.svg
-socialimage: http://freerangestats.info/img/0189-combined-2.png
+image: /img/0190-line.svg
+socialimage: http://freerangestats.info/img/0190-line.png
 category: R
 ---
 
-A chart is doing the rounds purporting to show the number of administrators working in health care in the USA has grown much faster than the number of physicians - more than 3,000% growth from 1970 to 2009 for administrators (allegedly) compared to about 100%. I don't much like the original chart so I've relegated it to the bottom of this post. It presumably dates from the time of the debates about the introduction of the Affordable Care Act (aka 'Obamacare'). I find it very difficult to believe and suspect there is either deliberate definitional sleight of hand going on, or a genuine classification challenge. One obvious possibility is that some "administrator" classification has been cherry-picked that was very rarely present under that name in the 1970s, and much of the growth is movement from other differently-classified roles into that one.
+A chart is doing the rounds purporting to show the number of administrators working in health care in the USA has grown much faster than the number of physicians - more than 3,000% growth from 1970 to 2009 for administrators (allegedly) compared to about 100%. I don't much like the original chart so I've relegated it to the bottom of this post. It presumably dates from the time of the debates about the introduction of the Affordable Care Act (aka 'Obamacare'). I find it very difficult to believe, and suspect there is either deliberate definitional sleight of hand going on, or a genuine classification challenge. One obvious possibility is that some "administrator" classification has been cherry-picked that was very rarely present under that name in the 1970s, and much of the growth is movement from other differently-classified roles into that one.
 
-It did cross my mind that the problem was the visualisation method; in fact [the tweet that brought this to my attention](https://twitter.com/JeremySussman/status/1289234476057243649) was from a researcher wondering what it would look like if it showed absolute numbers rather than cumulative growth. This sounded like something I should know about so I had a look at Australian figures from the Australian Bureau of Statistics' Labour Force Survey Quarterly Detail. Here is my 'replication', if we can call it that, of the US propaganda piece:
+It did cross my mind that the problem was the visualisation method; in fact [the tweet that brought this to my attention](https://twitter.com/JeremySussman/status/1289234476057243649) was from a researcher wondering what it would look like if it showed absolute numbers rather than cumulative growth. This sounded like something I should know about so I had a look at Australian figures from the Australian Bureau of Statistics' Labour Force Survey Quarterly Detail. Here is my 'replication', if we can call it that, of the chart showing cumulative growth in various occupations in an industry:
 
 <object type="image/svg+xml" data='/img/0190-line.svg' width='100%'><img src='/img/0190-line.png' width='100%'></object>
 
 Actually, I think my chart is much better, not only because it uses an official and well-defined occupation classification, but because it has a go at showing absolute size as well. So we can see that while the total hours worked in the health care and human services by Managers and Professionals who aren't health-specific (more on this below) have grown fast, the orange and grey dots are still small compared to the pink dots that represents Health Professionals.
 
-The industry I'm looking at here is "Health Care and Human Services", so some of those managers and other professionals (lawyers, accountants, statisticians, etc) are not in the health industry as such, but this is as granular as we can get for an occupation and industry crosstabulation with this data without a custom request to access the microdata.
+The industry I'm looking at here is "Health Care and Social Assistance", so some of those managers and other professionals (lawyers, accountants, statisticians, etc) are not in social assistance rather than health, but this is as granular as we can get for an occupation and industry crosstabulation with this data without a custom request to access the microdata.
 
 I have split the "Professionals" ANZSCO code into two by making the assumption that everyone in codes 2500 to 2544 ("Health Professionals not further defined" to "Registered Nurses") is in the health industry. This isn't true (for example, a mining company or sports team can hire a doctor or nurse) but I think it's acceptable for our purposes. Basically, the split between health and non-health professionals is wrong - there will be too much of the former, at the expense of the latter.
 
@@ -37,7 +37,7 @@ All three of these methods are completely valid.
 * The second - absolute numbers - highlights the aggregate size and growth of labour in these occupations, while still allowing basic comparisons of changes.
 * The third - proportions - lets you see changes in the proportion of the workforce while still getting a snapshot overview (like a pie chart would, but for many times). In this case the change we see is the growth in community and personal service workers rather than health professionals.
 
-Finally, the original US chart had focused specifically on "physicians" and I've used a broader category of "Health Professionals". This prompted me to do one last bit of analysis with this. I was surprised to see that the proportion of all health professional labour done by medical practitioners of various sorts (there is no "physician" in the ANZSCO so I chose the combination of unit groups I thought was closest to this) has stayed pretty constant over the past 35 years:
+Finally, the original US chart had focused specifically on "physicians" and I've used a broader category of "Health Professionals". This prompted me to do one last bit of analysis with this - to find out how much of the Australian health profession's labour is by medical practitioners and whether this is changing. I was surprised to see that the proportion of all health professional labour done by medical practitioners of various sorts (there is no "physician" in the ANZSCO so I chose the combination of unit groups I thought was closest to this) has stayed pretty constant over the past 35 years:
 
 <object type="image/svg+xml" data='/img/0190-medical-practitioners.svg' width='100%'><img src='/img/0190-medical-practitioners.png' width='100%'></object>
 
@@ -78,8 +78,6 @@ eq08 <- read_excel("EQ08.xlsx", sheet = "Data 1", skip = 3) %>%
     total_hours = number_of_hours_actually_worked_in_all_jobs_000_hours
   )
 
-# Define "health professionals" (as opposed to other professionals eg statisticians, lawyers)
-# There are quicker ways of coding this but I've done it this way so we can see exactly what is in:
 health_profs <- c(
  "2500 Health Professionals nfd"                                          ,
  "2510 Health Diagnostic and Promotion Professionals nfd"                 ,
@@ -157,7 +155,7 @@ the_caption <- "Source: ABS Labour Force Survey EQ08 and EQ09, analysis by http:
 
 #------------Line chart------------
 # This is equivalent to an index - showing cumulative growth
-p3 <- d  %>%
+d  %>%
   mutate(yr = year(mid_quarter_month)) %>%
   group_by(yr, occupation) %>%
   summarise(total_hours = mean(total_hours)) %>%
@@ -184,7 +182,8 @@ p3 <- d  %>%
 
 
 #----------stacked and filled area charts-----------------
-# fundamental guts of the plot with no geom:
+# fundamental guts of the plot with no geom
+
 p <- d  %>%
   ggplot(aes(x = mid_quarter_month, y = total_hours / 1000, fill = occupation)) +
   scale_fill_manual(values = occ_palette) +
@@ -246,13 +245,6 @@ profs_only %>%
   theme(axis.title.x = element_text(size = 9, hjust = 0, colour = "grey"))
 {% endhighlight %}
 
-
-
-
-{% highlight R lineanchors %}
-
-{% endhighlight %}
-
-Here's the original image
+Here's the original image that prompted me to think about all this:
 
 <img src='/img/0190-us-original.jfif' title='A probably misleading graphic' width='100%'>

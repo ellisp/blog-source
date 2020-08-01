@@ -136,6 +136,7 @@ p3 <- d  %>%
 
 
 #----------stacked and filled area charts-----------------
+# fundamental guts of the plot with no geom
 
 p <- d  %>%
   ggplot(aes(x = mid_quarter_month, y = total_hours / 1000, fill = occupation)) +
@@ -200,7 +201,7 @@ p4 <- profs_only %>%
 
 
 #==============save images==============
-svg_png(p1, "../img/0190-stack", w = 10)
-svg_png(p2, "../img/0190-fill", w = 10)
+svg_png(p1, "../img/0190-fill", w = 10)
+svg_png(p2, "../img/0190-stack", w = 10)
 svg_png(p3, "../img/0190-line", w = 10)
 svg_png(p4, "../img/0190-medical-practitioners", w = 10)
