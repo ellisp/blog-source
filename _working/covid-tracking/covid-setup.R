@@ -14,15 +14,20 @@ source("covid-tracking/plot_estimates.R")
 guardian_url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
 
 gs4_deauth()
-gd_orig <- read_sheet(url) 
+gd_orig <- read_sheet(guardian_url) 
 
 
 
 #------------Estimating R with EpiNow2---------------------
+# From the documentation re delays: " (assuming a lognormal distribution with all 
+# parameters excepting the max allowed value on the log scale).
+
 
 if(!exists("reporting_delay") || 
    !exists("generation_time") ||
    !exists("incubation_period")){
+  
+  set.seed(123)
   
   reporting_delay <- EpiNow2::bootstrapped_dist_fit(rlnorm(100, log(6), 1))
   ## Set max allowed delay to 30 days to truncate computation

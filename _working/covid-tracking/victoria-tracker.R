@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-#                          as.Date("2020-07-31"),   627
+#                          as.Date("2020-08-01"),   397
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -63,6 +63,10 @@ d <- gd_orig %>%
   ungroup() %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
 
+if(max(count(d, date)$n) > 1){
+  tail(d)
+  stop("Some duplicate days, usually coming from partial data")
+}
 
 if(max(d$date) < Sys.Date()){
   stop("No data yet for today")
@@ -98,7 +102,8 @@ svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 
 
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
-  select(date, confirm)
+  select(date, confirm) %>%
+  as.data.table()
 
 estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,

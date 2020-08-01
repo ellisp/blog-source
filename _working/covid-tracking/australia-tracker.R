@@ -78,7 +78,8 @@ svg_png(pos_line, "../_site/img/covid-tracking/australia-positivity", h = 5, w =
 
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
-  select(date, confirm)
+  select(date, confirm) %>%
+  as.data.table()
 
 estimates_oz <- EpiNow2::epinow(reported_cases = d2, 
                                  generation_time = generation_time,
@@ -89,6 +90,7 @@ estimates_oz <- EpiNow2::epinow(reported_cases = d2,
 
 
 pc_oz <- my_plot_estimates(estimates_oz, 
+                           location = " in Australia",
                             extra_title = " and positivity",
                             caption = the_caption,
                             y_max = 2000)
@@ -99,8 +101,8 @@ svg_png(pc_oz, "../_site/img/covid-tracking/australia-latest", h = 10, w = 10)
 
 wd <- setwd("../_site")
 
-system('git add img/covid-tracking/victoria-latest.*')
-system('git add img/covid-tracking/victoria-positivity.*')
+system('git add img/covid-tracking/australia-latest.*')
+system('git add img/covid-tracking/australia-positivity.*')
 
 
 system('git config --global user.email "peter.ellis2013nz@gmail.com"')

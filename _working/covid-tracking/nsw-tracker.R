@@ -125,7 +125,8 @@ d <- nsw_incidence_by_source %>%
 # - not sure if this can handle the imported v local thing but I think not.
 d2 <- d %>%
   mutate(confirm = round(not_nsw + nsw)) %>%
-  select(date, confirm)
+  select(date, confirm) %>%
+  as.data.table()
 
 estimates_nsw <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
