@@ -9,8 +9,8 @@ library(lubridate)
 
 #----------Industry by occupation----------------
 url <- "https://www.abs.gov.au/AUSSTATS/subscriber.nsf/log?openagent&eq09.zip&6291.0.55.003&Data%20Cubes&0A68E700485EF985CA2585910016AF26&0&May%202020&25.06.2020&Latest"
-download.file(url, "lfs-eq09.zip", mode = "wb")
-unzip("lfs-eq09.zip")
+#download.file(url, "lfs-eq09.zip", mode = "wb")
+#unzip("lfs-eq09.zip")
 
 eq09 <- read_excel("EQ09.xlsx", sheet = "Data 1", skip = 3) %>%
   clean_names() %>% 
@@ -22,8 +22,8 @@ eq09 <- read_excel("EQ09.xlsx", sheet = "Data 1", skip = 3) %>%
 
 #------------Detailed occupation-------------
 url <- "https://www.abs.gov.au/AUSSTATS/subscriber.nsf/log?openagent&eq08.zip&6291.0.55.003&Data%20Cubes&CB6124B8CB5B515DCA2585910016A499&0&May%202020&25.06.2020&Latest"
-download.file(url, "lfs-eq08.zip", mode = "wb")
-unzip("lfs-eq08.zip")
+#download.file(url, "lfs-eq08.zip", mode = "wb")
+#unzip("lfs-eq08.zip")
 
 eq08 <- read_excel("EQ08.xlsx", sheet = "Data 1", skip = 3) %>%
   clean_names() %>%
@@ -68,12 +68,16 @@ health_profs <- c(
 health_profs_hours <- eq08 %>%
   filter(occupation4 %in% health_profs) %>%
   group_by(mid_quarter_month) %>%
-  summarise(health_prof_hours = sum(total_hours)) %>%
+  summarise(health_prof_hours = sum(total_hours),
+            # adjust downwards to crudely remove health professionals in other industries
+            # Source: Table Builder for Census 2011 (note this ratio is applying to our
+            # whole time period, so this is really rough)
+            health_prof_hours = health_prof_hours * 373609 / 433726
+            ) %>%
   mutate(occupation1 = "Professionals")
 
 # And subtract it from the Professionals in the Health Care and Social Assistance Industry,
-# to get a data frame that has two types of professionals. Note this is problematic because
-# of health professionals in other industries.
+# to get a data frame that has two types of professionals. 
 separated_profs <- eq09 %>%
   filter(industry1 == "Health Care and Social Assistance") %>%
   group_by(occupation1, mid_quarter_month) %>%
@@ -143,9 +147,9 @@ p <- d  %>%
   scale_fill_manual(values = occ_palette) +
   theme(legend.position = "right") +
   labs(caption = the_caption,
-       x = str_wrap("Caution: the split between health and non-health professionals has challenges and will
-       overestimate the former at the expense of the latter, by including health professionals in
-       other industries.", 120),
+       x = str_wrap("Health care professionals who work in other industries adjusted for by
+                    subtracting around 14% over all years, based on a rough estimate from
+                    the ABS Census of Population and Housing 2011.", 120),
        fill = "Occupation",
        subtitle = "Hours by occupation of workers in Australia's health care and social assistance industry") +
   theme(axis.title.x = element_text(size = 9, hjust = 0, colour = "grey"))
@@ -193,15 +197,60 @@ p4 <- profs_only %>%
        pharmacists, midwives, nutritional practitioners, dental practitioners.", 120),
        fill = "",
        y = "Percentage of all health professionals' hours",
-       subtitle = "Hours worked by all health professionals (unit group code 2500 to 2544)",
+       subtitle = "Hours worked by all Australian health professionals (unit group code 2500 to 2544)",
        title = "Medical practitioners' labour has remained a constant proportion of health professionals'",
        caption = the_caption) +
   theme(axis.title.x = element_text(size = 9, hjust = 0, colour = "grey"))
 
 
+#=================which are growing fast?============
+p5 <- eq08 %>%
+  # remove any 'not further defined' residual categories so we can focus on real occupations
+  filter(!grepl("nfd$", occupation4)) %>%
+  mutate(yr = year(mid_quarter_month)) %>%
+  filter(yr %in% c(1987, 2019)) %>%
+  group_by(occupation4, yr) %>%
+  summarise(total_hours = sum(total_hours)) %>%
+  group_by(occupation4) %>%
+  arrange(yr) %>%
+  mutate(start_hours = total_hours[1],
+         growth = total_hours / start_hours - 1,
+         growth_backwards = start_hours / total_hours - 1,
+         growth_either = ifelse(growth > 0, growth, -growth_backwards)) %>%
+  filter(yr == max(yr)) %>%
+  ungroup() %>%
+  arrange(desc(abs(growth_either))) %>%
+  slice(1:25) %>%
+  mutate(occupation4 = fct_reorder(str_sub(occupation4, 6), growth_either)) %>%
+  ggplot(aes(y = occupation4, yend = occupation4, x = growth_either, xend = 0)) +
+  geom_segment(size = 2, aes(colour = growth_either)) +
+  geom_point(aes(size = total_hours / 1000)) +
+  scale_x_continuous(label = percent) +
+  scale_size_area(label = comma_format(accuracy = 1)) +
+  scale_colour_viridis_c(option = "C", label = percent, guide = 'none') +
+  labs(x = "Growth in employment hours from 1987 to 2019 (if increasing),\nor from 2019 to 1987 (if decreasing)",
+       y = "",
+       caption = the_caption,
+       colour = "",
+       size = "Million hours per year in 2019",
+       title = "The biggest growing and shrinking occupations by employment hours",
+       subtitle = paste0("Two occupations grew by 3,000% from nearly non-existent in 1987.\n",
+                        "Textile footwear machine operators' hours were 1,500% more in 1987 than (near zero) in 2019."))
 
 #==============save images==============
 svg_png(p1, "../img/0190-fill", w = 10)
 svg_png(p2, "../img/0190-stack", w = 10)
 svg_png(p3, "../img/0190-line", w = 10)
 svg_png(p4, "../img/0190-medical-practitioners", w = 10)
+svg_png(p5, "../img/0190-big-change", w = 10, h = 8)
+
+
+
+sort(unique(eq08$occupation4))
+eq08 %>%
+  filter(occupation4 >= "4000" & occupation4 <= "4999" ) %>%
+  filter(year(mid_quarter_month) == 2019) %>%
+  group_by(occupation4) %>%
+  summarise(total_hours = sum(total_hours)) %>%
+  arrange(desc(total_hours))
+

@@ -1,27 +1,35 @@
 ---
 layout: post
 title: Visualisation options to show growth in occupations in the Australian health industry
-date: 2020-08-01
+date: 2020-08-02
 tag: 
    - Health
    - Visualisation
-description: There is a fast growing body of knowledge and tools to help estimate effective reproduction number of an epidemic in real time; I have a go at applying the latest EpiNow2 R package to data for Covid-19 cases in Victoria, Australia.
+description: Exploration of change in occupations in the Australian health industry, and economy more broadly, from 1986 to the present.
 image: /img/0190-line.svg
 socialimage: http://freerangestats.info/img/0190-line.png
 category: R
 ---
 
-A chart is doing the rounds purporting to show the number of administrators working in health care in the USA has grown much faster than the number of physicians - more than 3,000% growth from 1970 to 2009 for administrators (allegedly) compared to about 100%. I don't much like the original chart so I've relegated it to the bottom of this post. It presumably dates from the time of the debates about the introduction of the Affordable Care Act (aka 'Obamacare'). I find it very difficult to believe, and suspect there is either deliberate definitional sleight of hand going on, or a genuine classification challenge. One obvious possibility is that some "administrator" classification has been cherry-picked that was very rarely present under that name in the 1970s, and much of the growth is movement from other differently-classified roles into that one.
+## Visualising growth in occupations in one industry
 
-It did cross my mind that the problem was the visualisation method; in fact [the tweet that brought this to my attention](https://twitter.com/JeremySussman/status/1289234476057243649) was from a researcher wondering what it would look like if it showed absolute numbers rather than cumulative growth. This sounded like something I should know about so I had a look at Australian figures from the Australian Bureau of Statistics' Labour Force Survey Quarterly Detail. Here is my 'replication', if we can call it that, of the chart showing cumulative growth in various occupations in an industry:
+A chart is doing the rounds purporting to show the number of administrators working in health care in the USA has grown much faster than the number of physicians - more than 3,000% growth from 1970 to 2009 for administrators (allegedly) compared to about 90% or so for physicians. I don't much like the original chart so I've relegated it to the bottom of this post. It presumably dates from the time of the debates about the introduction of the Affordable Care Act (aka 'Obamacare'). I find it very difficult to believe the 3,000% number, and suspect there is either deliberate definitional sleight of hand going on, or a genuine classification challenge. One obvious possibility is that some "administrator" classification has been cherry-picked that was very rarely present under that name in the 1970s, and much of the growth is movement from other differently-classified roles into that one.
+
+### A similar visualisation with Australian Labour Force Survey data
+
+It did cross my mind that the problem was the visualisation method; in fact [the tweet that brought this to my attention](https://twitter.com/JeremySussman/status/1289234476057243649) was from a researcher wondering what it would look like if it showed absolute numbers rather than cumulative growth. While I'm not really interested in the facts of "administrators" in the US health system, the broader data viz question sounded like something I should know about. So I had a look at Australian figures from the Australian Bureau of Statistics' [Labour Force Survey Quarterly Detail](https://www.abs.gov.au/ausstats/abs@.nsf/mf/6291.0.55.003). Here is my own version of a chart showing cumulative growth in various occupations in an industry:
 
 <object type="image/svg+xml" data='/img/0190-line.svg' width='100%'><img src='/img/0190-line.png' width='100%'></object>
 
-Actually, I think my chart is much better, not only because it uses an official and well-defined occupation classification, but because it has a go at showing absolute size as well. So we can see that while the total hours worked in the health care and human services by Managers and Professionals who aren't health-specific (more on this below) have grown fast, the orange and grey dots are still small compared to the pink dots that represents Health Professionals.
+Actually, I think my chart is much better than the US original, not only because it uses an official and well-defined occupation classification, but because it has a go at showing absolute size as well. So we can see that while the total hours worked in the health care and human services industry by managers and professionals who aren't health-specific (more on this below) have grown fast, the orange and grey dots are still small compared to the pink dots that represents health professionals.
 
-The industry I'm looking at here is "Health Care and Social Assistance", so some of those managers and other professionals (lawyers, accountants, statisticians, etc) are not in social assistance rather than health, but this is as granular as we can get for an occupation and industry crosstabulation with this data without a custom request to access the microdata.
+The industry I'm looking at here is "Health Care and Social Assistance", so some of those managers and other professionals (lawyers, accountants, statisticians, etc) are in social assistance rather than health, but this is as granular as we can get for an occupation and industry crosstabulation with this data without a custom request to access the microdata.
 
-I have split the "Professionals" ANZSCO code into two by making the assumption that everyone in codes 2500 to 2544 ("Health Professionals not further defined" to "Registered Nurses") is in the health industry. This isn't true (for example, a mining company or sports team can hire a doctor or nurse) but I think it's acceptable for our purposes. Basically, the split between health and non-health professionals is wrong - there will be too much of the former, at the expense of the latter.
+In fact, clearly one of the big stories from this chart is the thick blue dots and the rapidly rising blue line - community and personal care workers. The biggest occupations by far in that category in this industry are "Aged and Disabled Carers" and "Child Carers", and the growth in importance in these roles (particularly the former) is one of the big news stories of the economy seen over a few decades' perspective.
+
+I have split the "Professionals" ANZSCO code (the lowest level published by industry in this dataset) into health and other, by getting employment hours for everyone in occupation codes 2500 to 2544 ("Health Professionals not further defined" to "Registered Nurses"). This is from a different cut of the data from the industry version and is only published for "all industries". I adjust the all-industries health professionals number downwards by about 14%, based on the 2011 Census which tells us that there were 433,726 health professionals in total of which 373,609 worked in the health care and social assistance industry (see screenshot at bottom of post). For example, a mining company or sports team can hire a doctor or nurse. To avoid working on this thing all weekend, I've applied that single correction across all years of data.
+
+### Other ways of showing this data
 
 What are the other obvious ways to visualise this data? Obviously, in absolute numbers as a stacked area chart:
 
@@ -33,13 +41,27 @@ What are the other obvious ways to visualise this data? Obviously, in absolute n
 
 All three of these methods are completely valid. 
 
-* The first - cumulative growth - is visually equivalent to converting labour hours to an index. It's great for showing growth over time, and for many purposes would be suitable. For example, it nicely highlights that the number of labourers in the health care and social assistance industry has declined, and the fastest growing occupation types are managers and non-health professionals.
+* The very first line chart - cumulative growth - is visually equivalent to converting labour hours to an index. It's great for showing growth over time, and for many purposes would be suitable. For example, it nicely highlights that the number of labourers in the health care and social assistance industry has declined, and the fastest growing occupation types are managers and non-health professionals.
 * The second - absolute numbers - highlights the aggregate size and growth of labour in these occupations, while still allowing basic comparisons of changes.
 * The third - proportions - lets you see changes in the proportion of the workforce while still getting a snapshot overview (like a pie chart would, but for many times). In this case the change we see is the growth in community and personal service workers rather than health professionals.
 
-Finally, the original US chart had focused specifically on "physicians" and I've used a broader category of "Health Professionals". This prompted me to do one last bit of analysis with this - to find out how much of the Australian health profession's labour is by medical practitioners and whether this is changing. I was surprised to see that the proportion of all health professional labour done by medical practitioners of various sorts (there is no "physician" in the ANZSCO so I chose the combination of unit groups I thought was closest to this) has stayed pretty constant over the past 35 years:
+### Physicians / medical practitioners compared to other health professionals?
+
+The original US chart had focused specifically on "physicians" and I've used a broader category of "Health Professionals". This prompted me to do one last bit of analysis with this - to find out how much of the Australian health profession's labour is by medical practitioners and whether this is changing. I was surprised to see that the proportion of all health professional labour done by medical practitioners of various sorts (there is no "physician" in the ANZSCO so I chose the combination of unit groups I thought was closest to this) has stayed pretty constant over the past 35 years:
 
 <object type="image/svg+xml" data='/img/0190-medical-practitioners.svg' width='100%'><img src='/img/0190-medical-practitioners.png' width='100%'></object>
+
+That's a very boring chart, but it's boring for interesting reasons - a fairly steady composition of employment hours within the health professionals category, at least when divided between medical practitioners and others.
+
+## So what occupations are growing fast?
+
+Finally, I was intrigued by the 3,000% cumulative growth in the one occupation in the original US chart. Could an occupation really grow this much in a few decades?  Turns out we have a couple in the Australian data, but in our case I think these are genuine changes in employment patterns. Professional outdoor guides and ICT test engineers are two professions that we believe really have grown materially in the last few decades, partly due to changes in demand and workflow and partly due to specialisation and reclassification of other roles.
+
+<object type="image/svg+xml" data='/img/0190-big-change.svg' width='100%'><img src='/img/0190-big-change.png' width='100%'></object>
+
+I like that plot because it gives a real snapshot (at least from one perspective) of how the economy has changed over 32 years.
+
+## Code
 
 Here's today's R code, all in one chunk. The most interesting thing here is the need to use the occupation detailed data (cube EQ08) to separate out the single digit occupation data that we get from the higher level industry by occupation data in cube EQ09.
 
@@ -114,7 +136,12 @@ health_profs <- c(
 health_profs_hours <- eq08 %>%
   filter(occupation4 %in% health_profs) %>%
   group_by(mid_quarter_month) %>%
-  summarise(health_prof_hours = sum(total_hours)) %>%
+  summarise(health_prof_hours = sum(total_hours),
+            # adjust downwards to crudely remove health professionals in other industries
+            # Source: Table Builder for Census 2011 (note this ratio is applying to our
+            # whole time period, so this is really rough)
+            health_prof_hours = health_prof_hours * 373609 / 433726
+            ) %>%
   mutate(occupation1 = "Professionals")
 
 # And subtract it from the Professionals in the Health Care and Social Assistance Industry,
@@ -189,9 +216,9 @@ p <- d  %>%
   scale_fill_manual(values = occ_palette) +
   theme(legend.position = "right") +
   labs(caption = the_caption,
-       x = str_wrap("Caution: the split between health and non-health professionals has challenges and will
-       overestimate the former at the expense of the latter, by including health professionals in
-       other industries.", 120),
+       x = str_wrap("Health care professionals who work in other industries adjusted for by
+                    subtracting around 14% over all years, based on a rough estimate from
+                    the ABS Census of Population and Housing 2011.", 120),
        fill = "Occupation",
        subtitle = "Hours by occupation of workers in Australia's health care and social assistance industry") +
   theme(axis.title.x = element_text(size = 9, hjust = 0, colour = "grey"))
@@ -243,8 +270,53 @@ profs_only %>%
        title = "Medical practitioners' labour has remained a constant proportion of health professionals'",
        caption = the_caption) +
   theme(axis.title.x = element_text(size = 9, hjust = 0, colour = "grey"))
+#=================which are growing fast?============
+
+# chart: lollipop of fastest growing or shrinking occupations
+eq08 %>%
+  # remove any 'not further defined' residual categories so we can focus on real occupations
+  filter(!grepl("nfd$", occupation4)) %>%
+  mutate(yr = year(mid_quarter_month)) %>%
+  filter(yr %in% c(1987, 2019)) %>%
+  group_by(occupation4, yr) %>%
+  summarise(total_hours = sum(total_hours)) %>%
+  group_by(occupation4) %>%
+  arrange(yr) %>%
+  mutate(start_hours = total_hours[1],
+         growth = total_hours / start_hours - 1,
+         growth_backwards = start_hours / total_hours - 1,
+         growth_either = ifelse(growth > 0, growth, -growth_backwards)) %>%
+  filter(yr == max(yr)) %>%
+  ungroup() %>%
+  arrange(desc(abs(growth_either))) %>%
+  slice(1:25) %>%
+  mutate(occupation4 = fct_reorder(str_sub(occupation4, 6), growth_either)) %>%
+  ggplot(aes(y = occupation4, yend = occupation4, x = growth_either, xend = 0)) +
+  geom_segment(size = 2, aes(colour = growth_either)) +
+  geom_point(aes(size = total_hours / 1000)) +
+  scale_x_continuous(label = percent) +
+  scale_size_area(label = comma_format(accuracy = 1)) +
+  scale_colour_viridis_c(option = "C", label = percent, guide = 'none') +
+  labs(x = "Growth in employment hours from 1987 to 2019 (if increasing),\nor from 2019 to 1987 (if decreasing)",
+       y = "",
+       caption = the_caption,
+       colour = "",
+       size = "Million hours per year in 2019",
+       title = "The biggest growing and shrinking occupations by employment hours",
+       subtitle = paste0("Two occupations grew by 3,000% from nearly non-existent in 1987.\n",
+                        "Textile footwear machine operators' hours were 1,500% more in 1987 than (near zero) in 2019."))
+
+
 {% endhighlight %}
+
+## Other supplementary material
 
 Here's the original image that prompted me to think about all this:
 
 <img src='/img/0190-us-original.jfif' title='A probably misleading graphic' width='100%'>
+
+And here's a screenshot from the ABS Census tablebuilder, for anyone curious about which industries other than Health Care and Social Assistance employ medical professionals:
+
+<img src='/img/0190-tablebuilder.png' title='Table Builder screenshot of number of people by industry and occupation in Australia in 2011'>
+
+
