@@ -3,16 +3,10 @@ source("covid-tracking/covid-setup.R")
 
 #-----------------the Australia data--------------
 
+gd_orig_not_today <- filter(gd_orig, Date < Sys.Date())
+
 # power transform parameter
 k <- 0.1
-
-# check by hand to see if we need to add today's news in
-tmp <- filter(gd_orig) %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
-tail(tmp)
-
-if(max(tmp$Date) < Sys.Date()){
-  warning("No data yet for today")
-}
 
 d <- gd_orig %>%
   clean_names() %>% 
@@ -49,7 +43,7 @@ d <- gd_orig %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
 
 
-the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last data used from {max(d$date)}."  )
 
 #-----------------Positivity plot------------------
 pos_line <- d %>%

@@ -14,6 +14,9 @@ socialimage: /img/covid-tracking/victoria-latest.png
     <a data-toggle="tab"   href="#nsw">NSW</a>
   </li>
   <li>
+    <a data-toggle="tab"   href="#oz">Australia</a>
+  </li>
+  <li>
     <a data-toggle="tab"   href="#methods">Data and methods</a>
   </li>
 </ul>
@@ -56,6 +59,26 @@ socialimage: /img/covid-tracking/victoria-latest.png
 		<object type="image/svg+xml" data='/img/covid-tracking/nsw-positivity.svg' width='100%'><img src='/img/covid-tracking/nsw-positivity.png' width='100%'></object>
 
 	</div>
+
+	<div class="tab-pane fade in active" id="oz" role="tabpanel" aria-labelledby="oz-tab">
+		<h3>The Covid-19 outbreak in Australia as a whole</h3>
+		
+		
+		<object type="image/svg+xml" data='/img/covid-tracking/australia-latest.svg' width='100%'><img src='/img/covid-tracking/australia-latest.png' width='100%'></object>
+
+		<p>For each of the three time series shown, the green segment on the left shows a period of time that is substantively settled. The brown/orange segment is a "nowcast" - still heavily impacted by delays in incubation and reporting, but with at least some partial data. The final blue segment is a forecast.</p>
+
+		<p>The darker part of each ribbon reflects the estimated 50% credibility interval - the range within which a particular variable (infections, cases, or effective reproduction number) is believed to have a 50% chance of occurring, were the truth to be known. The wider, paler part of each ribbon is a 90% credibility interval.</p>
+
+		<p>The vertical pale grey bars represent confirmed cases, but with a small adjustment for test positivity (ie the proportion of tests for Covid-19 that return positive on any one day). Australia's test positivity over the last few months is shown in this chart, which makes clear that the proportion of positive tests is still low (ie good) by international standards:</p>
+
+		<object type="image/svg+xml" data='/img/covid-tracking/victoria-positivity.svg' width='100%'><img src='/img/covid-tracking/victoria-positivity.png' width='100%'></object>
+
+		<p>The positivity adjustment could be improved by doing it separately for each state. More generally, the effective reproduction number for Australia as a whole should be treated as even more indicative than for individual states; it is more useful to consider the states as separate outbreaks for this purpose.
+		</p>
+		
+	</div>
+
 
 	<div class="tab-pane fade" id="methods" role="tabpanel" aria-labelledby="methods-tab">
 
