@@ -31,9 +31,9 @@ my_plot_estimates <- function(estimates,
   todays_r <- p$data %>%
     filter(date == Sys.Date())
   st <- str_wrap(glue("Estimated R on {format(Sys.Date(), format = '%d %B')} 
-             is between {round(todays_r$lower, 2)} and 
-             {round(todays_r$upper, 2)}. The best point estimate is 
-              {round(todays_r$median, 2)}."), 100)
+             is between {format(todays_r$lower, digits = 2, nsmall = 2)} and 
+             {format(todays_r$upper, digits = 2, nsmall = 2)}. The best point estimate is 
+              {format(todays_r$median, digits = 2, nsmall = 2)}."), 100)
   
   
   p3 <- p$data %>% 

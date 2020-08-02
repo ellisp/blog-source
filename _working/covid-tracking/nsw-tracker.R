@@ -41,12 +41,7 @@ if(max(nsw_incidence_by_source$notification_date) < Sys.Date()){
 
 
 #----------------test numbers----------
-url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"
-
 k <- 0.1
-
-gs4_deauth()
-gd_orig <- read_sheet(url) 
 
 # For positivity, we don't care which source it is from
 cases_total <- nsw_incidence_by_source %>%
@@ -77,7 +72,7 @@ positivity <- gd_orig %>%
          pos_raw = cases/ test_increase,
          positivity = pmin(0.1, pos_raw)) %>%
   fill(positivity, .direction = "downup") %>%
-  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasipoisson")),
+  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasibinomial")),
          ps2 = fitted(loess(positivity ~ numeric_date), data = .)) %>%
   ungroup()  %>%
   select(date, ps1, pos_raw, positivity)
@@ -96,7 +91,7 @@ pos_line <- positivity %>%
        y = "Test positivity (log scale)",
        caption = the_caption,
        title = "Covid-19 test positivity in New South Wales, Australia, 2020",
-       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model with a Poisson family response, 
+       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model, 
        and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
        The lowest rate is {percent(min(positivity$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
        adjusted case numbers being {comma((0.015 / min(positivity$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
@@ -130,7 +125,8 @@ d <- nsw_incidence_by_source %>%
 # - not sure if this can handle the imported v local thing but I think not.
 d2 <- d %>%
   mutate(confirm = round(not_nsw + nsw)) %>%
-  select(date, confirm)
+  select(date, confirm) %>%
+  as.data.table()
 
 estimates_nsw <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
