@@ -8,7 +8,7 @@ gd_orig_not_today <- filter(gd_orig, Date < Sys.Date())
 # power transform parameter
 k <- 0.1
 
-d <- gd_orig %>%
+d <- gd_orig_not_today %>%
   clean_names() %>% 
   # deal with problem of multiple observations some days:
   mutate(date = as.Date(date)) %>%
