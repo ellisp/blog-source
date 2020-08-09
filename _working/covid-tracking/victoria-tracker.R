@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-09"),   394
+#                           as.Date("2020-08-09"),   394
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -106,18 +106,25 @@ svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 
 
 
 #---------Estimate Reff-------------
+# see https://www.mja.com.au/journal/2020/victorias-response-resurgence-covid-19-has-averted-9000-37000-cases-july-2020
+# dates of the major changes - Stage 3 and Stage 4 restrictions on all of Melbourne:
+npi_dates <- as.Date(c("2020/08/03", "2020/07/10"))
 
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
   select(date, confirm) %>%
-  as.data.table()
+  mutate(breakpoint = as.numeric(date %in% npi_dates)) %>%
+  as.data.table() 
+
+stopifnot(sum(d2$breakpoint) == length(npi_dates))
 
 estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                               generation_time = generation_time,
                               delays = list(incubation_period, reporting_delay),
-                              horizon = 7, samples = 3000, warmup = 600, 
+                              horizon = 14, samples = 3000, warmup = 600, 
                               cores = 4, chains = 4, verbose = TRUE, 
-                              adapt_delta = 0.95)
+                              adapt_delta = 0.95,
+                              estimate_breakpoints = TRUE)
 
 
 pc_vic <- my_plot_estimates(estimates_vic, 
@@ -143,23 +150,23 @@ system('git push origin master')
 setwd(wd)
 
 #---------------------estimate Reff without the positivity correction-----------
-d3 <- d %>%
-  select(date, confirm) %>%
-  as.data.table()
-
-estimates_vic_np <- EpiNow2::epinow(reported_cases = d3, 
-                                 generation_time = generation_time,
-                                 delays = list(incubation_period, reporting_delay),
-                                 horizon = 7, samples = 3000, warmup = 600, 
-                                 cores = 4, chains = 4, verbose = TRUE, 
-                                 adapt_delta = 0.95)
-
-
-pc_vic_np <- my_plot_estimates(estimates_vic_np, 
-                            extra_title = "",
-                            caption = the_caption,
-                            y_max = 2000)
-
-svg_png(pc_vic_np, "../img/covid-tracking/victoria-latest-np", h = 10, w = 10)
-
-svg_png(pc_vic_np, "../_site/img/covid-tracking/victoria-latest-np", h = 10, w = 10)
+# d3 <- d %>%
+#   select(date, confirm) %>%
+#   as.data.table()
+# 
+# estimates_vic_np <- EpiNow2::epinow(reported_cases = d3, 
+#                                  generation_time = generation_time,
+#                                  delays = list(incubation_period, reporting_delay),
+#                                  horizon = 7, samples = 3000, warmup = 600, 
+#                                  cores = 4, chains = 4, verbose = TRUE, 
+#                                  adapt_delta = 0.95)
+# 
+# 
+# pc_vic_np <- my_plot_estimates(estimates_vic_np, 
+#                             extra_title = "",
+#                             caption = the_caption,
+#                             y_max = 2000)
+# 
+# svg_png(pc_vic_np, "../img/covid-tracking/victoria-latest-np", h = 10, w = 10)
+# 
+# svg_png(pc_vic_np, "../_site/img/covid-tracking/victoria-latest-np", h = 10, w = 10)
