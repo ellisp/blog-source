@@ -6,7 +6,7 @@ source("covid-tracking/covid-setup.R")
 k <- 0.1
 
 # optional: remove today's data so we can pout it in by hand including positivity
-# gd_orig <- filter(gd_orig, Date != Sys.Date())
+gd_orig <- filter(gd_orig, Date != Sys.Date())
 
 
 # check by hand to see if we need to add today's news in
@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-02"),   650
+                           as.Date("2020-08-09"),   394
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -45,6 +45,8 @@ d <- gd_orig %>%
   # filter(!is.na(tests_conducted_total)) %>% 
   # correct one typo, missing a zero
   mutate(tests_conducted_total = ifelse(date == as.Date("2020-07-10"), 1068000, tests_conducted_total)) %>%
+  # correct another typo or otherwise bad data point
+  mutate(tests_conducted_total = ifelse(date == as.Date("2020-08-08"), NA, tests_conducted_total)) %>%
   # remove two bad dates 
   filter(!date %in% as.Date(c("2020-06-06", "2020-06-07"))) %>%
   mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
@@ -61,7 +63,8 @@ d <- gd_orig %>%
          ps2 = fitted(loess(positivity ~ numeric_date, data = ., span = 0.1)),
          cases_corrected = confirm * ps1 ^ k / min(ps1 ^ k)) %>%
   ungroup() %>%
-  mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1))) 
+  mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1)),
+         seven_day_avg_confirm = zoo::rollapplyr(confirm, width = 7, mean, na.pad = TRUE)) 
 
 if(max(count(d, date)$n) > 1){
   tail(d)
@@ -70,6 +73,10 @@ if(max(count(d, date)$n) > 1){
 
 if(max(d$date) < Sys.Date()){
   stop("No data yet for today")
+}
+
+if(! (Sys.Date() - 1) %in% d$date){
+  stop("No data for yesterday")
 }
 
 
@@ -134,3 +141,25 @@ system('git config --global user.name "Peter Ellis"')
 system('git commit -m "latest covid plot"')
 system('git push origin master')
 setwd(wd)
+
+#---------------------estimate Reff without the positivity correction-----------
+d3 <- d %>%
+  select(date, confirm) %>%
+  as.data.table()
+
+estimates_vic_np <- EpiNow2::epinow(reported_cases = d3, 
+                                 generation_time = generation_time,
+                                 delays = list(incubation_period, reporting_delay),
+                                 horizon = 7, samples = 3000, warmup = 600, 
+                                 cores = 4, chains = 4, verbose = TRUE, 
+                                 adapt_delta = 0.95)
+
+
+pc_vic_np <- my_plot_estimates(estimates_vic_np, 
+                            extra_title = "",
+                            caption = the_caption,
+                            y_max = 2000)
+
+svg_png(pc_vic_np, "../img/covid-tracking/victoria-latest-np", h = 10, w = 10)
+
+svg_png(pc_vic_np, "../_site/img/covid-tracking/victoria-latest-np", h = 10, w = 10)
