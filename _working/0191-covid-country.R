@@ -204,7 +204,7 @@ names(hcq_cols) <- unique(all_data$hcq_usage)
 
 the_caption <- str_wrap(
   "Source: HCQ policy on usage, and death adjustment factors by diabetes, hypertension, gender and age, 
-  from an anonymous aricle on the web, 'Early treatment with hydroxychloroquine'; 
+  from an anonymous article on the web, 'Early treatment with hydroxychloroquine'; 
   Covid-19 death numbers from Our World in Data;  population and GDP
   from the World Bank World Development Indicators. Analysis by http://freerangestats.info.",
   120
@@ -223,7 +223,7 @@ p1 <- all_data %>%
        y = "Adjusted Covid-19 deaths per million",
        color = "Reported HCQ usage in early stages of Covid-19:",
        caption = the_caption,
-       title = "GDP per capita, HCQ use and adjusted Covid-19 death rates",
+       title = "GDP per capita, reported HCQ use and adjusted Covid-19 death rates",
        subtitle = str_wrap("Of the 19 countries in this HCQ cross-country observational study, 
        nearly all countries described as limited users of HCQ are wealthy. Higher income countries
                            (for whatever reason) also have higher death rates reported, which will 
@@ -261,7 +261,7 @@ p3 <- all_data %>%
        y = "Un-adjusted Covid-19 deaths per million",
        color = "Reported HCQ usage in early stages of Covid-19:",
        caption = the_caption,
-  title = "Time since the outbreak became very serious, HCQ use and Covid-19 death rates",
+  title = "Time since the outbreak became very serious, reported HCQ use and Covid-19 death rates",
   subtitle = str_wrap("Countries described as using HCQ in limited fashion also tend to have
                       had more time pass since the outbreak became serious. That length of time 
                       is correlated with total deaths per million.", 100)) +
@@ -274,12 +274,14 @@ p4 <- all_data %>%
   geom_point() +
   geom_text_repel() +
   scale_colour_manual(values = hcq_cols) +
+  scale_x_log10() +
+  scale_y_log10(label = comma) +
   labs(x = "Cumulative deaths per case",
-       y = "Cumulative eaths per million population",
-       title = "Relationship between deaths per case and deaths per population is straightforward",
-       subtitle = "As at 7 August 2020",
+       y = "Cumulative deaths per million population",
+       title = "Relationship between deaths per case and deaths per population is straightforward if noisy",
+       subtitle = "As at 7 August 2020. Labelled countries are those with data in the original HCQ website.",
        color = "Reported HCQ usage in early stages of Covid-19:",
-       caption = "Source: Our World in Data (Covid) and World Bank WDI (population)")
+       caption = "Source: Our World in Data (Covid) and World Bank WDI (population). HCQ categorisation from an anonymous article on the web.")
 
 p5 <- all_data %>%
   filter(hcq_usage %in% c("Widespread", "Limited")) %>%
@@ -290,10 +292,10 @@ p5 <- all_data %>%
   scale_x_log10(label = dollar_format(accuracy = 1)) +
   scale_y_log10(label = comma) +
   labs(x = "GDP per capita",
-       y = "Adjusted Covid-19 deaths per case",
+       y = "Covid-19 deaths per case",
        color = "Reported HCQ usage in early stages of Covid-19:",
        caption = the_caption,
-       title = "GDP per capita, HCQ use and Covid-19 case fatality rates",
+       title = "GDP per capita, reported HCQ use and Covid-19 case fatality rates",
        subtitle = str_wrap("Of the 19 countries in this HCQ cross-country observational study, 
        nearly all countries described as limited users of HCQ are wealthy. Higher income countries
                            (for whatever reason) also have higher death rates reported, which will 
@@ -302,7 +304,7 @@ p5 <- all_data %>%
   theme(plot.caption = element_text(hjust = 0)) +
   scale_colour_manual(values = hcq_cols)
 
-#-------------"straightforward" modelling-----
+#-------------"straightforward" modelling with pre-lasso methods-----
 # These methods are unlikely to be good because of the small sample size
 # see further down the script for a more appropriate method
 
@@ -389,7 +391,7 @@ d1 <- all_data %>%
          widespread_hcq) 
 
 
-
+# function for fitting a glmnet lasso model to data[w, ] - to feed to boot()
 boot_glmnet <- function(data, w, return_as_vector = TRUE){
   
   stopifnot(names(data)[1] == "response_column")
@@ -455,6 +457,7 @@ boot.ci(booted2, type = "perc", index = 5)
 exp(boot.ci(booted2, type = "perc", index = 5)$percent[4:5]) # relative risk ratio 0.09 to 1.00
 
 #--------------bootstrap lasso with 176 observations------------
+# using deaths per *case* as response variable
 d3 <- all_data %>%
   filter(hcq_usage %in% c("Widespread", "Mixed", "Limited", "Unknown")) %>%
   filter(!is.na(gdp_per_capita) & deaths_per_c > 0) %>%
@@ -486,7 +489,7 @@ boot_glmnet(d3, 1:nrow(d3), FALSE)
 booted3 <- boot(d3, boot_glmnet, R = 999)
 mean(booted3$t[, 6] < 0 ) # 48% of time 'widespread' HCQ coefficient is less than zero
 mean(booted3$t[, 6] > 0 ) # 0% of time 'widespread' HCQ coefficient is greater than zero
-mean(booted3$t[, 2] > 0 ) # 73% of time GDP per capita coefficient is more than zero
+mean(booted3$t[, 2] > 0 ) # 73% of time 'days since bad' coefficient is more than zero
 mean(booted3$t[, 3] < 0 ) # 40% of time GDP per capita coefficient is less than zero
 mean(booted3$t[, 4] < 0 ) # 53% of time 'unknown'' coefficient is less than zero
 mean(booted3$t[, 5] < 0 ) # 38% of time 'mixed' HCQ coefficient is less than zero
