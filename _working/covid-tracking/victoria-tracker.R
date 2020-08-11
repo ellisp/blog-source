@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-#                           as.Date("2020-08-09"),   394
+                           as.Date("2020-08-11"),   331
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -108,7 +108,7 @@ svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 
 #---------Estimate Reff-------------
 # see https://www.mja.com.au/journal/2020/victorias-response-resurgence-covid-19-has-averted-9000-37000-cases-july-2020
 # dates of the major changes - Stage 3 and Stage 4 restrictions on all of Melbourne:
-npi_dates <- as.Date(c("2020/08/03", "2020/07/10"))
+
 
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%

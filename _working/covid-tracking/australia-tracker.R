@@ -73,6 +73,7 @@ svg_png(pos_line, "../_site/img/covid-tracking/australia-positivity", h = 5, w =
 d2 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
   select(date, confirm) %>%
+  mutate(breakpoint = as.numeric(date %in% npi_dates)) %>%
   as.data.table()
 
 estimates_oz <- EpiNow2::epinow(reported_cases = d2, 
@@ -80,7 +81,7 @@ estimates_oz <- EpiNow2::epinow(reported_cases = d2,
                                  delays = list(incubation_period, reporting_delay),
                                  horizon = 7, samples = 3000, warmup = 600, 
                                  cores = 4, chains = 4, verbose = TRUE, 
-                                 adapt_delta = 0.95)
+                                 adapt_delta = 0.95, estimate_breakpoints = TRUE)
 
 
 pc_oz <- my_plot_estimates(estimates_oz, 

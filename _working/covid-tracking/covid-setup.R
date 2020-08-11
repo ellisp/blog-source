@@ -18,7 +18,11 @@ gd_orig <- read_sheet(guardian_url)
 
 
 
-#------------Estimating R with EpiNow2---------------------
+#----------dates for breaks---
+#non-pharmaceutical interventions: stage 4, masks, stage 3, stage 3 (selected suburbs)
+npi_dates <- as.Date(c("2020/08/03", "2020/07/22", "2020/07/10", "2020/07/01"))
+
+#------------Reporting delays---------------------
 # From the documentation re delays: " (assuming a lognormal distribution with all 
 # parameters excepting the max allowed value on the log scale).
 
