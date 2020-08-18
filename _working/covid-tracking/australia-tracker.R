@@ -46,11 +46,18 @@ d <- gd_orig_not_today %>%
 the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last data used from {max(d$date)}."  )
 
 #-----------------Positivity plot------------------
+hp <- d %>%
+  filter(!is.na(ps1)) %>%
+  filter(date == max(date))
+
 pos_line <- d %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
+  geom_text(data = hp, aes(label = percent(ps1, accuracy = 0.1), y = ps1), 
+            hjust = 0, nudge_x = 1, colour = "steelblue") +
   scale_y_log10(label = percent_format(accuracy = 0.1)) +
+  xlim(min(d$date), hp$date + 3) +
   labs(x = "",
        y = "Test positivity (log scale)",
        caption = the_caption,

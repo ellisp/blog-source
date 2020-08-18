@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-12"),   410
+#                           as.Date("2020-08-18"),   222
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -83,11 +83,18 @@ if(! (Sys.Date() - 1) %in% d$date){
 the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 #-----------------Positivity plot------------------
+hp <- d %>%
+  filter(!is.na(ps1)) %>%
+  filter(date == max(date))
+
 pos_line <- d %>%
   ggplot(aes(x = date)) +
   geom_line(aes(y = ps1), colour = "steelblue") +
   geom_point(aes(y = pos_raw)) +
+  geom_text(data = hp, aes(label = percent(ps1, accuracy = 0.1), y = ps1), 
+            hjust = 0, nudge_x = 1, colour = "steelblue") +
   scale_y_log10(label = percent_format(accuracy = 0.1)) +
+  xlim(min(d$date), hp$date + 3) +
   labs(x = "",
        y = "Test positivity (log scale)",
        caption = the_caption,
@@ -136,18 +143,31 @@ svg_png(pc_vic, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
 
 svg_png(pc_vic, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
 
+vic_results <- rbind(
+  mutate(estimates_vic$plots$reports$data, type = "positivity-adjusted reported cases"),
+  mutate(estimates_vic$plots$infections$data, type = "Infections"),
+  mutate(estimates_vic$plots$reff$data, type = "Effective reproduction number (R)")
+) %>% 
+  as_tibble() 
+write_csv(vic_results, glue("../covid-tracking/vic-results-{Sys.Date()}.csv"))
+write_csv(vic_results, glue("../_site/covid-tracking/vic-results-{Sys.Date()}.csv"))
+write_csv(vic_results, glue("../_site/covid-tracking/vic-results-latest.csv"))
+
 wd <- setwd("../_site")
 
 system('git add img/covid-tracking/victoria-latest.*')
 system('git add img/covid-tracking/victoria-positivity.*')
+system('git add covid-tracking/vic-results-*.csv')
 
 
 system('git config --global user.email "peter.ellis2013nz@gmail.com"')
 system('git config --global user.name "Peter Ellis"')
 
-system('git commit -m "latest covid plot"')
+system('git commit -m "latest Victoria covid plot and data"')
 system('git push origin master')
 setwd(wd)
+
+
 
 #---------------------estimate Reff without the positivity correction-----------
 # d3 <- d %>%
