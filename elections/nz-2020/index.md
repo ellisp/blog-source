@@ -5,11 +5,11 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
-**Last updated 12 August 2020**
+**Last updated 18 August 2020**
 
 ## Near-certainty of a Labour-led government after 2020 election
 
-This chart shows the estimated probability of the key possible governing combinations after the coming New Zealand general election, which will be held on Saturday 19 September  2020.
+This chart shows the estimated probability of the key possible governing combinations after the coming New Zealand general election, which will be held on Saturday 17 October 2020.
 
 <object type="image/svg+xml" data='/img/nz-elections-2020/state-space-final-chances-bar.svg' width='100%'><img src='/img/nz-elections-2020/state-space-final-chances-bar.png' width='100%'></object>
 
