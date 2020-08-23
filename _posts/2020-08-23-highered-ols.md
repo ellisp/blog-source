@@ -8,7 +8,7 @@ tag:
 description: I have a go at synthesising data to re-create a controversial and much-criticised chart that used ordinary least squares to fit a line relating university subjects' costs per student to the number of students in each subject. 
 image: /img/0187-ols.svg
 socialimage: http://freerangestats.info/img/0187-ols.png
-category: Other
+category: R
 ---
 
 A couple of months ago my Twitter feed featured several mass-participation stern critiques laced with sneering and mockery (aka "Twitter pile-ons") for some naive regression modelling in the form of lines of best fit through scatter plots. All of the examples I've seen deserved some degree of criticism, but not to the virulent degree that they received. And there is an interesting phenomenon of righteous anger in some of those who criticise others' regression that is dependent on quite outdated views of what is and isn't acceptable in a statistical model.

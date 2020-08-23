@@ -147,7 +147,7 @@ pc_nsw <- my_plot_estimates(estimates_nsw,
                          extra_title = " and positivity",
                          caption = the_caption,
                          location = " in New South Wales",
-                         y_max = 500)
+                         y_max = 400)
 
 svg_png(pc_nsw, "../img/covid-tracking/nsw-latest", h = 10, w = 10)
 

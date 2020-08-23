@@ -95,7 +95,7 @@ pc_oz <- my_plot_estimates(estimates_oz,
                            location = " in Australia",
                             extra_title = " and positivity",
                             caption = the_caption,
-                            y_max = 2000)
+                            y_max = 1200)
 
 svg_png(pc_oz, "../img/covid-tracking/australia-latest", h = 10, w = 10)
 

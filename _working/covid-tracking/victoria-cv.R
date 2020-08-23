@@ -1,5 +1,7 @@
 
 source("covid-tracking/covid-setup.R")
+library(lubridate)
+library(patchwork)
 
 #-----------------the Victoria data--------------
 
@@ -104,7 +106,7 @@ for(i in 1:length(all_dates)){
 
   d2 <- d %>%
     mutate(confirm = round(cases_corrected) ) %>%
-    select(date, confirm) %>%
+    dplyr::select(date, confirm) %>%
     mutate(breakpoint = as.numeric(date %in% npi_dates)) %>%
     filter(date <= the_date) %>%
     as.data.table() 
@@ -115,7 +117,7 @@ for(i in 1:length(all_dates)){
                                 horizon = 0, samples = 3000, warmup = 600, 
                                 cores = 4, chains = 4, verbose = TRUE, 
                                 adapt_delta = 0.95,
-                                estimate_breakpoints = TRUE)
+                                estimate_breakpoints = as.logical(the_date > "2020-07-15"))
   
   latest_full <- estimates_vic$estimates$summarised
   latest <- latest_full %>%
@@ -128,4 +130,77 @@ for(i in 1:length(all_dates)){
 }
 
 save(vic_cv_r_nowcasts, file = "covid-tracking/vic_cv_r_nowcasts.rda")
+
+#-----------latest for comparison purposes----------------
+d3 <- d %>%
+  mutate(confirm = round(cases_corrected) ) %>%
+  dplyr::select(date, confirm) %>%
+  mutate(breakpoint = as.numeric(date %in% npi_dates)) %>%
+  as.data.table() 
+
+estimates_vic_latest <- EpiNow2::epinow(reported_cases = d3, 
+                                 generation_time = generation_time,
+                                 delays = list(incubation_period, reporting_delay),
+                                 horizon = 0, samples = 3000, warmup = 600, 
+                                 cores = 4, chains = 4, verbose = TRUE, 
+                                 adapt_delta = 0.95,
+                                 estimate_breakpoints = TRUE)
 #--------------------analysis----------
+latest_estimates <- estimates_vic_latest$estimates$summarised %>%
+  filter(variable == "R") %>%
+  as_tibble() %>%
+  dplyr::select(names(vic_cv_r_nowcasts)) %>%
+  mutate(var = "Latest estimate")
+  
+combined <-  vic_cv_r_nowcasts %>%
+  mutate(var = "On-the-day nowcasts")  %>%
+  rbind(latest_estimates)
+
+howout <- tibble(x = seq(from =0.7, to = 1.6, length.out = 100)) %>%
+  mutate(overestimate10 = x / 0.9,
+         underestimate10 = x / 1.1,
+         overestimate20 = x / 0.8,
+         underestimate20 = x / 1.2)
+
+the_title <- str_wrap("A nowcasts of 'R today' is going to be a lagging measure, compared to the best estimate in hindsight", 80)
+the_caption <- "Source: analysis using EpiNow2 by http://freerangestats.info, of data from The Guardian"
+
+p1 <- combined %>%
+  dplyr::select(date, median, var) %>%
+  spread(var, median) %>%
+  drop_na() %>%
+  mutate(label = ifelse(date %in% range(date) | lubridate::mday(date) == 29, format(date, "%d %b"), "")) %>%
+  ggplot(aes(y = `Latest estimate`, x = `On-the-day nowcasts`)) +
+  geom_ribbon(data = howout, aes(ymin = underestimate20, ymax = overestimate20, x = x), inherit.aes = FALSE, alpha = 0.1) +
+  geom_ribbon(data = howout, aes(ymin = underestimate10, ymax = overestimate10, x = x), inherit.aes = FALSE, alpha = 0.1) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_path(colour = "grey80") +
+  geom_point() +
+  geom_text_repel(aes(label = label), colour = "steelblue") +
+  coord_equal(xlim = c(0.7, 1.6), ylim = c(0.7, 1.6)) +
+  labs(title = "",
+       subtitle = str_wrap("In June the model under-estimated R; in July and August it has over-estimated it.
+                           The pale and dark grey areas indicate where the nowcast is 10% or 20% out from the
+                           eventual 'hindsight' estimate.", 100),
+       caption = the_caption)
+  
+
+p2 <- vic_cv_r_nowcasts %>%
+  ggplot(aes(x = date, y = median)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5, fill = "steelblue") +
+  geom_point(colour ="darkblue") +
+  geom_line(data = latest_estimates, aes(y = median), colour = "darkred", size = 1.5) +
+  annotate("text", x = as.Date("2020-05-15"), y = 1, label = "Best estimate\n in hindsight", colour = "darkred") +
+  annotate("text", x = as.Date("2020-08-01"), y = 1.5, label = "Point and 50% credibility\nestimates when nowcasting") +
+  labs(x = "",
+       y = "Estimated Effective Reproduction Number",
+       title = the_title,
+       subtitle = str_wrap("Tendency is to underestimate R when it is increasing, and overestimate it when decreasing",
+                           100),
+       caption = "")
+
+# polish these for a better title / subtitle, and force the axes to be identical or nearly
+cp <- function(){
+  print(p2 + p1 +plot_layout(widths = c(3,2)))
+  }
+svg_png(cp, "../img/0192-reff-both", w = 14, h = 7)
