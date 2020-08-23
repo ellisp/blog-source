@@ -26,7 +26,12 @@ ggplot(data.frame(x = x), aes(x = x)) +
   theme(panel.grid.minor = element_blank())
 
 
-
+#' Simulate data and compare its OLS fit to a desired OLS fit
+#' 
+#' @param par vector of slope and intercept of log(y) ~ log(x)
+#' @param df degrees of freedom for the t distribution of residuals of y on the log scale
+#' @param sigma scaling value for residuals
+#' @param infl amount that residuals are inflated when x is less than 100
 fn <- function(par, df, sigma, infl){
 
   log_b0 <- par[1]
@@ -60,6 +65,7 @@ sigma = 0.20
 df = 13
 best <- optim(c(10, -2), fn = fn, df = df, sigma = sigma, infl = infl)
 
+# simulate data with the best set of parameters
 set.seed(123)
 eps <- rt(n, df)
 eps <- eps / sd(eps) * sigma * ifelse(x < 100, infl, 1)
@@ -70,7 +76,7 @@ the_data <- data.frame(x, y)
 
 p1 <- ggplot(the_data, aes(x = x, y = y)) +
   geom_point()  + 
-  geom_smooth(method = "lm", formula = "y ~ x", colour = "blue") +
+  geom_smooth(method = "lm", formula = "y ~ x", colour = "white") +
   scale_x_continuous(breaks = xbreaks, label = comma) +
   scale_y_continuous(breaks = ybreaks, label = comma, limits = c(0, 60000)) +
   theme(panel.grid.minor = element_blank()) +
