@@ -22,7 +22,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-22"),   182
+                           as.Date("2020-08-25"),   148
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -120,16 +120,11 @@ for(i in 1:length(all_dates)){
                                 estimate_breakpoints = as.logical(the_date > "2020-07-15"))
   
   latest_full <- estimates_vic$estimates$summarised
-  latest <- latest_full %>%
-    filter(variable == "R") %>%
-    filter(date == the_date) %>%
-    select(date, bottom, top, lower, upper, median, mean, sd)
-  vic_cv_r_nowcasts <- rbind(vic_cv_r_nowcasts, latest)
   
   saveRDS(latest_full, file =glue("covid-tracking/estimates_vic_{the_date}.rds"))
 }
 
-save(vic_cv_r_nowcasts, file = "covid-tracking/vic_cv_r_nowcasts.rda")
+
 
 #-----------latest for comparison purposes----------------
 d3 <- d %>%
@@ -145,7 +140,29 @@ estimates_vic_latest <- EpiNow2::epinow(reported_cases = d3,
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95,
                                  estimate_breakpoints = TRUE)
+
+save(estimates_vic_latest, file = "covid-tracking/estimates_vic_latest.rda")
+
 #--------------------analysis----------
+# This can be run later if necessary as we are loading in data from abovbe
+
+# The latest "hindsight" version of estimates:
+load("covid-tracking/estimates_vic_latest.rda")
+
+# load in all our old estimates:
+all_rds_files <- list.files("covid-tracking", pattern = ".rds", full.names = TRUE)
+
+read <- function(f){
+  readRDS(f)  %>%
+    filter(variable == "R") %>%
+    filter(date == max(date)) %>%
+    select(date, bottom, top, lower, upper, median, mean, sd)
+}
+
+vic_cv_r_nowcasts <- bind_rows(lapply(all_rds_files, read))
+
+
+# combine the two:
 latest_estimates <- estimates_vic_latest$estimates$summarised %>%
   filter(variable == "R") %>%
   as_tibble() %>%
