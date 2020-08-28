@@ -142,6 +142,11 @@ estimates_nsw <- EpiNow2::epinow(reported_cases = d2,
                               cores = 4, chains = 4, verbose = TRUE, 
                               adapt_delta = 0.95)
 
+if(max(filter(estimates_nsw$estimates$summarised, variable == "R")$top, na.rm = TRUE) > 10){
+  stop("Probable convergence problem; some estimates of R are implausibly high")
+}
+
+
 
 pc_nsw <- my_plot_estimates(estimates_nsw, 
                          extra_title = " and positivity",

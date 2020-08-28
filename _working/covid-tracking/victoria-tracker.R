@@ -6,7 +6,7 @@ source("covid-tracking/covid-setup.R")
 k <- 0.1
 
 # optional: remove today's data so we can pout it in by hand including positivity
-gd_orig <- filter(gd_orig, Date != Sys.Date())
+#gd_orig <- filter(gd_orig, Date != Sys.Date())
 
 
 # check by hand to see if we need to add today's news in
@@ -20,7 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-26"),   149
+  #                         as.Date("2020-08-28"),   113
 ) %>%
   mutate(tests_conducted_total = NA,
          cumulative_case_count = NA,
@@ -133,6 +133,10 @@ estimates_vic <- EpiNow2::epinow(reported_cases = d2,
                               adapt_delta = 0.95,
                               estimate_breakpoints = TRUE)
 
+
+if(max(filter(estimates_vic$estimates$summarised, variable == "R")$top, na.rm = TRUE) > 10){
+  stop("Probable convergence problem; some estimates of R are implausibly high")
+}
 
 pc_vic <- my_plot_estimates(estimates_vic, 
                          extra_title = " and positivity",

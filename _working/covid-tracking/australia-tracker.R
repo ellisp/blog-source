@@ -90,6 +90,12 @@ estimates_oz <- EpiNow2::epinow(reported_cases = d2,
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95, estimate_breakpoints = TRUE)
 
+if(max(filter(estimates_oz$estimates$summarised, variable == "R")$top, na.rm = TRUE) > 10){
+  stop("Probable convergence problem; some estimates of R are implausibly high")
+}
+
+
+
 
 pc_oz <- my_plot_estimates(estimates_oz, 
                            location = " in Australia",
