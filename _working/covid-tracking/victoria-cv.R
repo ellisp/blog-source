@@ -1,24 +1,25 @@
+# Time series cross-validation of effective reproduction number for R
+# Expects to be run as part of the overall blog-source project (eg packages
+# called in .Rprofile etc), but shouldn't be hard to pull out if necessary.
+#
+# Peter Ellis 22-29 August 2020
 
 source("covid-tracking/covid-setup.R")
 library(lubridate)
 
 #-----------------the Victoria data--------------
-
+# parameter for power positivity adjustment
 k <- 0.1
 
-# optional: remove today's data so we can pout it in by hand including positivity
+# optional: remove today's data so we can put it in by hand including positivity
 gd_orig <- filter(gd_orig, Date != Sys.Date())
-
 
 # check by hand to see if we need to add today's news in
 tmp <- filter(gd_orig, State == "VIC") %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
-tail(tmp)
 
 if(max(tmp$Date) < Sys.Date()){
   warning("No data yet for today (perhaps you deleted it yourself?)")
 }
-
-
 
 if(max(tmp$Date) >= min(latest_vic_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
@@ -73,13 +74,7 @@ if(! (Sys.Date() - 1) %in% d$date){
 }
 
 
-the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
-
-
-
 #---------Estimate Reff-------------
-# see https://www.mja.com.au/journal/2020/victorias-response-resurgence-covid-19-has-averted-9000-37000-cases-july-2020
-# dates of the major changes - Stage 3 and Stage 4 restrictions on all of Melbourne:
 
 all_dates <- seq(from = as.Date("2020-06-01"), to = (Sys.Date() - 14), by = 1)
 vic_cv_r_nowcasts <- tibble(date = date(),
@@ -90,8 +85,11 @@ vic_cv_r_nowcasts <- tibble(date = date(),
                          median = numeric(),
                          mean = numeric(),
                          sd = numeric())
+
+# Trick of starting a loop from itself to make it easier to run this
+# loop in part if it gets interrupted:
 i <- 1
-for(i in 1:length(all_dates)){
+for(i in i:length(all_dates)){
   the_date <- all_dates[i]
   print(the_date)
 
@@ -118,6 +116,8 @@ for(i in 1:length(all_dates)){
 
 
 #-----------latest for comparison purposes----------------
+# Using all the data available up to today, closest we can
+# get to definitive estimate of R in the past:
 d3 <- d %>%
   mutate(confirm = round(cases_corrected) ) %>%
   dplyr::select(date, confirm) %>%
@@ -134,8 +134,11 @@ estimates_vic_latest <- EpiNow2::epinow(reported_cases = d3,
 
 save(estimates_vic_latest, file = "covid-tracking/estimates_vic_latest.rda")
 
-#--------------------analysis----------
-# This can be run later if necessary as we are loading in data from abovbe
+#================analysis and visualisation of results==============
+
+#----------------Data prep--------------------
+# This can be run later if necessary as we are loading in data from above,
+# which can take 20+ hours to generate.
 
 # The latest "hindsight" version of estimates:
 load("covid-tracking/estimates_vic_latest.rda")
@@ -156,9 +159,11 @@ vic_cv_r_nowcasts <- bind_rows(lapply(all_rds_files, read))
 margins <- vic_cv_r_nowcasts %>%
   mutate(hwci1_prop = (upper - lower) / 2 / median,
          hwci2_prop = (top - bottom) / 2 / median) %>%
-  summarise(hp1 = mean(hwci1_prop),
-            hp2 = mean(hwci2_prop))
+  summarise(hp1 = mean(hwci1_prop, tr = 0.2),
+            hp2 = mean(hwci2_prop, tr = 0.2))
 
+# Create confidence/credibility bands to use in the later scatter plot
+# of a sort of half width conf/cred band from "getting it right"
 howout <- tibble(x = seq(from =0.5, to = 2, length.out = 100)) %>%
   mutate(overestimate10 = x / (1 - margins$hp1),
          underestimate10 = x / (1 + margins$hp1),
@@ -172,7 +177,21 @@ latest_estimates <- estimates_vic_latest$estimates$summarised %>%
   as_tibble() %>%
   dplyr::select(names(vic_cv_r_nowcasts)) %>%
   mutate(var = "Latest estimate")
-  
+
+# what are the success rates of the credibility intervals? - used in text
+vic_cv_r_nowcasts %>%
+  select(date, bottom:upper) %>%
+  left_join(select(latest_estimates, date, median), by = "date") %>%
+  mutate(ok50= (median > lower & median < upper),
+         ok90 = median > bottom & median < top) %>%
+  summarise(ok50 = mean(ok50),
+            ok90 = mean(ok90))
+
+#        ok50      ok90
+# 1 0.5789474 0.8947368
+
+
+#------------Plot 1 - line/point/ribbon time series------------------
 
 the_title <- str_wrap("A nowcasts of 'R today' is going to be a lagging measure, compared to the best estimate in hindsight", 80)
 the_caption <- "Source: analysis using EpiNow2 by http://freerangestats.info, of data from The Guardian"
@@ -192,8 +211,7 @@ p1 <- vic_cv_r_nowcasts %>%
                            100),
        caption = "")
 
-
-#--------------scatter plot comparing nowcast to 'actual'---------------------
+#--------------Plot 2 -scatter plot comparing nowcast to 'actual'---------------------
 combined <-  vic_cv_r_nowcasts %>%
   mutate(var = "On-the-day nowcasts")  %>%
   rbind(latest_estimates)
@@ -211,11 +229,13 @@ p2 <- combined %>%
   geom_point() +
   geom_text_repel(aes(label = label), colour = "steelblue") +
   coord_equal(xlim = c(0.6, 1.6), ylim = c(0.6, 1.6)) +
-  labs(title = the_title,
+  labs(title = "Comparing estimates of Covid-19 R for Victoria on the day with better estimates made in hindsight",
        subtitle = str_wrap("In June the model under-estimated R; in July and early August it has over-estimated it.
                            The pale and dark grey areas approximate the width of the original 50% and 90% credibility intervals
                            but centred on the eventual 'hindsight' estimate.", 100),
-       caption = the_caption) + 
+       caption = the_caption,
+       x = "Nowcasts made with the best data available at the time",
+       y = "Latest estimate using data available at 29 August") + 
   theme(plot.title.position = "plot")
   
 svg_png(p1, "../img/0192-line", 8, 5)

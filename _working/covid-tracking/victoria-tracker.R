@@ -19,15 +19,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 
-latest_by_hand <- tribble(~date,                  ~confirm,
-  #                         as.Date("2020-08-28"),   113
-) %>%
-  mutate(tests_conducted_total = NA,
-         cumulative_case_count = NA,
-         test_increase = NA,
-         pos_raw = NA / NA)
-
-if(max(tmp$Date) >= min(latest_by_hand$date)){
+if(max(tmp$Date) >= min(latest_vic_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
 }
 
@@ -52,7 +44,7 @@ d <- gd_orig %>%
   mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
          confirm = c(cumulative_case_count[1], diff(cumulative_case_count)),
          pos_raw = pmin(1, confirm / test_increase)) %>%
-  rbind(latest_by_hand) %>%
+  rbind(latest_vic_by_hand) %>%
   complete(date = seq.Date(min(date), max(date), by="day"), 
            fill = list(confirm = 0)) %>%
   mutate(numeric_date = as.numeric(date),

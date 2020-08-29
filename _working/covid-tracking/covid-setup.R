@@ -28,6 +28,9 @@ gd_orig <- read_sheet(guardian_url)
 
 
 #----------dates for breaks---
+# see https://www.mja.com.au/journal/2020/victorias-response-resurgence-covid-19-has-averted-9000-37000-cases-july-2020
+# dates of the major changes - Stage 3 and Stage 4 restrictions on all of Melbourne:
+
 #non-pharmaceutical interventions: stage 4, masks, stage 3, stage 3 (selected suburbs)
 npi_dates <- as.Date(c("2020/08/03", "2020/07/22", "2020/07/10", "2020/07/01"))
 
