@@ -9,6 +9,15 @@ library(frs)     # removes::install_github("ellisp/frs-r-package/pkg")
 library(patchwork)
 library(glue)
 
+
+latest_vic_by_hand <- tribble(~date,                  ~confirm,
+                              as.Date("2020-08-29"),   94
+) %>%
+  mutate(tests_conducted_total = NA,
+         cumulative_case_count = NA,
+         test_increase = NA,
+         pos_raw = NA / NA)
+
 source("covid-tracking/plot_estimates.R")
 
 guardian_url <- "https://docs.google.com/spreadsheets/d/1q5gdePANXci8enuiS4oHUJxcxC13d6bjMRSicakychE/edit#gid=1437767505"

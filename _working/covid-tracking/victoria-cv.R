@@ -1,7 +1,6 @@
 
 source("covid-tracking/covid-setup.R")
 library(lubridate)
-library(patchwork)
 
 #-----------------the Victoria data--------------
 
@@ -21,15 +20,7 @@ if(max(tmp$Date) < Sys.Date()){
 
 
 
-latest_by_hand <- tribble(~date,                  ~confirm,
-                           as.Date("2020-08-25"),   148
-) %>%
-  mutate(tests_conducted_total = NA,
-         cumulative_case_count = NA,
-         test_increase = NA,
-         pos_raw = NA / NA)
-
-if(max(tmp$Date) >= min(latest_by_hand$date)){
+if(max(tmp$Date) >= min(latest_vic_by_hand$date)){
   stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
 }
 
@@ -54,7 +45,7 @@ d <- gd_orig %>%
   mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
          confirm = c(cumulative_case_count[1], diff(cumulative_case_count)),
          pos_raw = pmin(1, confirm / test_increase)) %>%
-  rbind(latest_by_hand) %>%
+  rbind(latest_vic_by_hand) %>%
   complete(date = seq.Date(min(date), max(date), by="day"), 
            fill = list(confirm = 0)) %>%
   mutate(numeric_date = as.numeric(date),
@@ -99,7 +90,7 @@ vic_cv_r_nowcasts <- tibble(date = date(),
                          median = numeric(),
                          mean = numeric(),
                          sd = numeric())
-
+i <- 1
 for(i in 1:length(all_dates)){
   the_date <- all_dates[i]
   print(the_date)
@@ -161,48 +152,33 @@ read <- function(f){
 
 vic_cv_r_nowcasts <- bind_rows(lapply(all_rds_files, read))
 
+# how much is our uncertainty on the day:
+margins <- vic_cv_r_nowcasts %>%
+  mutate(hwci1_prop = (upper - lower) / 2 / median,
+         hwci2_prop = (top - bottom) / 2 / median) %>%
+  summarise(hp1 = mean(hwci1_prop),
+            hp2 = mean(hwci2_prop))
 
-# combine the two:
+howout <- tibble(x = seq(from =0.5, to = 2, length.out = 100)) %>%
+  mutate(overestimate10 = x / (1 - margins$hp1),
+         underestimate10 = x / (1 + margins$hp1),
+         overestimate20 = x / (1 - margins$hp2),
+         underestimate20 = x / (1 + margins$hp2))
+
+
+# latest estimates with benefit of hindsight
 latest_estimates <- estimates_vic_latest$estimates$summarised %>%
   filter(variable == "R") %>%
   as_tibble() %>%
   dplyr::select(names(vic_cv_r_nowcasts)) %>%
   mutate(var = "Latest estimate")
   
-combined <-  vic_cv_r_nowcasts %>%
-  mutate(var = "On-the-day nowcasts")  %>%
-  rbind(latest_estimates)
-
-howout <- tibble(x = seq(from =0.7, to = 1.6, length.out = 100)) %>%
-  mutate(overestimate10 = x / 0.9,
-         underestimate10 = x / 1.1,
-         overestimate20 = x / 0.8,
-         underestimate20 = x / 1.2)
 
 the_title <- str_wrap("A nowcasts of 'R today' is going to be a lagging measure, compared to the best estimate in hindsight", 80)
 the_caption <- "Source: analysis using EpiNow2 by http://freerangestats.info, of data from The Guardian"
 
-p1 <- combined %>%
-  dplyr::select(date, median, var) %>%
-  spread(var, median) %>%
-  drop_na() %>%
-  mutate(label = ifelse(date %in% range(date) | lubridate::mday(date) == 29, format(date, "%d %b"), "")) %>%
-  ggplot(aes(y = `Latest estimate`, x = `On-the-day nowcasts`)) +
-  geom_ribbon(data = howout, aes(ymin = underestimate20, ymax = overestimate20, x = x), inherit.aes = FALSE, alpha = 0.1) +
-  geom_ribbon(data = howout, aes(ymin = underestimate10, ymax = overestimate10, x = x), inherit.aes = FALSE, alpha = 0.1) +
-  geom_abline(intercept = 0, slope = 1) +
-  geom_path(colour = "grey80") +
-  geom_point() +
-  geom_text_repel(aes(label = label), colour = "steelblue") +
-  coord_equal(xlim = c(0.7, 1.6), ylim = c(0.7, 1.6)) +
-  labs(title = "",
-       subtitle = str_wrap("In June the model under-estimated R; in July and August it has over-estimated it.
-                           The pale and dark grey areas indicate where the nowcast is 10% or 20% out from the
-                           eventual 'hindsight' estimate.", 100),
-       caption = the_caption)
-  
 
-p2 <- vic_cv_r_nowcasts %>%
+p1 <- vic_cv_r_nowcasts %>%
   ggplot(aes(x = date, y = median)) +
   geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5, fill = "steelblue") +
   geom_point(colour ="darkblue") +
@@ -216,8 +192,31 @@ p2 <- vic_cv_r_nowcasts %>%
                            100),
        caption = "")
 
-# polish these for a better title / subtitle, and force the axes to be identical or nearly
-cp <- function(){
-  print(p2 + p1 +plot_layout(widths = c(3,2)))
-  }
-svg_png(cp, "../img/0192-reff-both", w = 14, h = 7)
+
+#--------------scatter plot comparing nowcast to 'actual'---------------------
+combined <-  vic_cv_r_nowcasts %>%
+  mutate(var = "On-the-day nowcasts")  %>%
+  rbind(latest_estimates)
+
+p2 <- combined %>%
+  dplyr::select(date, median, var) %>%
+  spread(var, median) %>%
+  drop_na() %>%
+  mutate(label = ifelse(date %in% range(date) | lubridate::mday(date) == 1, format(date, "%d %b"), "")) %>%
+  ggplot(aes(y = `Latest estimate`, x = `On-the-day nowcasts`)) +
+  geom_ribbon(data = howout, aes(ymin = underestimate20, ymax = overestimate20, x = x), inherit.aes = FALSE, alpha = 0.1) +
+  geom_ribbon(data = howout, aes(ymin = underestimate10, ymax = overestimate10, x = x), inherit.aes = FALSE, alpha = 0.1) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_path(colour = "grey80") +
+  geom_point() +
+  geom_text_repel(aes(label = label), colour = "steelblue") +
+  coord_equal(xlim = c(0.6, 1.6), ylim = c(0.6, 1.6)) +
+  labs(title = the_title,
+       subtitle = str_wrap("In June the model under-estimated R; in July and early August it has over-estimated it.
+                           The pale and dark grey areas approximate the width of the original 50% and 90% credibility intervals
+                           but centred on the eventual 'hindsight' estimate.", 100),
+       caption = the_caption) + 
+  theme(plot.title.position = "plot")
+  
+svg_png(p1, "../img/0192-line", 8, 5)
+svg_png(p2, "../img/0192-scatter", 7, 8.5)
