@@ -193,7 +193,7 @@ vic_cv_r_nowcasts %>%
 
 #------------Plot 1 - line/point/ribbon time series------------------
 
-the_title <- str_wrap("A nowcasts of 'R today' is going to be a lagging measure, compared to the best estimate in hindsight", 80)
+the_title <- str_wrap("A nowcast of 'R today' is going to be a lagging measure, compared to the best estimate in hindsight", 80)
 the_caption <- "Source: analysis using EpiNow2 by http://freerangestats.info, of data from The Guardian"
 
 
@@ -203,7 +203,7 @@ p1 <- vic_cv_r_nowcasts %>%
   geom_point(colour ="darkblue") +
   geom_line(data = latest_estimates, aes(y = median), colour = "darkred", size = 1.5) +
   annotate("text", x = as.Date("2020-05-15"), y = 1, label = "Best estimate\n in hindsight", colour = "darkred") +
-  annotate("text", x = as.Date("2020-08-01"), y = 1.5, label = "Point and 50% credibility\nestimates when nowcasting") +
+  annotate("text", x = as.Date("2020-08-09"), y = 1.5, label = "Point and 50% credibility\nestimates when nowcasting") +
   labs(x = "",
        y = "Estimated Effective Reproduction Number",
        title = the_title,
@@ -229,9 +229,9 @@ p2 <- combined %>%
   geom_point() +
   geom_text_repel(aes(label = label), colour = "steelblue") +
   coord_equal(xlim = c(0.6, 1.6), ylim = c(0.6, 1.6)) +
-  labs(title = "Comparing estimates of Covid-19 R for Victoria on the day with better estimates made in hindsight",
+  labs(title = "Comparing estimates of Covid-19 R for Victoria on the day with better estimates\nmade in hindsight",
        subtitle = str_wrap("In June the model under-estimated R; in July and early August it has over-estimated it.
-                           The pale and dark grey areas approximate the width of the original 50% and 90% credibility intervals
+                           The pale and dark grey areas approximate the width of the original 50% and 90% credibility intervals,
                            but centred on the eventual 'hindsight' estimate.", 100),
        caption = the_caption,
        x = "Nowcasts made with the best data available at the time",
@@ -239,4 +239,4 @@ p2 <- combined %>%
   theme(plot.title.position = "plot")
   
 svg_png(p1, "../img/0192-line", 8, 5)
-svg_png(p2, "../img/0192-scatter", 7, 8.5)
+svg_png(p2, "../img/0192-scatter", 7, 8)
