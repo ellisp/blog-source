@@ -5,22 +5,8 @@ source("covid-tracking/covid-setup.R")
 
 k <- 0.1
 
-# optional: remove today's data so we can pout it in by hand including positivity
-#gd_orig <- filter(gd_orig, Date != Sys.Date())
-
-
-# check by hand to see if we need to add today's news in
-tmp <- filter(gd_orig, State == "VIC") %>% arrange(Date) %>% filter(!is.na(`Cumulative case count`))
-tail(tmp)
-
-if(max(tmp$Date) < Sys.Date()){
-  warning("No data yet for today (perhaps you deleted it yourself?)")
-}
-
-
-
-if(max(tmp$Date) >= min(latest_vic_by_hand$date)){
-  stop("A manually entered data point doubles up with some actual Guardian data, check this is ok")
+if(max(vic_dhhs$date) < (Sys.Date() - 1)){
+  warning("No data yet for yesterday")
 }
 
 d <- gd_orig %>%
@@ -29,22 +15,20 @@ d <- gd_orig %>%
   # deal with problem of multiple observations some days:
   mutate(date = as.Date(date)) %>%
   group_by(date) %>%
-  summarise(tests_conducted_total = max(tests_conducted_total, na.rm = TRUE),
-            cumulative_case_count = max(cumulative_case_count, na.rm = TRUE)) %>%
-  mutate(tests_conducted_total  = ifelse(tests_conducted_total < 0, NA, tests_conducted_total),
-         cumulative_case_count = ifelse(cumulative_case_count < 0, NA, cumulative_case_count)) %>%
+  summarise(tests_conducted_total = max(tests_conducted_total, na.rm = TRUE)) %>%
+  mutate(tests_conducted_total  = ifelse(tests_conducted_total < 0, NA, tests_conducted_total)) %>%
   ungroup() %>%
-  # filter(!is.na(tests_conducted_total)) %>% 
   # correct one typo, missing a zero
   mutate(tests_conducted_total = ifelse(date == as.Date("2020-07-10"), 1068000, tests_conducted_total)) %>%
   # correct another typo or otherwise bad data point
   mutate(tests_conducted_total = ifelse(date == as.Date("2020-08-08"), NA, tests_conducted_total)) %>%
   # remove two bad dates 
   filter(!date %in% as.Date(c("2020-06-06", "2020-06-07"))) %>%
+  mutate(date = date - 1) %>%
+  full_join(vic_dhhs, by = "date") %>%
+  rename(confirm = cases) %>%
   mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
-         confirm = c(cumulative_case_count[1], diff(cumulative_case_count)),
          pos_raw = pmin(1, confirm / test_increase)) %>%
-  rbind(latest_vic_by_hand) %>%
   complete(date = seq.Date(min(date), max(date), by="day"), 
            fill = list(confirm = 0)) %>%
   mutate(numeric_date = as.numeric(date),
@@ -63,16 +47,16 @@ if(max(count(d, date)$n) > 1){
   stop("Some duplicate days, usually coming from partial data")
 }
 
-if(max(d$date) < Sys.Date()){
-  stop("No data yet for today")
+if(max(d$date) < (Sys.Date() - 1)){
+  stop("No data yet for yesterday")
 }
 
-if(! (Sys.Date() - 1) %in% d$date){
-  stop("No data for yesterday")
+if(! (Sys.Date() - 2) %in% d$date){
+  stop("No data for day before yesterday")
 }
 
 
-the_caption <- glue("Data gathered by The Guardian; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+vic_caption <- glue("Data from the DHHS; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
 
 #-----------------Positivity plot------------------
 hp <- d %>%
@@ -89,7 +73,7 @@ pos_line <- d %>%
   xlim(min(d$date), hp$date + 3) +
   labs(x = "",
        y = "Test positivity (log scale)",
-       caption = the_caption,
+       caption = vic_caption,
        title = "Covid-19 test positivity in Victoria, Australia, 2020",
        subtitle = str_wrap(glue("Smoothed line is from a generalized additive model, 
        and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
@@ -100,7 +84,25 @@ svg_png(pos_line, "../img/covid-tracking/victoria-positivity", h = 5, w = 9)
 
 svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 9)
 
+#--------------------Positivity correction--------------
+pos_correction <- d %>%
+  select(date, `Confirmed` = confirm, `Positivity-corrected` = cases_corrected) %>%
+  gather(variable, value, -date) %>%
+  ggplot(aes(x = date, y = value, colour = variable)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "loess", span = 1/10) +
+  scale_y_continuous(label = comma) +
+  labs(x = "", 
+       y = "Number of cases",
+       colour = "",
+       title = "Confirmed cases compared to positivity correction",
+       subtitle = glue("With a positivity-correction parameter of k={k}"),
+       caption = vic_caption) +
+  scale_colour_brewer(palette = "Set1")
 
+svg_png(pos_correction, "../img/covid-tracking/victoria-positivity-correction", h = 5, w = 9)
+
+svg_png(pos_correction, "../_site/img/covid-tracking/victoria-positivity-correction", h = 5, w = 9)
 
 
 
@@ -132,7 +134,7 @@ if(max(filter(estimates_vic$estimates$summarised, variable == "R")$top, na.rm = 
 
 pc_vic <- my_plot_estimates(estimates_vic, 
                          extra_title = " and positivity",
-                         caption = the_caption,
+                         caption = vic_caption,
                          y_max = 1000)
 
 svg_png(pc_vic, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
@@ -148,6 +150,43 @@ vic_results <- rbind(
 write_csv(vic_results, glue("../covid-tracking/vic-results-{Sys.Date()}.csv"))
 write_csv(vic_results, glue("../_site/covid-tracking/vic-results-{Sys.Date()}.csv"))
 write_csv(vic_results, glue("../_site/covid-tracking/vic-results-latest.csv"))
+
+
+#-----------------------cases-------------------
+latest_positivity_correction <- d %>%
+  filter(date == max(date)) %>%
+  mutate(ratio = cases_corrected / confirm) %>%
+  pull(ratio)
+
+forecast_cases <- estimates_vic$plots$reports$data %>%
+  mutate(across(where(is.numeric), function(x){x / latest_positivity_correction})) %>%
+  mutate(status = ifelse(date <= max(d$date), "Observed", "Forecast")) %>%
+  mutate(status = fct_relevel(status, "Observed"))
+
+latest_fc <- tail(forecast_cases, 1)
+
+fc_plot_vic <- forecast_cases %>%
+  ggplot(aes(x = date)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = status), alpha = 0.5) +
+  geom_ribbon(aes(ymin = bottom, ymax = top, fill = status), alpha = 0.1) +
+  geom_line(aes(y = median)) +
+  geom_point(data = d, aes(y = confirm)) +
+  annotate("text", x = latest_fc$date + 1, y = c(latest_fc$bottom, latest_fc$top), 
+           label = comma(c(latest_fc$bottom, latest_fc$top))) +
+  scale_fill_manual(values = brewer.pal(3, "Dark2")[c(1, 3)]) +
+  labs(fill = "",
+       x = "",
+       y = "Number of confirmed cases",
+       title = "Forecast confirmed cases",
+       subtitle = "This is a forecast of the numnber of actual observed, confirmed cases, which is a subset of total infections.",
+       caption = vic_caption)
+  
+
+svg_png(fc_plot_vic, "../img/covid-tracking/victoria-latest-fc", h = 5, w = 10)
+
+svg_png(fc_plot_vic, "../_site/img/covid-tracking/victoria-latest-fc", h = 5, w = 10)
+
+#------------------Publish----------------------------
 
 wd <- setwd("../_site")
 
@@ -180,7 +219,7 @@ setwd(wd)
 # 
 # pc_vic_np <- my_plot_estimates(estimates_vic_np, 
 #                             extra_title = "",
-#                             caption = the_caption,
+#                             caption = vic_caption,
 #                             y_max = 2000)
 # 
 # svg_png(pc_vic_np, "../img/covid-tracking/victoria-latest-np", h = 10, w = 10)

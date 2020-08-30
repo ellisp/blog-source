@@ -8,10 +8,11 @@ library(EpiNow2) # remotes::install_github("epiforecasts/EpiNow2")
 library(frs)     # removes::install_github("ellisp/frs-r-package/pkg")
 library(patchwork)
 library(glue)
+library(RColorBrewer)
 
 
-
-vic_dhhs <- read_csv("covid-tracking/victoria-daily-cases.csv")
+vic_dhhs <- read_csv("covid-tracking/victoria-daily-cases.csv", col_types = c("cd")) %>%
+  mutate(date = as.Date(date, format = "%B %d, %Y"))
 
 source("covid-tracking/plot_estimates.R")
 
