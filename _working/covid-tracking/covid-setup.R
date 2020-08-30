@@ -10,13 +10,8 @@ library(patchwork)
 library(glue)
 
 
-latest_vic_by_hand <- tribble(~date,                  ~confirm,
-                              as.Date("2020-08-29"),   94
-) %>%
-  mutate(tests_conducted_total = NA,
-         cumulative_case_count = NA,
-         test_increase = NA,
-         pos_raw = NA / NA)
+
+vic_dhhs <- read_csv("covid-tracking/victoria-daily-cases.csv")
 
 source("covid-tracking/plot_estimates.R")
 
