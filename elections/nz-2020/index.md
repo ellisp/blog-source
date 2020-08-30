@@ -2,7 +2,7 @@
 layout: narrowwithcomments
 title: NZ 2020 - general election forecasts
 image: /img/nz-elections-2020/state-space-final-chances-bar.svg
-socialimage: /img/nz-elections-2020/state-space-final-chances-bar.png
+socialimage: http://freerangestats.info/img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
 **Last updated 18 August 2020**
