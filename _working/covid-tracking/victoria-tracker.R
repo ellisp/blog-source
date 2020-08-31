@@ -178,7 +178,7 @@ fc_plot_vic <- forecast_cases %>%
        x = "",
        y = "Number of confirmed cases",
        title = "Forecast confirmed cases",
-       subtitle = "This is a forecast of the numnber of actual observed, confirmed cases, which is a subset of total infections.",
+       subtitle = "This is a forecast of the number of actual observed, confirmed cases, which is a subset of total infections.",
        caption = vic_caption)
   
 
