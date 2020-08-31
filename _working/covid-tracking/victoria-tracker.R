@@ -192,6 +192,8 @@ wd <- setwd("../_site")
 
 system('git add img/covid-tracking/victoria-latest.*')
 system('git add img/covid-tracking/victoria-positivity.*')
+system('git add img/covid-tracking/victoria-positivity-correction.*')
+system('git add img/covid-tracking/victoria-latest-fc.*')
 system('git add covid-tracking/vic-results-*.csv')
 
 
