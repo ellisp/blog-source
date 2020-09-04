@@ -5,7 +5,7 @@ image: /img/nz-elections-2020/state-space-final-chances-bar.svg
 socialimage: http://freerangestats.info/img/nz-elections-2020/state-space-final-chances-bar.png
 ---
 
-**Last updated 18 August 2020**
+**Last updated 2 September 2020**
 
 ## Near-certainty of a Labour-led government after 2020 election
 

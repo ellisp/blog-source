@@ -69,4 +69,4 @@ twitter-auth.R
 
 data/*
 img/*
-#*.csv
+*.csv
