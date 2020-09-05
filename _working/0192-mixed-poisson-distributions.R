@@ -14,7 +14,7 @@ orig_x <- with(orig_d, rep(delay, freq))
 mean(orig_x)
 median(orig_x)
 
-ggplot(data.frame(x), aes(x = x)) +
+ggplot(data.frame(orig_x), aes(x = orig_x)) +
   geom_histogram()
 
 # mu = p.lambda1 + (1-p).lambda2
