@@ -28,7 +28,7 @@ p0 <- ggplot(egd, aes(x = weight_loss)) +
            label = glue("sigma^2=={round(var(egd$weight_loss), 1)}"), parse = TRUE,
            colour = "darkblue", hjust = 0) +
   annotate("text", x = -1.1, y = 0.13, 
-           label ="Mixture of standard normal (90%) and\nnormal with sd=10" , 
+           label ="Mixture of standard normal (90%) and\nnormal with sd=10 (10%)" , 
            colour = "darkblue", hjust = 0, size = 3) +
   
   labs(caption = "Adapted from Figure 3.8 of Wilcox, Modern Statistics for the Social and Behavioral Sciences",
@@ -64,7 +64,7 @@ p1 <- ggplot(orig_d, aes(x = as.ordered(delay), y = freq)) +
        y = "Frequency",
        title = "Reporting lags in Covid-19 deaths in Florida",
        caption = "Data from Jason L. Salemi",
-       subtitle = "An interesting example of a mixed distribution; with two modes, and <span style = 'color:red;'>median</span> > <span style = 'color:blue;'>mean</span>.") +
+       subtitle = "An interesting example of a mixed distribution; with two modes, and  <span style = 'color:blue;'>mean</span> < <span style = 'color:red;'>median</span>.") +
   theme(plot.subtitle = element_textbox())
 
 svg_png(p1, "../img/0192-original", w = 9, h = 5)
