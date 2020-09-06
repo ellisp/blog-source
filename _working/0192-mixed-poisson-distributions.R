@@ -5,6 +5,43 @@ library(glue)
 library(ggtext)
 library(rstan)
 
+
+#---------Example adapted fro Wilcox Modern Statistics for the Social and Behavioral Sciences---------
+# Wilcox's eg 3.8
+
+set.seed(123)
+egd <- tibble(diet = rep(c("Diet", "No diet"), c(10000, 90000))) %>%
+  mutate(weight_loss = ifelse(diet == "Diet", 
+                              rnorm(n(), 0, 10),
+                              rnorm(n(), 0, 1))) 
+
+egd %>% group_by(diet) %>% summarise(var(weight_loss))
+
+p0 <- ggplot(egd, aes(x = weight_loss)) +
+  geom_density(fill = "grey", alpha = 0.5, colour = "darkblue") +
+  stat_function(fun = dnorm, colour = "darkgreen", n = 1000) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  annotate("text", x = 1, y = 0.3, 
+           label = "sigma^2==1", parse = TRUE,
+           colour = "darkgreen", hjust = 0) +
+  annotate("text", x = -1.1, y = 0.17, 
+           label = glue("sigma^2=={round(var(egd$weight_loss), 1)}"), parse = TRUE,
+           colour = "darkblue", hjust = 0) +
+  annotate("text", x = -1.1, y = 0.13, 
+           label ="Mixture of standard normal (90%) and\nnormal with sd=10" , 
+           colour = "darkblue", hjust = 0, size = 3) +
+  
+  labs(caption = "Adapted from Figure 3.8 of Wilcox, Modern Statistics for the Social and Behavioral Sciences",
+       x = "Weight loss",
+       title = "The perils of a mixed or 'contanimated' distribution",
+       subtitle = "Comparison of a <span style = 'color:darkgreen;'>standard normal</span> and a <span style = 'color:darkblue;'>mixed normal</span> distribution") +
+  theme(plot.subtitle = element_textbox())
+
+svg_png(p0, "../img/0192-normal-eg", 8, 5)
+
+#--------Florida delay in death reporting data-----------
+# From Jason Salemi 28 August 2020 via Twitter
+
 orig_d <- tibble(freq= c(11,18,2,2,1,5,2,3,0,1,2,1,3,1,0,3,1,1,0,2,0,0,1,
                     3,0,0,1,0,0,1,2,2,2,7,8,4,7,6,6,3,3,6,0,2,2,1,3,
                     0,2,3,0,0,1,0,0,1)) %>%
@@ -26,6 +63,7 @@ p1 <- ggplot(orig_d, aes(x = as.ordered(delay), y = freq)) +
   labs(x = "Time elapsed from death occuring to appearing in confirmed statistics",
        y = "Frequency",
        title = "Reporting lags in Covid-19 deaths in Florida",
+       caption = "Data from Jason L. Salemi",
        subtitle = "An interesting example of a mixed distribution; with two modes, and <span style = 'color:red;'>median</span> > <span style = 'color:blue;'>mean</span>.") +
   theme(plot.subtitle = element_textbox())
 
@@ -206,4 +244,4 @@ p4 <- data.frame(x = xsim) %>%
        title = "Simulations from fitted mixture of two negative binomial distributions",
        subtitle = "Fit is ok and <span style = 'color:red;'>median</span> > <span style = 'color:blue;'>mean</span>, but not by as much as in original.")
 
-svg_png(p4, "../img/final-sim", 9, 5)  
+svg_png(p4, "../img/0192-final-sim", 9, 5)  

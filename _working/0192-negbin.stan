@@ -1,4 +1,5 @@
 // Draws heavily on https://mc-stan.org/docs/2_24/stan-users-guide/summing-out-the-responsibility-parameter.html
+// Save as 0192-negbin.stan
 
 data {
   int<lower=0> N;
