@@ -1,0 +1,167 @@
+
+source("covid-tracking/covid-setup.R")
+
+#-----------------the Victoria data--------------
+
+k <- 0.1
+
+if(max(vic_dhhs$date) < (Sys.Date() - 1)){
+  warning("No data yet for yesterday")
+}
+
+d <- gd_orig %>%
+  clean_names() %>% 
+  filter(state == "VIC") %>%
+  # deal with problem of multiple observations some days:
+  mutate(date = as.Date(date)) %>%
+  group_by(date) %>%
+  summarise(tests_conducted_total = max(tests_conducted_total, na.rm = TRUE)) %>%
+  mutate(tests_conducted_total  = ifelse(tests_conducted_total < 0, NA, tests_conducted_total)) %>%
+  ungroup() %>%
+  # correct one typo, missing a zero
+  mutate(tests_conducted_total = ifelse(date == as.Date("2020-07-10"), 1068000, tests_conducted_total)) %>%
+  # correct another typo or otherwise bad data point
+  mutate(tests_conducted_total = ifelse(date == as.Date("2020-08-08"), NA, tests_conducted_total)) %>%
+  # remove two bad dates 
+  filter(!date %in% as.Date(c("2020-06-06", "2020-06-07"))) %>%
+  mutate(date = date - 1) %>%
+  full_join(vic_dhhs, by = "date") %>%
+  rename(confirm = cases) %>%
+  mutate(test_increase = c(tests_conducted_total[1], diff(tests_conducted_total)),
+         pos_raw = pmin(1, confirm / test_increase)) %>%
+  complete(date = seq.Date(min(date), max(date), by="day"), 
+           fill = list(confirm = 0)) %>%
+  mutate(numeric_date = as.numeric(date),
+         positivity = pos_raw) %>%
+  filter(date > as.Date("2020-05-01")) %>%
+  fill(positivity, .direction = "downup") %>%
+  mutate(ps1 = fitted(gam(positivity ~ s(numeric_date), data = ., family = "quasibinomial")),
+         ps2 = fitted(loess(positivity ~ numeric_date, data = ., span = 0.1)),
+         cases_corrected = confirm * ps1 ^ k / min(ps1 ^ k)) %>%
+  ungroup() %>%
+  mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1)),
+         seven_day_avg_confirm = zoo::rollapplyr(confirm, width = 7, mean, na.pad = TRUE)) 
+
+if(max(count(d, date)$n) > 1){
+  tail(d)
+  stop("Some duplicate days, usually coming from partial data")
+}
+
+if(max(d$date) < (Sys.Date() - 1)){
+  stop("No data yet for yesterday")
+}
+
+if(! (Sys.Date() - 2) %in% d$date){
+  stop("No data for day before yesterday")
+}
+
+
+vic_caption <- glue("Data from the DHHS; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+
+
+#---------Estimate Reff-------------
+# see https://www.mja.com.au/journal/2020/victorias-response-resurgence-covid-19-has-averted-9000-37000-cases-july-2020
+# dates of the major changes - Stage 3 and Stage 4 restrictions on all of Melbourne:
+
+
+d2 <- d %>%
+  mutate(confirm = round(cases_corrected) ) %>%
+  select(date, confirm) %>%
+  mutate(breakpoint = as.numeric(date %in% npi_dates)) %>%
+  as.data.table() 
+
+stopifnot(sum(d2$breakpoint) == length(npi_dates))
+
+estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
+                                 generation_time = generation_time,
+                                 delays = list(incubation_period, reporting_delay),
+                                 horizon = 80, samples = 3000, warmup = 600, 
+                                 cores = 4, chains = 4, verbose = TRUE, 
+                                 adapt_delta = 0.95,
+                                 estimate_breakpoints = TRUE)
+
+
+if(max(filter(estimates_vic$estimates$summarised, variable == "R")$top, na.rm = TRUE) > 10){
+  stop("Probable convergence problem; some estimates of R are implausibly high")
+}
+
+pc_vic <- my_plot_estimates(estimates_vic, 
+                            extra_title = " and positivity",
+                            caption = vic_caption,
+                            y_max = 1000)
+
+last_pos_ratio <- d %>%
+  filter(!is.na(ps1)) %>%
+  filter(date == max(date)) %>%
+  mutate(ratio = cases_corrected / confirm) %>%
+  pull(ratio)
+
+# Probability average new cases < 50 in 14 days to 
+
+winsorize_df <- function(data, variable, tr = 0.01){
+  trn <- round(nrow(data) * tr)
+  
+  data %>%
+    arrange(desc({{variable}})) %>%
+    slice(-(1:trn)) %>%
+    arrange({{variable}}) %>%
+    slice(-(1:trn))
+ }
+
+#--------------28 September--------------
+pd1 <- estimates_vic$estimated_reported_cases$samples %>%
+  filter(date >= "2020-09-14" & date <= "2020-09-27") %>%
+  group_by(sample) %>%
+  summarise(avg_14_day = mean(cases / last_pos_ratio))
+
+pr1 <-  pd1 %>%
+  summarise(pr = round(mean(avg_14_day < 50), 2)) %>%
+  pull(pr)
+
+plot1 <- pd1 %>%
+  winsorize_df(avg_14_day, tr = 0.02) %>%
+  ggplot(aes(x = avg_14_day)) +
+  geom_density(fill = "steelblue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, 100)) +
+  labs(title = glue("{percent(pr1, accuracy = 1)} chance of meeting target for 28 September 2020"),
+       subtitle = "Target is 14 day average of less than 50 new confirmed cases per day.",
+       x = "14 day average of cases, to 27 September 2020",
+       caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
+
+#--------------25 October--------------
+pd2 <- estimates_vic$estimated_reported_cases$samples %>%
+  filter(date >= "2020-10-12" & date <= "2020-10-25") %>%
+  group_by(sample) %>%
+  summarise(avg_14_day = mean(cases / last_pos_ratio))
+
+pr2 <-  pd2 %>%
+  summarise(pr = round(mean(avg_14_day < 5), 2)) %>%
+  pull(pr)
+
+plot2 <- pd2 %>%
+  winsorize_df(avg_14_day, tr = 0.1) %>%
+  ggplot(aes(x = avg_14_day)) +
+  geom_density(fill = "steelblue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, 100)) +
+  labs(title = glue("{percent(pr2, accuracy = 1)} chance of meeting target for 26 October 2020"),
+       subtitle = "Target is 14 day average of less than 5 new confirmed cases per day.",
+       x = "14 day average of cases, to 25 October 2020",
+       caption = "Forecasts are provisional and are subject to daily change. Analysis by http://freerangestats.info.")
+
+
+fcp <- function(){
+  print(plot1 + plot2 + plot_layout(ncol = 2))
+}
+svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
+svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
+
+#--------------23 November---------
+# Too far away to forecast meaningfully
+pr3 <- estimates_vic$estimated_reported_cases$samples %>%
+  filter(date >= "2020-11-09" & date <= "2020-11-22") %>%
+  group_by(sample) %>%
+  summarise(avg_14_day = mean(cases / last_pos_ratio)) %>%
+  summarise(pr = mean(avg_14_day == 0)) %>%
+  pull(pr)
+
+round(c(pr1, pr2, pr3), 2)
