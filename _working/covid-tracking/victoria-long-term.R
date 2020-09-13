@@ -157,11 +157,28 @@ svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
 #--------------23 November---------
 # Too far away to forecast meaningfully
-pr3 <- estimates_vic$estimated_reported_cases$samples %>%
-  filter(date >= "2020-11-09" & date <= "2020-11-22") %>%
-  group_by(sample) %>%
-  summarise(avg_14_day = mean(cases / last_pos_ratio)) %>%
-  summarise(pr = mean(avg_14_day == 0)) %>%
-  pull(pr)
+# pr3 <- estimates_vic$estimated_reported_cases$samples %>%
+#   filter(date >= "2020-11-09" & date <= "2020-11-22") %>%
+#   group_by(sample) %>%
+#   summarise(avg_14_day = mean(cases / last_pos_ratio)) %>%
+#   summarise(pr = mean(avg_14_day == 0)) %>%
+#   pull(pr)
+# 
+# round(c(pr1, pr2, pr3), 2)
 
-round(c(pr1, pr2, pr3), 2)
+
+#------------------Publish----------------------------
+
+stopifnot("patchwork" %in% class(fcp()))
+stopifnot(pr1 > 0 && pr2 > 0 && pr1 < 1 && pr2 < 1)
+
+wd <- setwd("../_site")
+
+system('git add img/covid-tracking/victoria-14day.*')
+
+system('git config --global user.email "peter.ellis2013nz@gmail.com"')
+system('git config --global user.name "Peter Ellis"')
+
+system('git commit -m "latest Victoria covid 14 day forecasts"')
+system('git push origin master')
+setwd(wd)
