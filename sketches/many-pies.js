@@ -32,7 +32,7 @@ function setup() {
     // create a canvas the width of the div, and movee it to 
     // inside the div with id='sketch-holder':
    // var thisdiv = document.getElementById('sketch-holder')
-    var canvas = createCanvas(680, 400);
+    var canvas = createCanvas(Math.min(windowWidth, 680), 400);
     canvas.parent('sketch-holder');
       
     noStroke();

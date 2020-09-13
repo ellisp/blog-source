@@ -57,8 +57,9 @@ img/Thumbs.db
 _working/docword*
 _working/IVS*
 
-# stan compiled objects
+# stan compiled objects and other R data files
 *.rds
+*.rda
 
 # things associated with the "most popular pages" analysis
 .httr-oauth
@@ -70,3 +71,7 @@ twitter-auth.R
 data/*
 img/*
 *.csv
+*.pdf
+*.sav
+NZES2017*
+*.xls
