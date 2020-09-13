@@ -4,10 +4,15 @@
 // Australian value add by industry division, top 7 divisions and 'other'
 // Sourced from https://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/8155.02018-19?OpenDocument
 let the_data = [ 51983, 46153, 32061, 25092, 16001, 14240, 13992, 61200 ];
+
+// Calculate total sum of the_data so can use it for scaling:
+let sum = the_data.reduce(function(a, b){
+    return a + b;
+}, 0);
  
 // Rescale the data from 0 to 360 (for degrees):
 for(let i =0; i < the_data.length; i++){
-	the_data[i] = the_data[i] / 260722 * 360
+	the_data[i] = the_data[i] / sum * 360
 } 
     
 let pies = new Array();
@@ -27,7 +32,7 @@ function setup() {
     // create a canvas the width of the div, and movee it to 
     // inside the div with id='sketch-holder':
    // var thisdiv = document.getElementById('sketch-holder')
-    var canvas = createCanvas(700, 400);
+    var canvas = createCanvas(680, 400);
     canvas.parent('sketch-holder');
       
     noStroke();
@@ -104,11 +109,12 @@ class PieChart {
         pop();
     }
  
-    // spin method with a speed argument supplied:
+    // spin method
     spin() {
         this.startAngle += this.ss;
     }
  
+    // move method  with a speed argument supplied:
     move(sp) {
   
         // change speeds: 
@@ -135,6 +141,7 @@ class PieChart {
         this.y += this.yv;
     }
  
+    // resize method with a scaling for how much to resize by (roughly):
     resize(z) {
         this.diameter += randomGaussian() * z;
         if(this.diameter < (z + 1)){
@@ -142,10 +149,10 @@ class PieChart {
         }
     }
  
+    // relocate to new position and diameter:
     relocate(newx, newy, newd) {
         this.x = newx;
         this.y = newy;
         this.diameter = newd;
     }
 }
-
