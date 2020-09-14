@@ -109,10 +109,13 @@ winsorize_df <- function(data, variable, tr = 0.01){
  }
 
 #--------------28 September--------------
-pd1 <- estimates_vic$estimated_reported_cases$samples %>%
+pd1 <- estimates_vic$estimated_reported_cases$samples %>% 
+  # replace simulations with the actual values, if we have them:
+  left_join(select(d, date, actual = confirm), by = "date") %>%
+  mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
   filter(date >= "2020-09-14" & date <= "2020-09-27") %>%
   group_by(sample) %>%
-  summarise(avg_14_day = mean(cases / last_pos_ratio))
+  summarise(avg_14_day = mean(best_cases / last_pos_ratio))
 
 pr1 <-  pd1 %>%
   summarise(pr = round(mean(avg_14_day < 50), 2)) %>%
@@ -130,9 +133,12 @@ plot1 <- pd1 %>%
 
 #--------------25 October--------------
 pd2 <- estimates_vic$estimated_reported_cases$samples %>%
+  # replace simulations with the actual values, if we have them:
+  left_join(select(d, date, actual = confirm), by = "date") %>%
+  mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
   filter(date >= "2020-10-12" & date <= "2020-10-25") %>%
   group_by(sample) %>%
-  summarise(avg_14_day = mean(cases / last_pos_ratio))
+  summarise(avg_14_day = mean(best_cases / last_pos_ratio))
 
 pr2 <-  pd2 %>%
   summarise(pr = round(mean(avg_14_day < 5), 2)) %>%
