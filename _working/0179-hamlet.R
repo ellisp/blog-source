@@ -5,7 +5,10 @@ library(SnowballC)
 library(tidygraph)
 library(ggraph)
 library(Cairo)
-CairoWin()
+library(BTM)
+library(textplot)
+library(concaveman)
+library(kableExtra)
 
 # TODO - a problem with lines 6380:6381 which has a stage direction across two lines.
 
@@ -26,15 +29,17 @@ replace_na_with_num <- function(x){
 }
 stopifnot(replace_na_with_num(c(1,1,1,NA, NA, 1, NA)) == c(1,1,1,2,3,1,2))
 
-
+# There seem to be two Shaekspeares, definitely duplicates:
 filter(gutenberg_authors, grepl("Shakespeare", author))
 
+# At least five versions of Hamlet
 filter(gutenberg_metadata, grepl("Hamlet", title) & 
          author == "Shakespeare, William" &
          grepl("Public domain", rights) &
          language == "en") %>%
   select(gutenberg_id, title, gutenberg_bookshelf)
 
+# I'll download the first mentioned. May not be the best.
 hamlet <- gutenberg_download(1524) %>%
   mutate(original_line_number = 1:n()) %>%
   select(-gutenberg_id)
@@ -258,9 +263,11 @@ hamlet_words <- hamlet_words %>%
   mutate(top_20_char = speaker_sh %in% top_20_chars,
          speaker_sh = factor(speaker_sh, levels = char_summary$speaker_sh))
 
+
+#----------------Explore and analyse---------------
+
 # words per scene:
-hamlet_words %>%
-  count(act, scene) 
+count(hamlet_words, act, scene) 
 
 # most common words:
 hamlet_words %>%
@@ -272,9 +279,12 @@ hamlet_words %>%
   count(word, sort = TRUE) %>%
   print(n = 30)
 
+# what does the table look like:
+hamlet_words %>% select(contains("word"), everything())
+
 #--------------------Distinctive words-------------------
 
-# three most distinctive word satem for each of the main cast
+# three most distinctive word stem for each of the main cast
 dist_words <- hamlet_words %>%
   filter(!stopword) %>%
   count(word_stem, speaker_sh) %>%
@@ -290,19 +300,21 @@ dist_words <- hamlet_words %>%
   filter(speaker_sh %in% top_20_chars) 
 # note that "mai" is the word stem for "may", and "joi" for "joy"
 
-dist_words %>%
+p1 <- dist_words %>%
   group_by(speaker_sh) %>%
   mutate(rank = 1:n()) %>%
   ggplot(aes(x = rank, y = reorder(speaker_sh, desc(speaker_sh)), label = word_stem)) +
-  geom_text() +
+  geom_text(size = 3) +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         axis.text.x = element_blank()) +
   labs(x = "", y = "",
        title = "Most distinctive words for the top 20 characters in Hamlet")
 
+svg_png(p1, "../img/0179-distinctive-words")
+
 #--------------------Distribution of length of speeches--------------------
-hamlet_words %>%
+p2 <- hamlet_words %>%
   filter(main_character | speaker_sh == "First gravedigger") %>%
   group_by(speech_number) %>%
   filter(word_number_this_speech == max(word_number_this_speech)) %>%
@@ -315,6 +327,8 @@ hamlet_words %>%
   labs(x = "Number of continuous words in row",
        title = "Length of uninterrupted speeches in Shakespeare's Hamlet") +
   theme(panel.spacing = unit(2, "lines"))
+
+svg_png(p2, "../img/0179-distribution-speeches-length", w = 10, h = 6)
 
 
 #=========who interacts with whom==============
@@ -348,7 +362,7 @@ d2 <-as_tbl_graph(d1) %>%
 
 layout <- create_layout(d2, layout = 'igraph', algorithm = 'kk') 
 
-ggraph(layout) +
+p3 <- ggraph(layout) +
   geom_edge_arc(strength = 0, 
                 aes(edge_colour = n, edge_width = n)) +
   geom_node_label(aes(label = name), colour = "white", fill = "grey10", label.size = 0) +
@@ -360,7 +374,24 @@ ggraph(layout) +
        size = "Total words spoken:")
 
 # can't control the label for edge_size
-
+svg_png(p3, "../img/0179-interactions", w = 11, h = 8)
 
 #======================Topic modelling================
 # we could do this for each individual speech; or for all speeches 
+
+# note who'
+
+hw_for_btm <- hamlet_words %>%
+  filter(!stopword) %>%
+  select(speech_number, word_stem)
+
+btm_model <- BTM(hw_for_btm, k = 20)
+
+p4 <- function() {
+  print(plot(btm_model, top_n = 7))
+}
+
+svg_png(p4, "../img/0179-topics", w = 9, h = 7)
+
+class(btm_model)
+
