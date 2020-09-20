@@ -75,7 +75,7 @@ stopifnot(sum(d2$breakpoint) == length(npi_dates))
 estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                                  generation_time = generation_time,
                                  delays = list(incubation_period, reporting_delay),
-                                 horizon = 80, samples = 3000, warmup = 600, 
+                                 horizon = 50, samples = 3000, warmup = 600, 
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95,
                                  estimate_breakpoints = TRUE)
@@ -176,7 +176,7 @@ svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 #------------------Publish----------------------------
 
 stopifnot("patchwork" %in% class(fcp()))
-stopifnot(pr1 > 0 && pr2 > 0 && pr1 < 1 && pr2 < 1)
+stopifnot(pr1 > 0 && pr2 > 0 && pr1 <= 1 && pr2 <= 1)
 
 wd <- setwd("../_site")
 
