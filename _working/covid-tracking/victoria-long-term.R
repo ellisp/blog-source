@@ -122,10 +122,10 @@ pr1 <-  pd1 %>%
   pull(pr)
 
 plot1 <- pd1 %>%
-  winsorize_df(avg_14_day, tr = 0.02) %>%
+  #winsorize_df(avg_14_day, tr = 0.02) %>%
   ggplot(aes(x = avg_14_day)) +
   geom_density(fill = "steelblue", alpha = 0.5) +
-  coord_cartesian(xlim = c(0, 100)) +
+  coord_cartesian(xlim = c(0, 50)) +
   labs(title = glue("{percent(pr1, accuracy = 1)} chance of meeting target for 28 September 2020"),
        subtitle = "Target is 14 day average of less than 50 new confirmed cases per day.",
        x = "14 day average of cases, to 27 September 2020",
@@ -148,7 +148,7 @@ plot2 <- pd2 %>%
   winsorize_df(avg_14_day, tr = 0.1) %>%
   ggplot(aes(x = avg_14_day)) +
   geom_density(fill = "steelblue", alpha = 0.5) +
-  coord_cartesian(xlim = c(0, 100)) +
+  coord_cartesian(xlim = c(0, 20)) +
   labs(title = glue("{percent(pr2, accuracy = 1)} chance of meeting target for 26 October 2020"),
        subtitle = "Target is 14 day average of less than 5 new confirmed cases per day.",
        x = "14 day average of cases, to 25 October 2020",
