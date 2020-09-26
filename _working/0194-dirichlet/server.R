@@ -20,7 +20,7 @@ shinyServer(function(input, output) {
                   tern.panel.grid.major.T = element_line(colour = "steelblue"),
                   tern.panel.grid.major.R = element_line(colour = "steelblue"),
                   tern.panel.grid.major.L = element_line(colour = "steelblue")) +
-            stat_density_tern(geom = 'polygon', contour = TRUE) +
+            stat_density_tern(geom = 'polygon', contour = TRUE, alpha = 0.5) +
             scale_fill_gradient2(low = "white", high = "black") +
             scale_T_continuous(labels = 0:5 * .20) +
             scale_L_continuous(labels = 0:5 * .20) +
