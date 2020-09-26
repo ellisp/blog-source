@@ -1,8 +1,11 @@
+# Global setup for application that draws a ternary density plot for a Dirichlet distribution
+# Peter Ellis 26 September 2020
+
 library(shiny)
 library(gtools)
 library(ggtern)
 
-d <- expand.grid(p1 = 1:99 /100, p2 = 1:99 / 100) %>%
-  mutate(p3 = 1 - p1 - p2) %>%
-  filter(p3 >= 0.01) 
+d <- expand.grid(p1 = 1:99 /100, p2 = 1:99 / 100) 
+d$p3 <- with(d, 1 - p1 - p2) 
+d <- subset(d, p3 >= 0.01) 
 

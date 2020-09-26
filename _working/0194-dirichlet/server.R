@@ -1,4 +1,5 @@
-# Define server logic required to draw a histogram
+# Define server logic for application that draws a ternary density plot for a Dirichlet distribution
+# Peter Ellis 26 September 2020
 shinyServer(function(input, output) {
     
     the_data <- reactive({
@@ -9,8 +10,7 @@ shinyServer(function(input, output) {
     
     output$d_plot <- renderPlot({
         
-        p <- the_data() %>%
-            ggplot(aes(x = p1, y = p2, z = p3, weight = dens, fill = ..level..)) +
+        p <- ggplot(the_data(), aes(x = p1, y = p2, z = p3, weight = dens, fill = ..level..)) +
             coord_tern() +
             theme_custom(tern.plot.background = "white", tern.panel.background = "white") +
             theme_hidetitles() +
