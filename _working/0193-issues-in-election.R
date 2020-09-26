@@ -49,7 +49,7 @@ nzes %>%
   select(issue, prop) %>%
   arrange(desc(prop)) %>%
   rename(`Percentage naming most important:` = prop,
-         `Single most important issue in the New Zealand election (2017)` = issue) %>% gt
+         `Single most important issue in the New Zealand election (2017)` = issue) %>% 
   kable() %>%
   kable_styling() %>%
   write_clip()
