@@ -4,6 +4,7 @@
 library(shiny)
 library(gtools)
 library(ggtern)
+library(fresh) # for use_googlefont
 
 d <- expand.grid(p1 = 1:99 /100, p2 = 1:99 / 100) 
 d$p3 <- with(d, 1 - p1 - p2) 

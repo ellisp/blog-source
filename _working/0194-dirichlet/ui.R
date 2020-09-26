@@ -3,7 +3,15 @@
 # Define UI for application that draws a ternary density plot for a Dirichlet distribution
 # Peter Ellis 26 September 2020
 shinyUI(fluidPage(
-
+    tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+    ),
+    
+    use_googlefont("Prosto One"),
+    use_googlefont("Sarala"),
+    use_googlefont("Roboto"),
+    
+    
     # Application title
     titlePanel("Visualising a Dirichlet distribution"),
     
