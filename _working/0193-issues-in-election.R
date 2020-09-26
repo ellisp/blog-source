@@ -126,7 +126,7 @@ p1 <- grouped_stems %>%
   labs(caption = the_caption,
        x = "Proportion of voters using this word stem",
        y= "",
-       subtitle = "Responses to question on the 'single most important issue in the election', grouped into topics by human coders. Most mentioned topics at top left of chart.",
+       subtitle = "Responses to question on the 'single most important issue in the election', grouped into topics by human\ncoders. Most mentioned topics at top left of chart.",
        title = "Words used to describe important issues in New Zealand, 2017")
 
 svg_png(p1, "../img/0193-stems-issues", w = 11, h = 8)

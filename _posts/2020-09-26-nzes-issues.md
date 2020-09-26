@@ -7,6 +7,7 @@ tag:
    - Surveys
    - Text
    - NewZealand
+   - ClusterAnalysis
    - Distributions
 description: I try out biterm topic modelling on a free text question in the 2017 New Zealand Election Study about the most important issue in the election.
 image: /img/0193-pv-issues.svg
@@ -136,7 +137,7 @@ Again, all seems straightforward. Words with the stem "hous" are strongly associ
 
 ## Biterm topic modelling
 
-[Biterm topic modelling](https://www.researchgate.net/publication/262244963_A_biterm_topic_model_for_short_texts) is an approach to gleaning the latent topics discussed in a number of documents. It is explicitly designed to cope efficiently and effectively with short source documents, with a sparse document term matrix. It's available via a C++ library by Xiaohui Yan, wrapped in the `BTM` R package maintained by Jan Wijffels.
+[Biterm topic modelling](https://www.researchgate.net/publication/262244963_A_biterm_topic_model_for_short_texts) is an approach to gleaning the latent topics discussed in a number of documents. It is explicitly designed to cope efficiently and effectively with short documents, with a sparse document term matrix. It's available via a C++ library by Xiaohui Yan, wrapped in the `BTM` R package maintained by Jan Wijffels. While I use Latent Dirichlet Allocation estimation for topic modelling quite regularly, biterm topic modelling with its emphasis on pairs of words is a newer technique for me. It seems to be very promising.
 
 Is topic modelling appropriate with its many-to-many relationship of documents to topics, or should I be looking for a simpler classification? While the original survey question asked for a single issue of most importance, this is the world of surveys and respondents don't always do what they're asked, and they don't always agree with the researcher on what a single issue is. For example, many people gave responses like "housing and poverty". This can meaningfully be parsed as a single issue, but then how does it relate to others who think just "housing" is the issue, independently of poverty? Then there are responses such as "No party had policy that would remedy major problems, police, education, health, councils". From the respondent's view point this is a single 'issue' (the parties' policies are no good!) but from the point of view of the researchers this is multiple subject-matter issues grouped under a single meta-issue. The original coders coped with this by classifying each response to up to 3 issues (`rimpissue`, `rimpissue2`, `rimpissue3`) and retaining the full original text in the `rmpissuex` column. In the charts earlier in this blog, I used the `rimpissue` column, the first issue identified by the coders.
 
@@ -146,7 +147,7 @@ Fitting a biterm topic model with 21 topics (the same number as that chosen by t
 
 <object type="image/svg+xml" data='/img/0193-btm.svg' width='100%'><img src='/img/0193-btm.png' width='100%'></object>
 
-Generally there are some sensible results here. For instance, topic 1 hones in on the words "clean", "green", river" and "environment" - very sensible. Topic 15 features "climate change". The human-coded topics did not distinguish between general concern for the environment and climate change as two separate issues, and I would say this is probably an improvement. Topic 7 clearly relates neatly to health, 2 to foreign land ownership and immigration, and so on. Basically, there are some sensible clusterings of words into topics here that make sense with what we know of political attitudes in New Zealand.
+Generally there are some sensible results here. For instance, topic 1 hones in on the words "clean", "green", river" and "environment" - very sensible. Topic 15 features "climate change". The human-coded topics did not distinguish between general concern for the environment and climate change as two separate issues, and I would say splitting them out is probably an improvement. Topic 7 clearly relates neatly to health, 2 to foreign land ownership and immigration, and so on. Basically, there are some sensible clusterings of words into topics here that make sense with what we know of political attitudes in New Zealand.
 
 Comparing the BTM-chosen topics numbers 1 to 21 with the human-coded topics made from the same free text, and overlaying the party vote choices most related to each combination of topic, we see this relationship:
 
