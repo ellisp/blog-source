@@ -46,7 +46,13 @@ shinyUI(fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-            plotOutput("d_plot", height = "550px")
+            plotOutput("d_plot", height = "550px"),
+            HTML("<p>This is a <a href='https://en.wikipedia.org/wiki/Ternary_plot'>ternary plot</a>,
+                 used to show composition of a total amount that must sum up to a constant (in this case,
+                 the three probabilities p1, p2 and p3 must add up to one). If it is hard to read for you,
+                 don't worry, you aren't alone. I find this very hard to interpret myself other than in the
+                 broadest intuitive sense (eg the corners are clearly extreme values where one of the three
+                 variables is close to 1 and the other two are close to 0).<p>")
         )
     )
 ))
