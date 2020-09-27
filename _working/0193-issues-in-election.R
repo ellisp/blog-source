@@ -151,7 +151,7 @@ p5 <- topics_btm %>%
        x = "",
        fill = "Party Vote",
        y = "",
-       subtitle = "Responses to question on the 'single most important issue in the election', grouped into topics by human coders. Most mentioned topics at top left of chart.",
+       subtitle = "Responses to question on the 'single most important issue in the election', grouped into topics by\nhuman coders. Most mentioned topics at top left of chart.",
        title = "Most important issues for voters in New Zealand, 2017")
 
 svg_png(p5, "../img/0193-pv-issues", w = 9, h = 7)
