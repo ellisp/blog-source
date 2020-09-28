@@ -131,6 +131,41 @@ plot1 <- pd1 %>%
        x = "14 day average of cases, to 27 September 2020",
        caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
 
+#------------------Rolling 14 day average-----------------
+s1 <- estimates_vic$estimated_reported_cases$samples %>%
+  # replace simulations with the actual values, if we have them:
+  left_join(select(d, date, actual = confirm), by = "date") %>%
+  mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
+  filter(date >= "2020-09-01") 
+
+all_dates <- sort(unique(s1$date))[-(1:13)]
+s2 <- list()
+for(i in 1:length(all_dates)){
+  the_date <- as.Date(all_dates[i])
+
+  s2[[i]] <- s1 %>%
+    filter(date <= the_date & date > (the_date - 14)) %>%
+    group_by(sample) %>%
+    summarise(avg_14_day = mean(best_cases / last_pos_ratio)) %>%
+    mutate(date_to = the_date)
+}
+
+plot3 <- bind_rows(s2) %>%
+  group_by(date_to) %>%
+  filter(date_to >= "2020-09-25") %>%
+  summarise(lower = quantile(avg_14_day, 0.05),
+            mid = median(avg_14_day),
+            upper = quantile(avg_14_day, 0.95)) %>%
+  ggplot(aes(x = date_to)) +
+  geom_vline(xintercept = Sys.Date(), size = 2, colour = "grey") +
+  geom_hline(yintercept = 5, size = 2, colour = "grey") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "darkgreen", alpha = 0.5) +
+  geom_line(aes(y = mid)) +
+  labs(x = "14 day period ending",
+       y = "Average new cases",
+       title = "Expected 14 day rolling average of new cases", 
+       subtitle = "(including 90% credibility interval)")
+
 #--------------25 October--------------
 pd2 <- estimates_vic$estimated_reported_cases$samples %>%
   # replace simulations with the actual values, if we have them:
@@ -145,7 +180,7 @@ pr2 <-  pd2 %>%
   pull(pr)
 
 plot2 <- pd2 %>%
-  winsorize_df(avg_14_day, tr = 0.1) %>%
+  winsorize_df(avg_14_day, tr = 0.01) %>%
   ggplot(aes(x = avg_14_day)) +
   geom_density(fill = "steelblue", alpha = 0.5) +
   coord_cartesian(xlim = c(0, 20)) +
@@ -156,7 +191,7 @@ plot2 <- pd2 %>%
 
 
 fcp <- function(){
-  print(plot1 + plot2 + plot_layout(ncol = 2))
+  print(plot2 + plot3 + plot_layout(ncol = 2))
 }
 svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
