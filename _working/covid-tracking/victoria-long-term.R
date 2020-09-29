@@ -150,21 +150,30 @@ for(i in 1:length(all_dates)){
     mutate(date_to = the_date)
 }
 
-plot3 <- bind_rows(s2) %>%
+s3 <- bind_rows(s2) %>%
   group_by(date_to) %>%
   filter(date_to >= "2020-09-25") %>%
   summarise(lower = quantile(avg_14_day, 0.05),
             mid = median(avg_14_day),
-            upper = quantile(avg_14_day, 0.95)) %>%
+            upper = quantile(avg_14_day, 0.95)) 
+
+earliest5 <- s3 %>%
+  filter(mid <=5) %>%
+  arrange(date_to) %>%
+  slice(1) %>%
+  pull(date_to)
+
+plot3 <- s3 %>%
   ggplot(aes(x = date_to)) +
-  geom_vline(xintercept = Sys.Date(), size = 2, colour = "grey") +
+  geom_vline(xintercept = (Sys.Date() - 1), size = 2, colour = "grey") +
   geom_hline(yintercept = 5, size = 2, colour = "grey") +
   geom_ribbon(aes(ymin = lower, ymax = upper), fill = "darkgreen", alpha = 0.5) +
   geom_line(aes(y = mid)) +
-  labs(x = "14 day period ending",
+  labs(x = "14 day period ending (green area shows 90% credibility interval)",
        y = "Average new cases",
        title = "Expected 14 day rolling average of new cases", 
-       subtitle = "(including 90% credibility interval)")
+       subtitle = glue("Likely to go below 5 per day when data released on {format(earliest5 + 1, '%d %B %Y')}."),
+       caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
 
 #--------------25 October--------------
 pd2 <- estimates_vic$estimated_reported_cases$samples %>%
