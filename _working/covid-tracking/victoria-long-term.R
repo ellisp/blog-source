@@ -208,6 +208,7 @@ svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
 svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 5)
+svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only",w = 7, h = 5)
 
 
 #--------------23 November---------
