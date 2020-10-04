@@ -176,12 +176,13 @@ plot3 <- s3 %>%
        subtitle = glue("Likely to go below 5 per day when data released on {format(earliest5 + 1, '%d %B %Y')}."),
        caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
 
-#--------------25 October--------------
+#--------------18 October--------------
+# noting 18 October is the day for which 19 october releases data
 pd2 <- estimates_vic$estimated_reported_cases$samples %>%
   # replace simulations with the actual values, if we have them:
   left_join(select(d, date, actual = confirm), by = "date") %>%
   mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
-  filter(date >= "2020-10-12" & date <= "2020-10-25") %>%
+  filter(date >= "2020-10-7" & date <= "2020-10-18") %>%
   group_by(sample) %>%
   summarise(avg_14_day = mean(best_cases / last_pos_ratio))
 
@@ -194,9 +195,9 @@ plot2 <- pd2 %>%
   ggplot(aes(x = avg_14_day)) +
   geom_density(fill = "steelblue", alpha = 0.5) +
   coord_cartesian(xlim = c(0, 20)) +
-  labs(title = glue("{percent(pr2, accuracy = 1)} chance of meeting target for 26 October 2020"),
+  labs(title = glue("{percent(pr2, accuracy = 1)} chance of meeting target for 19 October 2020"),
        subtitle = "Target is 14 day average of less than 5 new confirmed cases per day.",
-       x = "14 day average of cases, to 25 October 2020",
+       x = "14 day average of cases, to 18 October 2020",
        caption = "Forecasts are provisional and are subject to daily change. Analysis by http://freerangestats.info.")
 
 

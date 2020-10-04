@@ -11,7 +11,7 @@ socialimage: http://freerangestats.info/img/0195-states-masks.png
 category: R
 ---
 
-The Covid-19 Symptom Data Challenge (under way at the time of writing this blog post) makes available two large sets of survey data. These are provided in granular but aggregate form ie no response-level microdata, at least for this Challenge. The two surveys cover the USA and the rest of the world respectively, and involve hundreds of thousands of Facebook users aged 18 and over, in 119 countries. The actual challenge is to use this data for this purpose:
+The [Covid-19 Symptom Data Challenge](https://www.symptomchallenge.org/) (under way at the time of writing this blog post) makes available two large sets of survey data. These are provided in granular but aggregate form ie no response-level microdata, at least for this Challenge. The two surveys cover the USA and the rest of the world respectively, and involve hundreds of thousands of Facebook users aged 18 and over, in 119 countries. The actual challenge is to use this data for this purpose:
 
 > "Can you develop a novel analytic approach that uses the CMU/UMD COVID-19 Symptom Survey data to enable earlier detection and improved situational awareness of the outbreak by public health authorities and the general public?"
 
