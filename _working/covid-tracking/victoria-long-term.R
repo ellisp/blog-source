@@ -75,7 +75,8 @@ stopifnot(sum(d2$breakpoint) == length(npi_dates))
 estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                                  generation_time = generation_time,
                                  delays = list(incubation_period, reporting_delay),
-                                 horizon = 50, samples = 3000, warmup = 600, 
+                                 horizon = max(30, as.numeric(as.Date("2020-11-15") - Sys.Date())), 
+                                 samples = 3000, warmup = 600, 
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95,
                                  estimate_breakpoints = TRUE)
@@ -204,6 +205,9 @@ fcp <- function(){
 }
 svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
+
+svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 5)
+
 
 #--------------23 November---------
 # Too far away to forecast meaningfully
