@@ -129,7 +129,7 @@ plot1 <- pd1 %>%
   coord_cartesian(xlim = c(0, 50)) +
   labs(title = glue("{percent(pr1, accuracy = 1)} chance of meeting target for 28 September 2020"),
        subtitle = "Target is 14 day average of less than 50 new confirmed cases per day.",
-       x = "14 day average of cases, to 27 September 2020",
+       x = "14 day average of cases, period finishing on 27 September 2020",
        caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
 
 #------------------Rolling 14 day average-----------------
@@ -197,7 +197,7 @@ plot2 <- pd2 %>%
   coord_cartesian(xlim = c(0, 20)) +
   labs(title = glue("{percent(pr2, accuracy = 1)} chance of meeting target for 19 October 2020"),
        subtitle = "Target is 14 day average of less than 5 new confirmed cases per day.",
-       x = "14 day average of cases, to 18 October 2020",
+       x = "14 day average of cases, period finishing on 18 October 2020",
        caption = "Forecasts are provisional and are subject to daily change. Analysis by http://freerangestats.info.")
 
 
