@@ -182,7 +182,7 @@ pd2 <- estimates_vic$estimated_reported_cases$samples %>%
   # replace simulations with the actual values, if we have them:
   left_join(select(d, date, actual = confirm), by = "date") %>%
   mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
-  filter(date >= "2020-10-7" & date <= "2020-10-18") %>%
+  filter(date >= "2020-10-05" & date <= "2020-10-18") %>%
   group_by(sample) %>%
   summarise(avg_14_day = mean(best_cases / last_pos_ratio))
 
@@ -200,6 +200,30 @@ plot2 <- pd2 %>%
        x = "14 day average of cases, period finishing on 18 October 2020",
        caption = "Forecasts are provisional and are subject to daily change. Analysis by http://freerangestats.info.")
 
+#--------------25 October--------------
+# noting 25 October is the day for which 16 october releases data
+pd2a <- estimates_vic$estimated_reported_cases$samples %>%
+  # replace simulations with the actual values, if we have them:
+  left_join(select(d, date, actual = confirm), by = "date") %>%
+  mutate(best_cases = ifelse(is.na(actual), cases, actual)) %>%
+  filter(date >= "2020-10-12" & date <= "2020-10-25") %>%
+  group_by(sample) %>%
+  summarise(avg_14_day = mean(best_cases / last_pos_ratio))
+
+pr2a <-  pd2a %>%
+  summarise(pr = round(mean(avg_14_day < 5), 2)) %>%
+  pull(pr)
+
+plot2a <- pd2a %>%
+  winsorize_df(avg_14_day, tr = 0.01) %>%
+  ggplot(aes(x = avg_14_day)) +
+  geom_density(fill = "steelblue", alpha = 0.5) +
+  coord_cartesian(xlim = c(0, 20)) +
+  labs(title = glue("{percent(pr2a, accuracy = 1)} chance of meeting target for 26 October 2020"),
+       subtitle = "Target is 14 day average of less than 5 new confirmed cases per day.",
+       x = "14 day average of cases, period finishing on 25 October 2020",
+       caption = "Forecasts are provisional and are subject to daily change. Analysis by http://freerangestats.info.")
+
 
 fcp <- function(){
   print(plot2 + plot3 + plot_layout(ncol = 2))
@@ -208,7 +232,8 @@ svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
 svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 5)
-svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only",w = 7, h = 5)
+svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 5)
+svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 5)
 
 
 #--------------23 November---------
