@@ -57,6 +57,51 @@ if(! (Sys.Date() - 2) %in% d$date){
 
 
 vic_caption <- glue("Data from the DHHS; analysis by http://freerangestats.info. Last updated {Sys.Date()}."  )
+#-----------------Positivity plot------------------
+hp <- d %>%
+  filter(!is.na(ps1)) %>%
+  filter(date == max(date))
+
+pos_line <- d %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = ps1), colour = "steelblue") +
+  geom_point(aes(y = pos_raw)) +
+  geom_text(data = hp, aes(label = percent(ps1, accuracy = 0.1), y = ps1), 
+            hjust = 0, nudge_x = 1, colour = "steelblue") +
+  scale_y_log10(label = percent_format(accuracy = 0.1)) +
+  xlim(min(d$date), hp$date + 3) +
+  labs(x = "",
+       y = "Test positivity (log scale)",
+       caption = vic_caption,
+       title = "Covid-19 test positivity in Victoria, Australia, 2020",
+       subtitle = str_wrap(glue("Smoothed line is from a generalized additive model, 
+       and is used to adjust incidence numbers before analysis to estimate effective reproduction number.
+       The lowest rate is {percent(min(d$ps1), accuracy = 0.01)}, and a positivity rate of 1.5% would result in
+       adjusted case numbers being {comma((0.015 / min(d$ps1)) ^ k, accuracy = 0.01)} times their raw value."), 110))
+
+svg_png(pos_line, "../img/covid-tracking/victoria-positivity", h = 5, w = 9)
+
+svg_png(pos_line, "../_site/img/covid-tracking/victoria-positivity", h = 5, w = 9)
+
+#--------------------Positivity correction--------------
+pos_correction <- d %>%
+  select(date, `Confirmed` = confirm, `Positivity-corrected` = cases_corrected) %>%
+  gather(variable, value, -date) %>%
+  ggplot(aes(x = date, y = value, colour = variable)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "loess", span = 1/10) +
+  scale_y_continuous(label = comma) +
+  labs(x = "", 
+       y = "Number of cases",
+       colour = "",
+       title = "Confirmed cases compared to positivity correction",
+       subtitle = glue("With a positivity-correction parameter of k={k}"),
+       caption = vic_caption) +
+  scale_colour_brewer(palette = "Set1")
+
+svg_png(pos_correction, "../img/covid-tracking/victoria-positivity-correction", h = 5, w = 9)
+
+svg_png(pos_correction, "../_site/img/covid-tracking/victoria-positivity-correction", h = 5, w = 9)
 
 
 #---------Estimate Reff-------------
@@ -114,6 +159,18 @@ winsorize_df <- function(data, variable, tr = 0.01){
     arrange({{variable}}) %>%
     slice(-(1:trn))
  }
+
+vic_results <- rbind(
+  mutate(estimates_vic$plots$reports$data, type = "positivity-adjusted reported cases"),
+  mutate(estimates_vic$plots$infections$data, type = "Infections"),
+  mutate(estimates_vic$plots$reff$data, type = "Effective reproduction number (R)")
+) %>% 
+  as_tibble() 
+write_csv(vic_results, glue("../covid-tracking/vic-results-{Sys.Date()}.csv"))
+write_csv(vic_results, glue("../_site/covid-tracking/vic-results-{Sys.Date()}.csv"))
+write_csv(vic_results, glue("../_site/covid-tracking/vic-results-latest.csv"))
+
+
 
 #--------------28 September--------------
 pd1 <- estimates_vic$estimated_reported_cases$samples %>% 
@@ -237,6 +294,7 @@ fcp <- function(){
 svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
+# Some charts just for Tweeting:
 svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 4)
 svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 4)
 svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 4)
@@ -263,6 +321,9 @@ wd <- setwd("../_site")
 
 system('git add img/covid-tracking/victoria-14day.*')
 system('git add img/covid-tracking/victoria-latest.*')
+system('git add img/covid-tracking/victoria-positivity.*')
+system('git add img/covid-tracking/victoria-positivity-correction.*')
+system('git add covid-tracking/vic-results-*.csv')
 
 system('git config --global user.email "peter.ellis2013nz@gmail.com"')
 system('git config --global user.name "Peter Ellis"')

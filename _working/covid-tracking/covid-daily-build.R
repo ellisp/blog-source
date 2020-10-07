@@ -5,7 +5,7 @@
 
 
 source("covid-tracking/victoria-long-term.R")
-source("covid-tracking/victoria-tracker.R")
+# source("covid-tracking/victoria-tracker.R")
 # source("covid-tracking/nsw-tracker.R")
 # source("covid-tracking/australia-tracker.R")
 
