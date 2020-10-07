@@ -82,6 +82,7 @@ estimates_vic <- EpiNow2::epinow(reported_cases = d2,
                                  estimate_breakpoints = TRUE)
 
 
+
 if(max(filter(estimates_vic$estimates$summarised, variable == "R")$top, na.rm = TRUE) > 10){
   stop("Probable convergence problem; some estimates of R are implausibly high")
 }
@@ -90,6 +91,11 @@ pc_vic <- my_plot_estimates(estimates_vic,
                             extra_title = " and positivity",
                             caption = vic_caption,
                             y_max = 1000)
+
+svg_png(pc_vic, "../img/covid-tracking/victoria-latest", h = 10, w = 10)
+
+svg_png(pc_vic, "../_site/img/covid-tracking/victoria-latest", h = 10, w = 10)
+
 
 last_pos_ratio <- d %>%
   filter(!is.na(ps1)) %>%
@@ -130,7 +136,7 @@ plot1 <- pd1 %>%
   labs(title = glue("{percent(pr1, accuracy = 1)} chance of meeting target for 28 September 2020"),
        subtitle = "Target is 14 day average of less than 50 new confirmed cases per day.",
        x = "14 day average of cases, period finishing on 27 September 2020",
-       caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
+       caption = glue("Simplified version of Melbourne targets for Third Step. Forecast as at {Sys.Date()}."))
 
 #------------------Rolling 14 day average-----------------
 s1 <- estimates_vic$estimated_reported_cases$samples %>%
@@ -154,9 +160,9 @@ for(i in 1:length(all_dates)){
 s3 <- bind_rows(s2) %>%
   group_by(date_to) %>%
   filter(date_to >= "2020-09-25") %>%
-  summarise(lower = quantile(avg_14_day, 0.05),
+  summarise(lower = quantile(avg_14_day, 0.10),
             mid = median(avg_14_day),
-            upper = quantile(avg_14_day, 0.95)) 
+            upper = quantile(avg_14_day, 0.80)) 
 
 earliest5 <- s3 %>%
   filter(mid <=5) %>%
@@ -170,7 +176,7 @@ plot3 <- s3 %>%
   geom_hline(yintercept = 5, size = 2, colour = "grey") +
   geom_ribbon(aes(ymin = lower, ymax = upper), fill = "darkgreen", alpha = 0.5) +
   geom_line(aes(y = mid)) +
-  labs(x = "14 day period ending (green area shows 90% credibility interval)",
+  labs(x = "14 day period ending (green area shows 80% credibility interval)",
        y = "Average new cases",
        title = "Expected 14 day rolling average of new cases", 
        subtitle = glue("Likely to go below 5 per day when data released on {format(earliest5 + 1, '%d %B %Y')}."),
@@ -231,9 +237,9 @@ fcp <- function(){
 svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
-svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 5)
-svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 5)
-svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 5)
+svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 4)
+svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 4)
+svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 4)
 
 
 #--------------23 November---------
@@ -256,6 +262,7 @@ stopifnot(pr1 > 0 && pr2 > 0 && pr1 <= 1 && pr2 <= 1)
 wd <- setwd("../_site")
 
 system('git add img/covid-tracking/victoria-14day.*')
+system('git add img/covid-tracking/victoria-latest.*')
 
 system('git config --global user.email "peter.ellis2013nz@gmail.com"')
 system('git config --global user.name "Peter Ellis"')
