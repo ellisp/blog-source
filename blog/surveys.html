@@ -1,0 +1,29 @@
+---
+layout: leftwithcomments
+title: Posts about analysis of surveys
+image: /img/0121-powerbi.png
+socialimage: /img/0121-powerbi.png
+nametype: index
+---
+
+   
+   {% for post in site.posts %}
+   {% if post.tags[0] == "Surveys" or post.tags[1] == "Surveys" or post.tags[2] == "Surveys" or post.tags[3] == "Surveys" or post.tags[4] == "Surveys" or post.tags[5] == "Surveys"%}
+	   <hr> </hr>
+	   <div class ="row">
+		  <div class="col-md-8">
+			 <a href="{{ post.url }}">
+				<h3>{{ post.title }}</h3>
+				<h4>{{ post.date | date_to_long_string }}</h4>
+			 </a>
+			 <p>{{ post.description }}</p>
+		  </div>
+		  <div class = "col-md-4">
+			 <a href="{{ post.url }}"><img src = {{ post.image }} height = "150"></a>
+		  </div>
+		 </div>
+	{% endif %}
+
+   {% endfor %}
+
+
