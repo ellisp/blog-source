@@ -121,7 +121,7 @@ estimates_vic <- EpiNow2::epinow(reported_cases = d2,
                                  generation_time = generation_time,
                                  delays = list(incubation_period, reporting_delay),
                                  horizon = max(30, as.numeric(as.Date("2020-11-15") - Sys.Date())), 
-                                 samples = 3000, warmup = 600, 
+                                 samples = 4000, warmup = 600, 
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95,
                                  estimate_breakpoints = TRUE)
@@ -289,15 +289,15 @@ plot2a <- pd2a %>%
 
 
 fcp <- function(){
-  print(plot2 + plot3 + plot_layout(ncol = 2))
+  print(plot2a + plot3 + plot_layout(ncol = 2))
 }
 svg_png(fcp, "../img/covid-tracking/victoria-14day", w = 11, h = 5)
 svg_png(fcp, "../_site/img/covid-tracking/victoria-14day",w = 11, h = 5)
 
 # Some charts just for Tweeting:
-svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 4)
-svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 4)
-svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 4)
+svg_png(plot3, "../img/covid-tracking/victoria-14day-fc-only",w = 7, h = 3.7)
+svg_png(plot2, "../img/covid-tracking/victoria-14day-density-only-1910",w = 7, h = 3.7)
+svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, h = 3.7)
 
 
 #--------------23 November---------
@@ -315,7 +315,7 @@ svg_png(plot2a, "../img/covid-tracking/victoria-14day-density-only-2610",w = 7, 
 #------------------Publish----------------------------
 
 stopifnot("patchwork" %in% class(fcp()))
-stopifnot(pr1 > 0 && pr2 > 0 && pr1 <= 1 && pr2 <= 1)
+#stopifnot(pr1 > 0 && pr2 > 0 && pr1 <= 1 && pr2 <= 1)
 
 wd <- setwd("../_site")
 

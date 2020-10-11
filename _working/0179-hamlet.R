@@ -77,6 +77,12 @@ hamlet %>%
 # - Some one word sentences like "Farewell." and "Good."
 # - Some collective terms like "Both." and "All."
 
+#
+hamlet %>%
+  filter(grepl("^[A-Z][a-z]+\\.$", text)) %>%
+  filter(text == "Ham.") %>%
+  select(original_line)
+
 
 # Number of times each stage direction used
 hamlet %>%
@@ -250,12 +256,15 @@ hamlet_words <- hamlet_words %>%
 char_summary <- hamlet_words %>%
   group_by(speaker_sh) %>%
   summarise(words = n(),
-            speeches = sum(new_speaker_this_line),
+            speeches = sum(new_speaker_this_word),
             words_per_speech = words / speeches,
             stopwords = sum(stopword),
             prop_non_stop = 1 - stopwords / words,
             most_words_single_speech = max(word_number_this_speech)) %>%
   arrange(desc(words))
+
+
+kable(char_summary) %>%  kable_styling() %>% write_clip()
 
 top_20_chars <- char_summary[1:20, ]$speaker_sh
 
@@ -284,7 +293,7 @@ hamlet_words %>% select(contains("word"), everything())
 
 #--------------------Distinctive words-------------------
 
-# three most distinctive word stem for each of the main cast
+# most distinctive word stem for each of the main cast
 dist_words <- hamlet_words %>%
   filter(!stopword) %>%
   count(word_stem, speaker_sh) %>%
@@ -300,6 +309,7 @@ dist_words <- hamlet_words %>%
   filter(speaker_sh %in% top_20_chars) 
 # note that "mai" is the word stem for "may", and "joi" for "joy"
 
+# plot of disitncive word stems
 p1 <- dist_words %>%
   group_by(speaker_sh) %>%
   mutate(rank = 1:n()) %>%
@@ -309,11 +319,13 @@ p1 <- dist_words %>%
         panel.grid.minor.x = element_blank(),
         axis.text.x = element_blank()) +
   labs(x = "", y = "",
-       title = "Most distinctive words for the top 20 characters in Hamlet")
+       title = "Most distinctive word stems for the top 20 characters in Hamlet")
 
 svg_png(p1, "../img/0179-distinctive-words")
 
 #--------------------Distribution of length of speeches--------------------
+
+# chart of distribution of length of speeches
 p2 <- hamlet_words %>%
   filter(main_character | speaker_sh == "First gravedigger") %>%
   group_by(speech_number) %>%
@@ -329,6 +341,20 @@ p2 <- hamlet_words %>%
   theme(panel.spacing = unit(2, "lines"))
 
 svg_png(p2, "../img/0179-distribution-speeches-length", w = 10, h = 6)
+
+# Find the longest speech:
+longest_speech <- hamlet_words %>%
+  arrange(desc(word_number_this_speech)) %>%
+  slice(1) %>%
+  pull(speech_number)
+
+hamlet_words %>%
+  filter(speech_number == longest_speech) %>%
+  distinct(original_line_number) %>%
+  inner_join(hamlet, by = "original_line_number") %>%
+  select(text) %>%
+  pull(text) %>%
+  cat()
 
 
 #=========who interacts with whom==============
@@ -346,6 +372,8 @@ d <- hamlet_handovers %>%
   mutate(from = as.character(from),
          to = as.character(to))
 
+# we are going to count from-to and to-from as though they are the same,
+# ie ignoring direction
 d1 <- d %>%
   rename(new_from = to,
          to = from) %>%
