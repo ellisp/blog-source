@@ -120,7 +120,7 @@ stopifnot(sum(d2$breakpoint) == length(npi_dates))
 estimates_vic <- EpiNow2::epinow(reported_cases = d2, 
                                  generation_time = generation_time,
                                  delays = list(incubation_period, reporting_delay),
-                                 horizon = max(30, as.numeric(as.Date("2020-11-15") - Sys.Date())), 
+                                 horizon = max(14 , as.numeric(as.Date("2020-11-15") - Sys.Date())), 
                                  samples = 4000, warmup = 600, 
                                  cores = 4, chains = 4, verbose = TRUE, 
                                  adapt_delta = 0.95,
@@ -193,7 +193,7 @@ plot1 <- pd1 %>%
   labs(title = glue("{percent(pr1, accuracy = 1)} chance of meeting target for 28 September 2020"),
        subtitle = "Target is 14 day average of less than 50 new confirmed cases per day.",
        x = "14 day average of cases, period finishing on 27 September 2020",
-       caption = glue("Simplified version of Melbourne targets for Third Step. Forecast as at {Sys.Date()}."))
+       caption = glue("Simplified version of Melbourne targets for Roadmap. Forecast as at {Sys.Date()}."))
 
 #------------------Rolling 14 day average-----------------
 s1 <- estimates_vic$estimated_reported_cases$samples %>%
@@ -237,7 +237,7 @@ plot3 <- s3 %>%
        y = "Average new cases",
        title = "Expected 14 day rolling average of new cases", 
        subtitle = glue("Likely to go below 5 per day when data released on {format(earliest5 + 1, '%d %B %Y')}."),
-       caption = glue("Simplified version of Melbourne targets for Second and Third Steps. Forecast as at {Sys.Date()}."))
+       caption = glue("Simplified version of Melbourne targets for Roadmap. Forecast as at {Sys.Date()}."))
 
 #--------------18 October--------------
 # noting 18 October is the day for which 19 october releases data
@@ -331,3 +331,5 @@ system('git config --global user.name "Peter Ellis"')
 system('git commit -m "latest Victoria covid 14 day forecasts"')
 system('git push origin master')
 setwd(wd)
+
+beepr::beep(sound = 8)
