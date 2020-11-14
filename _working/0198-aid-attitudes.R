@@ -78,7 +78,7 @@ stargazer(nz_mods[[1]], nz_mods[[2]], nz_mods[[3]],
 rbind(
   as_tibble(pairs(emmeans(aust_mods[[1]], "treatment_group"))[3, ]),
   as_tibble(pairs(emmeans(aust_mods[[2]], "treatment_group"))[3, ]),
-            as_tibble(pairs(emmeans(aust_mods[[3]], "treatment_group"))[3, ])
+  as_tibble(pairs(emmeans(aust_mods[[3]], "treatment_group"))[3, ])
 ) %>%
   # pairs actually gives us the Measured estimate relative to Forceful; we want
   # the reverse:
@@ -106,7 +106,7 @@ p3f <- function(){
   print(
     p3a + 
     p3b +
-    plot_annotation(title = "Surprising impact on Australians of considering overseas aid in context of Australian aid",
+    plot_annotation(title = "Telling Australians about Chinese aid might make them more focused on helping the poor",
                     subtitle = "Subjects were given a description of Chinese aid that was either forceful, measured or none (control)",
                     caption = the_caption)
   )
@@ -202,7 +202,7 @@ for(j in 1:length(boot_reg)){
     as.data.frame() %>%
     mutate(variable = c("Intercept", "Measured vignette re China", "Forceful vignette re China", 
                         "Male", "Over fifty", "Academic", "Log Income Per Person"),
-           var_type = rep(c("Indirect", "Direct", "Indirect"), c(1, 2, 4))) %>%
+           var_type = rep(c("doesn't matter", "Total", "Mediated"), c(1, 2, 4))) %>%
     cbind(point = my_reg(aust, resp_var = all_response_vars[[j]])) %>%
     filter(variable != "Intercept") %>%
     rename(lower = V1,
@@ -219,7 +219,7 @@ for(j in 1:length(boot_reg)){
          y = "",
          colour = "How to interpret the effect of the variable:",
          title = "The effect of geostrategic competition on public attitudes to aid",
-         subtitle = str_wrap(glue("Impact of a measured or forceful vignette about Chinese aid on likelihood
+         subtitle = str_wrap(glue("Impact of a measured or forceful vignette about Chinese aid, and other secondary variables, on likelihood
          of supporting '{all_response_labs[j]}'"), 80))
 }
 
