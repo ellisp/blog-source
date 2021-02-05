@@ -87,7 +87,7 @@ p2 <- d %>%
                 limits = c(1, 300)) +
   scale_y_log10(label = dollar_format(accuracy = 1)) +
   scale_colour_manual(values = c(Bullish = "darkblue", Bearish = "tomato")) +
-  labs(x = "Volume", 
+  labs(x = "Volume (log scale)", 
        y = "Closing price (log scale)",
        title = symb_name,
        colour = "Direction of sentiment over the day:",
