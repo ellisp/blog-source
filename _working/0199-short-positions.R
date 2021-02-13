@@ -58,6 +58,11 @@ i = 1
 for(i in i:length(all_dates)){
   the_date <- all_dates[i]
   
+  # Don't bother trying to download on weekends:
+  if(wday(the_date, label = TRUE) %in% c("Sat", "Sun")){
+    next()
+    }
+  
   m <- str_pad(month(the_date), width = 2, side = "left", pad = "0")
   y <- year(the_date)
   ch <- format(the_date, "%Y%m%d")
@@ -82,7 +87,8 @@ already_done_dates <- dbGetQuery(con, "SELECT DISTINCT observation_date AS od
                                       FROM f_prices_and_volumes AS a
                                       INNER JOIN d_variables AS b
                                         On a.variable_id = b.variable_id
-                                      WHERE b.variable = 'short_position'")$od
+                                      WHERE b.variable = 'short_positions'
+                                      ORDER BY observation_date")$od
 
 d_variables <- dbGetQuery(con, "select variable_id, variable from d_variables")
 
@@ -97,7 +103,7 @@ for(i in i:1){
   
   # if we've already got short positions observations in the data for this date,
   # then break out of the loop and go to the next iteration
-  if(the_data %in% already_done_dates){break()}
+  if(as.character(the_date) %in% already_done_dates){next()}
   
   # The first 1400 files are actually tab-delimited and UTF-16, the
   # rest are genuine comma separated files and more standard encoding
