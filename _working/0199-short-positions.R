@@ -44,6 +44,67 @@ RSQLite::dbWriteTable(con, "d_products", asx_cos, row.names =FALSE, append = TRU
 dbGetQuery(con, "select * from d_products") %>%
   as_tibble()
 
+
+
+#================stock price and volume information===========
+
+all_stocks <- dbGetQuery(con, "select product_id, ticker_yahoo from d_products") %>% as_tibble()
+
+for(i in 1:nrow(all_stocks)){
+  if(i %% 20 == 0){
+    cat(i, " ")
+  }
+  ax_ticker <- all_stocks[i, ]$ticker_yahoo
+  
+  latest <- as.Date(dbGetQuery(con, glue("select max(observation_date) as x from f_prices 
+                        where product_id = {all_stocks[i, ]$product_id}"))$x)
+  if(is.na(latest)){
+    start_date <- as.Date("1980-01-01")
+  } else {
+    start_date <- latest + 1
+  }
+  
+  tryCatch({
+    df_get <- data.frame(getSymbols(
+      ax_ticker,
+      src = 'yahoo',
+      from = start_date,
+      to = Sys.Date(),
+      auto.assign = FALSE)) 
+    
+    if(nrow(df_get) > 0){
+      df_get$observation_date <- row.names(df_get)
+      
+      row.names(df_get) <- NULL
+      names(df_get) <- c("open", "high", "low", "close", "volume", "adjusted", "observation_date")
+      upload_data <- df_get %>%
+        mutate(product_id = all_stocks[i, ]$product_id) %>%
+        mutate(short_positions = NA,
+               total_product_in_issue = NA,
+               short_positions_prop = NA) %>%
+        select(product_id,
+               open,
+               high,
+               low,
+               close,
+               volume, 
+               adjusted,
+               short_positions,
+               total_product_in_issue,
+               short_positions_prop,
+               observation_date) %>%
+        filter(observation_date >= start_date)
+    
+      dbWriteTable(con, "f_prices", upload_data, append = TRUE)
+    }
+    
+  },
+  error=function(e){})
+}
+
+#------------------Download stock price etc--------
+
+
 #===============Get the data=============
 
 
@@ -182,47 +243,6 @@ extremes %>%
   kable_styling()
 
 
-#================stock price and volume information===========
-
-#------------------Download stock price etc--------
-
-codes_wanted <- heavily_shorted %>%
-  mutate(product_code = paste0(product_code, ".AX")) %>%
-  pull(product_code)
-
-
-# chunk of code adapted from https://www.michaelplazzer.com/import-asx-data-r/
-all_stocks_l <- list()
-
-for (i in 1:length(codes_wanted)) {
-  ax_ticker <- codes_wanted[i]
-  
-  tryCatch({
-    df_get <- data.frame(getSymbols(
-      ax_ticker,
-      src = 'yahoo',
-      from = min(all_data$date),
-      to = max(all_data$date),
-      auto.assign = FALSE))
-    
-    df_get$date <- row.names(df_get)
-    row.names(df_get) <- NULL
-    df_stock <- tibble(ax_ticker=ax_ticker,df_get)
-    names(df_stock) <- tolower(c("ax_ticker","OPEN","HIGH","LOW","CLOSE","VOLUME","ADJUSTED","Date"))
-    
-    all_stocks_l[[i]] <- df_stock
-  },
-  error=function(e){})
-}
-
-all_stocks_data <- bind_rows(all_stocks_l) %>%
-  mutate(date = as.Date(date),
-         product_code = gsub("\\.AX$", "", ax_ticker) ) %>%
-  group_by(product_code) %>%
-  filter(!is.na(close)) %>%
-  arrange(date) %>%
-  mutate(close_index = close / close[1]) %>%
-  ungroup()
 
 #---------------Explore stock price etc----------------------
 
