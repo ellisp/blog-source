@@ -1,11 +1,29 @@
 library(tidyverse)
 library(glue)
 library(lubridate)
-library(frs) # for download_if_fresh
+library(frs) # for download_if_fresh and execute_sql
 library(janitor)
 library(ggrepel)
 library(kableExtra)
 library(quantmod)
+library(RSQLite)
+library(DBI)
+
+#=============database setup============================
+
+con <- dbConnect(RSQLite::SQLite(), "stocks.sqlite")
+
+sql <- "DROP TABLE IF EXISTS f_prices
+DROP TABLE IF EXISTS d_products
+"
+dbExecute(con, "drop table if exists d_products")
+dbExecute(con, "drop table if exists f_prices")
+
+execute_sql(con, "0200-stocks-db-setup.sql", log_table = NULL)
+
+
+dbGetQuery(con, "select * from d_products")
+dbGetQuery(con, "select * from f_prices")
 
 #===============Get the data=============
 
