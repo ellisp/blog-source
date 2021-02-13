@@ -11,19 +11,38 @@ library(DBI)
 
 #=============database setup============================
 
-con <- dbConnect(RSQLite::SQLite(), "stocks.sqlite")
 
-sql <- "DROP TABLE IF EXISTS f_prices
-DROP TABLE IF EXISTS d_products
-"
-dbExecute(con, "drop table if exists d_products")
-dbExecute(con, "drop table if exists f_prices")
+#-----------Define database------------------
+if(!"stocks.sqlite" %in% list.files()){
+  # if this is the very first run we need to create the empty database and its tables
+  con <- dbConnect(RSQLite::SQLite(), "stocks.sqlite")
+  execute_sql(con, "0199-stocks-db-setup.sql", log_table = NULL)
+  
+} else {
+  con <- dbConnect(RSQLite::SQLite(), "stocks.sqlite")
+}
 
-execute_sql(con, "0200-stocks-db-setup.sql", log_table = NULL)
+#------------set up product dimension-----------
 
+asx_cos <- read.csv("http://www.asx.com.au/asx/research/ASXListedCompanies.csv",skip=1) %>%
+  mutate(ticker_yahoo = paste0(ASX.code, ".AX"),
+         exchange_origin = "ASX",
+         latest_observed = as.Date(NA),
+         latest_full_description_tc = tools::toTitleCase(tolower(Company.name))) %>%
+  select(
+    ticker_yahoo,
+    ticker_origin = ASX.code,
+    exchange_origin,
+    latest_full_description = Company.name,
+    latest_full_description_tc,
+    industry_group = GICS.industry.group,
+    latest_observed
+  )
 
-dbGetQuery(con, "select * from d_products")
-dbGetQuery(con, "select * from f_prices")
+RSQLite::dbWriteTable(con, "d_products", asx_cos, row.names =FALSE, append = TRUE)
+
+dbGetQuery(con, "select * from d_products") %>%
+  as_tibble()
 
 #===============Get the data=============
 
@@ -32,11 +51,12 @@ dbGetQuery(con, "select * from f_prices")
 # From:
 # https://asic.gov.au/regulatory-resources/markets/short-selling/short-position-reports-table/
 
-all_dates <- seq(from = as.Date("2010-06-16"), to = as.Date("2021-01-22"), by = 1)
+all_dates <- seq(from = as.Date("2010-06-16"), to = Sys.Date(), by = 1)
 dir.create("asic-shorts", showWarnings = FALSE)
 
 # Began 8:54am
-for(i in 1:length(all_dates)){
+i = i
+for(i in i:length(all_dates)){
   the_date <- all_dates[i]
   
   m <- str_pad(month(the_date), width = 2, side = "left", pad = "0")
@@ -70,7 +90,7 @@ for(i in i:length(all_csvs)){
     d <- read.csv(the_csv) 
   }
   
-  all_data_l[[i]] <- d %>%
+  d2 <- d %>%
     clean_names() %>%
     as_tibble() %>%
     mutate(date = the_date)
@@ -80,7 +100,7 @@ for(i in i:length(all_csvs)){
 }
 
 all_data <- bind_rows(all_data_l) %>%
-  mutate(product_code = str_trim(product_code)) 
+  mutate() 
 
 # Rename one very long variable name
 names(all_data) <- gsub("x_of_total_product_in_issue_reported_as_short_positions", 
