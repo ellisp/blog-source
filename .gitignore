@@ -12,6 +12,8 @@ _site/
 *.gif
 *.png
 
+*.sqlite
+
 !0013-data-types-1.PNG
 !*screenshot*
 
