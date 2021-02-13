@@ -48,9 +48,13 @@ dbGetQuery(con, "select * from d_products") %>%
 
 #================stock price and volume information===========
 
-all_stocks <- dbGetQuery(con, "select product_id, ticker_yahoo from d_products") %>% as_tibble()
+all_stocks <- dbGetQuery(con, "SELECT product_id, ticker_yahoo 
+                               FROM d_products 
+                               ORDER BY prod8ct_id") %>% as_tibble()
 
-for(i in 1:nrow(all_stocks)){
+i=1
+for(i in i:nrow(all_stocks)){
+  # display a counter ever 20 iterations so we know we're making progress:
   if(i %% 20 == 0){
     cat(i, " ")
   }
@@ -64,45 +68,69 @@ for(i in 1:nrow(all_stocks)){
     start_date <- latest + 1
   }
   
-  tryCatch({
-    df_get <- data.frame(getSymbols(
-      ax_ticker,
-      src = 'yahoo',
-      from = start_date,
-      to = Sys.Date(),
-      auto.assign = FALSE)) 
-    
-    if(nrow(df_get) > 0){
-      df_get$observation_date <- row.names(df_get)
+  if(start_date <= Sys.Date()){
+    tryCatch({
+      df_get <- data.frame(getSymbols(
+        ax_ticker,
+        src = 'yahoo',
+        from = start_date,
+        to = Sys.Date(),
+        auto.assign = FALSE)) 
       
-      row.names(df_get) <- NULL
-      names(df_get) <- c("open", "high", "low", "close", "volume", "adjusted", "observation_date")
-      upload_data <- df_get %>%
-        mutate(product_id = all_stocks[i, ]$product_id) %>%
-        mutate(short_positions = NA,
-               total_product_in_issue = NA,
-               short_positions_prop = NA) %>%
-        select(product_id,
-               open,
-               high,
-               low,
-               close,
-               volume, 
-               adjusted,
-               short_positions,
-               total_product_in_issue,
-               short_positions_prop,
-               observation_date) %>%
-        filter(observation_date >= start_date)
-    
-      dbWriteTable(con, "f_prices", upload_data, append = TRUE)
-    }
-    
-  },
-  error=function(e){})
+      if(nrow(df_get) > 0){
+        df_get$observation_date <- row.names(df_get)
+        
+        row.names(df_get) <- NULL
+        names(df_get) <- c("open", "high", "low", "close", "volume", "adjusted", "observation_date")
+        upload_data <- df_get %>%
+          mutate(product_id = all_stocks[i, ]$product_id) %>%
+          mutate(short_positions = NA,
+                 total_product_in_issue = NA,
+                 short_positions_prop = NA) %>%
+          select(product_id,
+                 open,
+                 high,
+                 low,
+                 close,
+                 volume, 
+                 adjusted,
+                 short_positions,
+                 total_product_in_issue,
+                 short_positions_prop,
+                 observation_date) %>%
+          filter(observation_date >= start_date)
+      
+        dbWriteTable(con, "f_prices", upload_data, append = TRUE)
+      }
+      
+    },
+    error=function(e){})
+  }
 }
 
-#------------------Download stock price etc--------
+#------------------Update the observation dates in the dimension table----------
+# This is much more complicated with SQLite than in SQL Server because of the
+# apparent inability of SQLite to elegantly update a table via a join with
+# another table. There may be a better way than the below but I couldn't find it:
+
+sql1 <- 
+  "CREATE TABLE tmp AS
+  SELECT product_id, max(observation_date) as the_date
+  FROM f_prices 
+  WHERE observation_date IS NOT NULL
+  GROUP BY product_id;"
+
+sql2 <- 
+  "UPDATE d_products
+  SET latest_observed = (SELECT the_date FROM tmp WHERE d_products.product_id = tmp.product_id)
+  WHERE EXISTS (SELECT * FROM tmp WHERE d_products.product_id = tmp.product_id);"
+
+sql3 <- "DROP TABLE tmp;"
+
+
+dbSendQuery(con, sql1)
+dbSendQuery(con, sql2)
+dbSendQuery(con, sql3)
 
 
 #===============Get the data=============
