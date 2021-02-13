@@ -41,16 +41,141 @@ asx_cos <- read.csv("http://www.asx.com.au/asx/research/ASXListedCompanies.csv",
 
 RSQLite::dbWriteTable(con, "d_products", asx_cos, row.names =FALSE, append = TRUE)
 
-dbGetQuery(con, "select * from d_products") %>%
+
+
+
+#===============Get the short positions data=============
+
+
+#----------Download-------------
+# From:
+# https://asic.gov.au/regulatory-resources/markets/short-selling/short-position-reports-table/
+
+all_dates <- seq(from = as.Date("2010-06-16"), to = Sys.Date(), by = 1)
+dir.create("asic-shorts", showWarnings = FALSE)
+
+i = 1
+for(i in i:length(all_dates)){
+  the_date <- all_dates[i]
+  
+  m <- str_pad(month(the_date), width = 2, side = "left", pad = "0")
+  y <- year(the_date)
+  ch <- format(the_date, "%Y%m%d")
+  fn <- glue("RR{ch}-001-SSDailyAggShortPos.csv")
+  
+  url <- glue("https://asic.gov.au/Reports/Daily/{y}/{m}/{fn}")
+  
+  # Only exists for trading days. Rather than bother to work out exactly the trading days,
+  # we will just skip over any 404 error
+  try(download_if_fresh(url, glue("asic-shorts/{fn}")))
+}
+
+
+#----------------------Import---------------------------
+# TODO - make this work incrementally, not just from a clean build. Currently
+# it is all or nothing.
+all_products <- dbGetQuery(con, "SELECT product_id, ticker_yahoo 
+                                 FROM d_products 
+                                 WHERE exchange_origin = 'ASX'") %>%
   as_tibble()
 
+d_variables <- dbGetQuery(con, "select variable_id, variable from d_variables")
+
+all_csvs <- list.files("asic-shorts", pattern = "DailyAggShortPos", full.names = TRUE)
+
+# we are going to do this backwards so product names are the latest ones
+i =length(all_csvs)
+for(i in i:1){
+  
+  the_csv <- all_csvs[i]
+  the_date <- as.Date(str_extract(the_csv, "[0-9]+"), format= "%Y%m%d")
+  
+  # The first 1400 files are actually tab-delimited and UTF-16, the
+  # rest are genuine comma separated files and more standard encoding
+  if(i <= 1400){
+    d1 <- read.csv(the_csv, fileEncoding = "UTF-16", sep = "\t") 
+  } else {
+    d1 <- read.csv(the_csv) 
+    if(nrow(d1) < 10){
+      d1 <- read.csv(the_csv, fileEncoding = "UTF-16", sep = "\t") 
+    }
+  }
+  
+  d2 <- d1 %>%
+    clean_names() %>%
+    as_tibble() %>%
+    mutate(observation_date = the_date,
+           ticker_yahoo = paste0(str_trim(product_code), ".AX")) %>%
+    left_join(all_products, by = "ticker_yahoo") %>%
+    select(
+      product_id,
+      observation_date,
+      short_positions = reported_short_positions,
+      total_product_in_issue,
+      short_positions_prop = x_of_total_product_in_issue_reported_as_short_positions,
+      ticker_yahoo,
+      product,
+      product_code
+    ) %>%
+    # convert from percentage to proportion:
+    mutate(short_positions_prop = short_positions_prop / 100)
+  
+  non_match <- sum(is.na(d2$product_id))
+  if(non_match > 0){
+    message(glue("Found {non_match} products in the short data not yet in the database"))
+    print(select(filter(d2, is.na(product_id)), ticker_yahoo, product, observation_date))
+    
+    new_products <- d2 %>%
+      filter(is.na(product_id)) %>%
+      mutate(exchange_origin = 'ASX',
+             latest_full_description_tc = tools::toTitleCase(tolower(product)),
+             industry_group = NA,
+             latest_observed = NA,
+             ticker_origin = str_trim(product_code)) %>%
+      select(ticker_yahoo,
+             ticker_origin,
+             exchange_origin,
+             latest_full_description = product,
+             latest_full_description_tc,
+             industry_group,
+             latest_observed)
+    
+    RSQLite::dbWriteTable(con, "d_products", new_products, row.names =FALSE, append = TRUE)
+    
+    all_products <- dbGetQuery(con, "SELECT product_id, ticker_yahoo 
+                                 FROM d_products 
+                                 WHERE exchange_origin = 'ASX'") %>%
+      as_tibble()
+  }
+  
+  upload_data <- d2 %>% 
+    select(observation_date:ticker_yahoo) %>%
+    left_join(all_products, by = "ticker_yahoo") %>%
+    select(-ticker_yahoo) %>%
+    gather(variable, value, -product_id, -observation_date) %>%
+    left_join(d_variables, by = "variable") %>%
+    select(product_id,
+         observation_date,
+         variable_id,
+         value) %>%
+    # a small number of occasions the short_positions_prop is NA or Inf because
+    # the totla product in issue is 0 even though there are some short positions.
+    # we will just filter these out
+    filter(!is.na(value)) %>%
+    mutate(observation_date = as.character(observation_date))
+  
+  dbWriteTable(con, "f_prices_and_volumes", upload_data, append = TRUE)
+  
+  # progress counter so we know it isn't just stuck
+  if(i %% 100 == 0){cat(i)}
+}
 
 
 #================stock price and volume information===========
 
 all_stocks <- dbGetQuery(con, "SELECT product_id, ticker_yahoo 
                                FROM d_products 
-                               ORDER BY prod8ct_id") %>% as_tibble()
+                               ORDER BY product_id") %>% as_tibble()
 
 i=1
 for(i in i:nrow(all_stocks)){
@@ -60,7 +185,7 @@ for(i in i:nrow(all_stocks)){
   }
   ax_ticker <- all_stocks[i, ]$ticker_yahoo
   
-  latest <- as.Date(dbGetQuery(con, glue("select max(observation_date) as x from f_prices 
+  latest <- as.Date(dbGetQuery(con, glue("select max(observation_date) as x from f_prices_and_volumes 
                         where product_id = {all_stocks[i, ]$product_id}"))$x)
   if(is.na(latest)){
     start_date <- as.Date("1980-01-01")
@@ -83,24 +208,18 @@ for(i in i:nrow(all_stocks)){
         row.names(df_get) <- NULL
         names(df_get) <- c("open", "high", "low", "close", "volume", "adjusted", "observation_date")
         upload_data <- df_get %>%
+          as_tibble() %>%
           mutate(product_id = all_stocks[i, ]$product_id) %>%
-          mutate(short_positions = NA,
-                 total_product_in_issue = NA,
-                 short_positions_prop = NA) %>%
+          gather(variable, value, -observation_date, -product_id) %>%
+          inner_join(d_variables, by = "variable") %>%
           select(product_id,
-                 open,
-                 high,
-                 low,
-                 close,
-                 volume, 
-                 adjusted,
-                 short_positions,
-                 total_product_in_issue,
-                 short_positions_prop,
-                 observation_date) %>%
-          filter(observation_date >= start_date)
-      
-        dbWriteTable(con, "f_prices", upload_data, append = TRUE)
+                 observation_date,
+                 variable_id,
+                 value) %>%
+          filter(observation_date >= start_date) %>%
+          mutate(observation_date = as.character(observation_date))
+        
+        dbWriteTable(con, "f_prices_and_volumes", upload_data, append = TRUE)
       }
       
     },
@@ -108,7 +227,9 @@ for(i in i:nrow(all_stocks)){
   }
 }
 
-#------------------Update the observation dates in the dimension table----------
+
+
+#===============Update the observation dates in the dimension table============
 # This is much more complicated with SQLite than in SQL Server because of the
 # apparent inability of SQLite to elegantly update a table via a join with
 # another table. There may be a better way than the below but I couldn't find it:
@@ -116,7 +237,7 @@ for(i in i:nrow(all_stocks)){
 sql1 <- 
   "CREATE TABLE tmp AS
   SELECT product_id, max(observation_date) as the_date
-  FROM f_prices 
+  FROM f_prices_and_volumes 
   WHERE observation_date IS NOT NULL
   GROUP BY product_id;"
 
@@ -131,88 +252,6 @@ sql3 <- "DROP TABLE tmp;"
 dbSendQuery(con, sql1)
 dbSendQuery(con, sql2)
 dbSendQuery(con, sql3)
-
-
-#===============Get the data=============
-
-
-#----------Download-------------
-# From:
-# https://asic.gov.au/regulatory-resources/markets/short-selling/short-position-reports-table/
-
-all_dates <- seq(from = as.Date("2010-06-16"), to = Sys.Date(), by = 1)
-dir.create("asic-shorts", showWarnings = FALSE)
-
-# Began 8:54am
-i = i
-for(i in i:length(all_dates)){
-  the_date <- all_dates[i]
-  
-  m <- str_pad(month(the_date), width = 2, side = "left", pad = "0")
-  y <- year(the_date)
-  ch <- format(the_date, "%Y%m%d")
-  fn <- glue("RR{ch}-001-SSDailyAggShortPos.csv")
-  
-  url <- glue("https://asic.gov.au/Reports/Daily/{y}/{m}/{fn}")
-  
-  # Only exists for trading days. Rather than bother to work out exactly the trading days,
-  # we will just skip over any 404 error
-  try(download_if_fresh(url, glue("asic-shorts/{fn}")))
-}
-
-
-#----------------------Import---------------------------
-
-all_csvs <- list.files("asic-shorts", pattern = "DailyAggShortPos", full.names = TRUE)
-all_data_l <- list()
-i =1
-for(i in i:length(all_csvs)){
-  
-  the_csv <- all_csvs[i]
-  the_date <- as.Date(str_extract(the_csv, "[0-9]+"), format= "%Y%m%d")
-  
-  # The first 1400 files are actually tab-delimited and UTF-16, the
-  # rest are genuine comma separated files and more standard encoding
-  if(i <= 1400){
-    d <- read.csv(the_csv, fileEncoding = "UTF-16", sep = "\t") 
-  } else {
-    d <- read.csv(the_csv) 
-  }
-  
-  d2 <- d %>%
-    clean_names() %>%
-    as_tibble() %>%
-    mutate(date = the_date)
-  
-  # progress counter so we know it isn't just stuck
-  if(i %% 100 == 0){cat(i)}
-}
-
-all_data <- bind_rows(all_data_l) %>%
-  mutate() 
-
-# Rename one very long variable name
-names(all_data) <- gsub("x_of_total_product_in_issue_reported_as_short_positions", 
-                        "short_position_prop",
-                        names(all_data))
-
-# not sure where this column came from but it's just empty so let's drop it:
-all_data$yth_p <-  NULL
-
-# convert from percentage to proportion
-all_data$short_position_prop <- all_data$short_position_prop / 100
-
-# Rationalise the product names which sometimes change over time, so we have the latest
-# one to use consistently over time in some charts
-pnl <- all_data %>%
-  group_by(product_code) %>%
-  arrange(desc(date)) %>%
-  slice(1) %>%
-  select(product_code, recent_product_name = product) %>%
-  ungroup()
-
-all_data <- all_data %>%
-  inner_join(pnl, by = "product_code")
 
 #=================Exploratory analysis of short positions=====================
 

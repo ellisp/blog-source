@@ -1,4 +1,6 @@
-drop table if exists f_prices;
+drop table if exists f_prices_and_volumes;
+GO
+drop table if exists d_variables;
 GO
 drop table if exists d_products;
 GO
@@ -16,18 +18,33 @@ CREATE TABLE d_products (
 )
 GO
 
-CREATE TABLE f_prices (
+CREATE TABLE d_variables (
+  variable_id INTEGER PRIMARY KEY,
+  variable VARCHAR(60) NOT NULL UNIQUE
+)
+GO
+
+CREATE TABLE f_prices_and_volumes (
   product_id INTEGER,
   observation_date DATE NOT NULL,
-  open FLOAT,
-  high FLOAT,
-  low FLOAT,
-  close FLOAT,
-  volume FLOAT,
-  adjusted FLOAT,
-  short_positions FLOAT,
-  total_product_in_issue FLOAT,
-  short_positions_prop FLOAT,
+  variable_id INTEGER NOT NULL,
+  value FLOAT NOT NULL,
   
-  FOREIGN KEY (product_id) REFERENCES d_products (product_id)
+  FOREIGN KEY (product_id) REFERENCES d_products (product_id),
+  FOREIGN KEY (variable_id) REFERENCES d_variables (variable_id)
 )
+GO
+
+CREATE UNIQUE INDEX one_obs_per_var ON f_prices_and_volumes(variable_id, product_id, observation_date);
+GO
+
+INSERT INTO d_variables (variable) VALUES
+	('open'),
+	('high'),
+	('low'),
+	('close'),
+	('volume'),
+	('adjusted'),
+	('short_positions'),
+	('total_product_in_issue'),
+	('short_positions_prop')
