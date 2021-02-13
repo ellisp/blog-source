@@ -72,12 +72,17 @@ for(i in i:length(all_dates)){
 
 
 #----------------------Import---------------------------
-# TODO - make this work incrementally, not just from a clean build. Currently
-# it is all or nothing.
+
 all_products <- dbGetQuery(con, "SELECT product_id, ticker_yahoo 
                                  FROM d_products 
                                  WHERE exchange_origin = 'ASX'") %>%
   as_tibble()
+
+already_done_dates <- dbGetQuery(con, "SELECT DISTINCT observation_date AS od
+                                      FROM f_prices_and_volumes AS a
+                                      INNER JOIN d_variables AS b
+                                        On a.variable_id = b.variable_id
+                                      WHERE b.variable = 'short_position'")$od
 
 d_variables <- dbGetQuery(con, "select variable_id, variable from d_variables")
 
@@ -90,12 +95,17 @@ for(i in i:1){
   the_csv <- all_csvs[i]
   the_date <- as.Date(str_extract(the_csv, "[0-9]+"), format= "%Y%m%d")
   
+  # if we've already got short positions observations in the data for this date,
+  # then break out of the loop and go to the next iteration
+  if(the_data %in% already_done_dates){break()}
+  
   # The first 1400 files are actually tab-delimited and UTF-16, the
   # rest are genuine comma separated files and more standard encoding
   if(i <= 1400){
     d1 <- read.csv(the_csv, fileEncoding = "UTF-16", sep = "\t") 
   } else {
     d1 <- read.csv(the_csv) 
+    # sometimes this still doesn't work and we go back to the other method:
     if(nrow(d1) < 10){
       d1 <- read.csv(the_csv, fileEncoding = "UTF-16", sep = "\t") 
     }
