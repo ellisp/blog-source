@@ -269,152 +269,80 @@ dbSendQuery(con, sql1)
 dbSendQuery(con, sql2)
 dbSendQuery(con, sql3)
 
-#=================Exploratory analysis of short positions=====================
 
-# so some companies had moments when they were very heavily shorted - more than 16 times
-most_shorted <- all_data %>%
-  group_by(recent_product_name, product_code) %>%
-  summarise(max_sp = max(short_position_prop),
-            # earliest and latest date the firm had that position (noting not necessarily
-            # continuous between these two dates)
-            max_sp_date_early = min(date[short_position_prop == max_sp]),
-            max_sp_date_late = min(date[short_position_prop == max_sp]),
-            max_sp_days = sum(short_position_prop == max_sp)) %>%
-  ungroup() %>%
-  arrange(desc(max_sp)) 
+#============Create a denormalised (wide) version of the main fact table=======
+# In another database system this would be a materialized view or indexed view or similar,
+# but we don't have that in SQLite so it is a straight out table. Note that this roughly
+# doubles the size of the database on disk; and duplication means we need to remember
+# to re-create this table whenevedr the original fact table updates.
 
-# 35 firms had more than 100% of their float shorted
-most_shorted %>%    filter(max_sp > 1)
+sql1 <- "DROP TABLE IF EXISTS f_prices_and_volumes_w"
 
-# usually only for 1 day (but of course that's not surprising as I required it to exactly match)
-most_shorted %>%
-  filter(max_sp > 1) %>%
-  arrange(desc(max_sp_days))
+sql2 <- "
+CREATE TABLE f_prices_and_volumes_w AS
+SELECT 
+	observation_date,
+	c.ticker_yahoo,
+	c.ticker_origin,
+	c.latest_full_description,
+	SUM(CASE WHEN variable = 'open' THEN value END) AS open,
+	SUM(CASE WHEN variable = 'high' THEN value END) AS high,
+	SUM(CASE WHEN variable = 'low' THEN value END) AS low,
+	SUM(CASE WHEN variable = 'close' THEN value END) AS close,
+	SUM(CASE WHEN variable = 'volume' THEN value END) AS volume,
+	SUM(CASE WHEN variable = 'adjusted' THEN value END) AS adjusted,
+	SUM(CASE WHEN variable = 'short_positions' THEN value END) AS short_positions
+FROM f_prices_and_volumes AS a
+INNER JOIN d_variables AS b
+	ON a.variable_id = b.variable_id
+INNER JOIN d_products AS c
+	ON a.product_id = c.product_id
+GROUP BY observation_date, ticker_yahoo, ticker_origin, latest_full_description"
 
+dbSendStatement(con, sql1)
+dbSendStatement(con, sql2) # takes a minute or so
 
-# 46 firms had at least sometimes 50% shorted
-heavily_shorted <- most_shorted %>%   
-  filter(max_sp > 0.5) %>%
-  select(product_code, max_sp)
+#==============exploration===========
 
-extremes <- most_shorted %>%
-  filter(max_sp > 5) %>%
-  rename(short_position_prop = max_sp,
-         date = max_sp_date_early) %>%
-  arrange(date) %>%
-  select(recent_product_name, product_code, short_position_prop, date)
+#------------Basic numbers---------
 
+sql <- "
+SELECT 
+	variable,
+	COUNT(1) AS n,
+	COUNT(DISTINCT(product_id)) AS number_products,
+	COUNT(DISTINCT(observation_date)) AS number_dates
+FROM f_prices_and_volumes AS a
+INNER JOIN d_variables AS b
+	ON a.variable_id = b.variable_id
+GROUP BY variable
+ORDER BY b.variable_id"
 
-all_data %>%
-  inner_join(heavily_shorted, by = "product_code") %>%
-  ggplot(aes(x = date, y = short_position_prop, colour = product_code)) +
-  geom_line() +
-  geom_text_repel(data = extremes, aes(label = product_code)) +
-  scale_y_sqrt(label = percent, breaks = c(0.3, 1, 5, 10, 15)) +
-  theme(legend.position =  "none",
-        panel.grid.minor.y = element_blank()) +
-  labs(y = "Percentage of product issue\nreported as short position",
-       x = "",
-       title = glue("The {nrow(heavily_shorted)} most shorted firms on the ASX"),
-       subtitle = "Four unusual shorting events since 2010, two of them involving multiple products.
-Chart shows the short positions of all products that at least once had 50% of product issue reported as short position.",
-       caption = "Source: ASIC short position reports")
-
-extremes %>%
-  rename("Most shorted as %" = short_position_prop) %>%
-  kable(digits = 0) %>%
+dbGetQuery(con, sql) %>%
+  kable() %>%
   kable_styling()
 
+#---------Recent growth-----------
 
+sql <- "
+WITH annual_vals AS
+	(SELECT
+	    CAST(STRFTIME('%Y', observation_date) AS INT) AS year,
+		AVG(adjusted) AS avg_adjusted,
+		latest_full_description,
+		ticker_origin
+	FROM f_prices_and_volumes_w
+	GROUP BY latest_full_description, ticker_yahoo, STRFTIME('%Y', observation_date))
+SELECT 
+	SUM(CASE WHEN year = 2020 THEN avg_adjusted END) AS adj_2020,
+	SUM(CASE WHEN year = 2021 THEN avg_adjusted END) AS adj_2021,
+	ticker_yahoo,
+	latest_full_description
+FROM annual_vals
+WHERE year >= 2020
+GROUP BY ticker_origin, latest_full_description
+HAVING SUM(CASE WHEN year = 2020 THEN avg_adjusted END) > 0"
 
-#---------------Explore stock price etc----------------------
+recent_growth <- dbGetQuery(con, sql) %>% as_tibble()
 
-all_stocks_data  %>%
-  ggplot(aes(x = date, y = close_index, colour = ax_ticker)) +
-  geom_line() +
-  theme(legend.position = "none",
-        panel.grid.minor.y = element_blank()) +
-  scale_y_log10(label = comma_format(accuracy = 0.001)) +
-  labs(x = "",
-       y = "Closing price\n(as index, first observed value = 1)",
-       title = "Closing stock prices of the 46 most shorted products on the ASX")
-
-
-all_stocks_data %>%
-  inner_join(all_data, by = c("date", "product_code")) %>%
-  ggplot(aes(x = close_index, y = short_position_prop, colour = product_code)) +
-  geom_path() +
-  geom_smooth(aes(colour = NULL), method = "gam", colour = "black") +
-  #geom_point() +
-  scale_y_log10(label = percent) +
-  scale_x_log10() +
-  theme(legend.position = "none",
-        panel.grid.minor = element_blank()) +
-  labs(x = "Closing price (as index, first observed value = 1)",
-       y = "Percentage of product issue\nreported as short position")
-
-
-all_stocks_data %>%
-  inner_join(all_data, by = c("date", "product_code")) %>%
-  ggplot(aes(x = volume / 1000, y = short_position_prop, colour = product_code)) +
-  geom_path() +
-  geom_smooth(aes(colour = NULL), method = "gam", colour = "black") +
-  scale_y_log10(label = percent) +
-  scale_x_log10(label = comma_format(suffix = "k")) +
-  theme(legend.position = "none",
-        panel.grid.minor = element_blank()) +
-  labs(x = "Volume of trades",
-       y = "Percentage of product issue\nreported as short position")
-
-
-#====================Combine the two=================
-
-set.seed(126)
-some_products <- sample(all_stocks_data$product_code, 13)
-
-all_stocks_data %>%
-  inner_join(all_data, by = c("date", "product_code")) %>%
-  filter(product_code == some_products) %>%
-  ggplot(aes(x = volume / 1000, y = short_position_prop, colour = year(date))) +
-  geom_path() +
-  geom_smooth(method = "gam", colour = "black") +
-  facet_wrap(~glue("{product_code}: {recent_product_name}"), scales = "free") +
-  scale_y_log10(label = percent) +
-  scale_x_log10(label = comma_format(suffix = "k")) +
-  scale_colour_viridis_c() +
-  theme(legend.position = "right") +
-  labs(x = "Volume of trades",
-       y = "Percentage of product issue\nreported as short position",
-       colour = "Year")
-
-
-all_stocks_data %>%
-  inner_join(all_data, by = c("date", "product_code")) %>%
-  filter(product_code == some_products) %>%
-  ggplot(aes(x = volume / 1000, y = close, colour = year(date))) +
-  geom_path() +
-  geom_smooth(method = "gam", colour = "black") +
-  facet_wrap(~glue("{product_code}: {recent_product_name}"), scales = "free") +
-  scale_y_log10(label = dollar) +
-  scale_x_log10(label = comma_format(suffix = "k")) +
-  scale_colour_viridis_c() +
-  theme(legend.position = "right") +
-  labs(x = "Volume of trades",
-       y = "Closing price",
-       colour = "Year")
-
-
-all_stocks_data %>%
-  inner_join(all_data, by = c("date", "product_code")) %>%
-  filter(product_code == some_products) %>%
-  ggplot(aes(x = close, y = short_position_prop, colour = year(date))) +
-  geom_path() +
-  geom_smooth(method = "gam", colour = "black") +
-  facet_wrap(~glue("{product_code}: {recent_product_name}"), scales = "free") +
-  scale_y_log10(label = percent) +
-  scale_x_log10(label = dollar) +
-  scale_colour_viridis_c() +
-  theme(legend.position = "right") +
-  labs(x = "Closing price",
-       y = "Percentage of product issue\nreported as short position",
-       colour = "Year")
+recent_growth
