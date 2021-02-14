@@ -8,6 +8,7 @@ library(kableExtra)
 library(quantmod)
 library(RSQLite)
 library(DBI)
+library(tools)
 
 #=============database setup============================
 
@@ -291,7 +292,9 @@ SELECT
 	SUM(CASE WHEN variable = 'close' THEN value END) AS close,
 	SUM(CASE WHEN variable = 'volume' THEN value END) AS volume,
 	SUM(CASE WHEN variable = 'adjusted' THEN value END) AS adjusted,
-	SUM(CASE WHEN variable = 'short_positions' THEN value END) AS short_positions
+	SUM(CASE WHEN variable = 'short_positions' THEN value END) AS short_positions,
+	SUM(CASE WHEN variable = 'total_product_in_issue' THEN value END) AS total_product_in_issue,
+	SUM(CASE WHEN variable = 'short_positions_prop' THEN value END) AS short_positions_prop
 FROM f_prices_and_volumes AS a
 INNER JOIN d_variables AS b
 	ON a.variable_id = b.variable_id
@@ -320,7 +323,8 @@ ORDER BY b.variable_id"
 
 dbGetQuery(con, sql) %>%
   kable() %>%
-  kable_styling()
+  kable_styling() %>%
+  write_clip()
 
 #---------Recent growth-----------
 
@@ -329,6 +333,7 @@ WITH annual_vals AS
 	(SELECT
 	    CAST(STRFTIME('%Y', observation_date) AS INT) AS year,
 		AVG(adjusted) AS avg_adjusted,
+		sum(volume * adjusted) AS vol_val,
 		latest_full_description,
 		ticker_origin
 	FROM f_prices_and_volumes_w
@@ -336,7 +341,8 @@ WITH annual_vals AS
 SELECT 
 	SUM(CASE WHEN year = 2020 THEN avg_adjusted END) AS adj_2020,
 	SUM(CASE WHEN year = 2021 THEN avg_adjusted END) AS adj_2021,
-	ticker_yahoo,
+	SUM(CASE WHEN year = 2021 THEN vol_val END) AS vol_val_2021,
+	ticker_origin,
 	latest_full_description
 FROM annual_vals
 WHERE year >= 2020
@@ -345,4 +351,43 @@ HAVING SUM(CASE WHEN year = 2020 THEN avg_adjusted END) > 0"
 
 recent_growth <- dbGetQuery(con, sql) %>% as_tibble()
 
-recent_growth
+d <- recent_growth %>%
+  mutate(gr = adj_2021 /  adj_2020 - 1) %>%
+  filter(vol_val_2021 > 1e6) %>%
+  arrange(adj_2021) 
+
+#' Convert upper case security names to title case
+#' 
+#' @param x a character vector
+#' @param rm_ltd whether or not to strip "Limited" and "Ltd" from titles as unwanted clutter
+#' @details A convenience function for labelling securities on a chart, which
+#'   converts to title case, keeps ETF (Exchange Trade Fund) in capitals, and
+#'   can remove 'Limited' altogether
+better_case <- function(x, rm_ltd = TRUE){
+  x <- toTitleCase(tolower(x))
+  x <- gsub("Etf ", "ETF ", x)
+  if(rm_ltd){
+    x <- gsub("Limited", "", x)
+    x <- gsub("Ltd", "", x)
+  }
+  x <- str_trim(x)
+  return(x)
+}
+
+set.seed(123)
+p1 <- d %>%
+  ggplot(aes(x = vol_val_2021 / 1e6, y = gr, colour = ticker_origin)) +
+  geom_point() +
+  geom_text_repel(data = filter(d, gr > 2 | vol_val_2021 > 100e6),
+                  aes(label = better_case(latest_full_description)),
+                  alpha = 0.9, size = 2.6) +
+  scale_x_log10(label = dollar_format(suffix = "m")) +
+  scale_y_continuous(label = percent) +
+  theme(legend.position = "none") +
+  labs(x = "Value of transactions in 2021, to 14 February",
+       y = "Growth in price\nfrom average in 2020 to average in 2021",
+       title = "High volume and growth securities in the ASX, 2021",
+       subtitle = "Labelled securities are those with volume of trades > $100m or growth >200%",
+       caption = "Source: Yahoo Finance via http://freerangestats.info. This is not financial advice.")
+
+svg_png(p1, "../img/0199-vol-and-growth")  
