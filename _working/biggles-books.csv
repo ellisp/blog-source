@@ -1,100 +1,100 @@
-publication_year,story_sequence,title,story_year,notes,story_type,detailed_story_type,book_type,main_location
-1968,1,The Boy Biggles,1910,,Adventure,Biographical,stories,India
-1951,2,Biggles Goes to School,1913,,Adventure,Biographical,novel,UK
-1935,3,Biggles Learns to Fly,1916,,War flying,WWI,stories,France
-1935,4,Biggles in France,1917,,War flying,WWI,stories,France
-1956,5,Biggles of 266,1917,,War flying,WWI,stories,France
-1934,6,Biggles of the Camel Squadron,1917-1918,Finishes with armistice,War flying,WWI,stories,France
-1935,7,Biggles Flies East,1917,,War flying,WWI,novel,Syria
-1939,8,The Rescue Flight,1917,,War flying,WWI,novel,France
-1932,9,The Camels are Coming,1917-1918,,War flying,WWI,stories,France
-1999,10,Biggles - Air Ace,1918,,War flying,WWI,stories,France
-1954,11,Biggles Pioneer Air Fighter,1918,,War flying,WWI,stories,France
-1933,12,The Cruise of the Condor,1920,First Dickpa story,Adventure,Treasure-hunt,novel,Brazil
-1934,13,Biggles Flies Again,1930,,Adventure,Misc,stories,Various
-1935,14,The Black Peril,1935,First Ginger story. German planes have swastikas,Secret agent,Inter-war,novel,Russia
-1935,15,Biggles Hits the Trail,1935,Includes Ginger so must be after Black Peril,Adventure,Treasure-hunt,novel,Tibet
-1936,16,Biggles & Co.,1936,,Adventure,Misc,stories,Various
-1936,17,Biggles in Africa,1936,,Adventure,Rescue,novel,Central Africa
-1937,18,Biggles - Air Commodore,1937,"Not officially with the police but with the RAF, but a precursor of the post-war detective approach",Detective,,novel,"Elephant Island, Indian Ocean"
-1937,19,Biggles Flies West,1937,,Adventure,Treasure-hunt,novel,Caribbean
-1938,20,Biggles Flies South,1937,,Adventure,Treasure-hunt,novel,Sahara Desert
-1938,21,Biggles Goes to War,1937,,War flying,other,novel,"Maltovia, Central Europe"
-1940,22,Biggles in the South Seas,1938,,Adventure,Treasure-hunt,novel,French Polynesia
-1942,23,Biggles in the Jungle,1938,,Adventure,Misc,stories,Belize
-1939,24,Biggles in Spain,1938,,Adventure,Misc,stories,Spain
-1938,25,Biggles Flies North,1938,,Adventure,Misc,stories,Canada
-1940,26,Biggles Secret Agent,1939,Clearly just before the war,Secret agent,Inter-war,novel,"Lucrania, Central Europe"
-1940,27,Biggles in the Baltic,1939,Features declaration of war,War flying,WWII,novel,Baltic Sea
-1941,28,Biggles Sees It through,1940,"Finnish-USSR war including peace, so must end with May 1940",Secret agent,WWII,novel,Russia
-1941,29,Biggles Defies the Swastika,1940,Features April 1940 invasion of Norway so actually overlaps with Biggles Sees it through,War flying,WWII,novel,Norway
-1941,30,Spitfire Parade,1940,Bad re-writes of WWI stories,War flying,WWII,stories,England
-1942,31,Biggles Sweeps the Desert,1941,,War flying,WWII,novel,West Africa
-1943,32,Biggles 'Fails to Return',1942,,Secret agent,WWII,novel,Monaco
-1943,33,Biggles in Borneo,1943,Features an Australian aircraft carrier! (there wasn't one),War flying,WWII,novel,Borneo
-1945,34,Biggles in the Orient,1943,,War flying,WWII,novel,Calcutta
-1946,35,Biggles Delivers the Goods,1943,,War flying,WWII,novel,"Elephant Island, Indian Ocean"
-1943,36,Biggles Charter Pilot,1936,"Set in both c. 1941 and mid 1930s (story within story), but the main stories are those in the 1930s",Adventure,Misc,stories,Various
-1947,37,Comrades in Arms,1941,After the Battle of Britain but still with large forces of german aircraft in the west,War flying,WWII,novel,Germany
-1947,38,Sergeant Bigglesworth C.I.D.,1946,Features transition from RAF to police,Detective,,novel,Sahara Desert
-1948,39,Biggles' Second Case,1946,Features a U-boat in hiding after the war,Detective,,novel,Kerguelen Island
-1948,40,Biggles Hunts Big Game,1948,,Detective,,novel,Central Africa
-1949,41,Biggles Takes a Holiday,1949,,Adventure,Rescue,novel,South America
-1949,42,Biggles Breaks the Silence,1949,Refurbished Wellington bombers,Adventure,Treasure-hunt,novel,Antarctica
-1950,43,Biggles Gets his Men,1950,,Detective,,novel,China
-1951,44,Another Job for Biggles,1951,,Detective,,novel,Arabia
-1951,45,Biggles Works It Out,1951,,Detective,,novel,Sahara Desert
-1952,46,Biggles Takes the Case,1952,,Detective,,stories,Various
-1952,47,Biggles Follows On,1952,,Secret agent,Cold war,novel,Prague
-1950,48,Biggles - Air Detective,1952,,Detective,,stories,England
-1953,49,Biggles and the Black Raider,1953,,Detective,,novel,Central Africa
-1953,50,Biggles in the Blue,1953,,Secret agent,Cold war,novel,Caribbean
-1953,51,Biggles in the Gobi,1953,,Secret agent,Cold war,novel,Gobi desert
-1953,52,Biggles of the Special Air Police,1953,,Detective,,stories,Various
-1954,53,Biggles Cuts It Fine,1954,,Secret agent,Cold war,novel,Indian Ocean
-1954,54,Biggles and the Pirate Treasure,1954,Biggles definitely a detective but many of the stories are throw-backs to the adventure genre,Detective,,stories,Various
-1954,55,Biggles Foreign Legionnaire,1954,,Detective,,novel,Sahara Desert
-1955,56,Biggles in Australia,1955,First giant squid attack...,Secret agent,Cold war,novel,Australia
-1955,57,Biggles' Chinese Puzzle,1955,,Detective,,stories,Various
-1956,58,No Rest for Biggles,1956,,Secret agent,Cold war,novel,Liberia
-1956,59,Biggles Takes Charge,1956,,Secret agent,Cold war,novel,Moldavia
-1957,60,Biggles Makes Ends Meet,1957,,Detective,,novel,Indian Ocean
-1957,61,Biggles of the Interpol,1957,,Detective,,stories,Various
-1957,62,Biggles on the Home Front,1957,,Detective,,novel,England
-1958,63,Biggles Presses On,1958,,Detective,,stories,Various
-1958,64,Biggles on Mystery Island,1958,,Detective,,novel,Central Pacific
-1958,65,Biggles Buries a Hatchet,1958,,Secret agent,Cold war,novel,Sakhalin
-1959,66,Biggles in Mexico,1959,,Detective,,novel,Mexico
-1959,67,Biggles' Combined Operation,1959,,Detective,,novel,Greece
-1959,68,Biggles at World's End,1959,,Adventure,Treasure-hunt,novel,Chile
-1960,69,Biggles and the Leopards of Zinn,1960,,Detective,,novel,Central Africa
-1960,70,Biggles Goes Home,1960,,Adventure,Rescue,novel,North East India
-1961,71,Biggles and the Poor Rich Boy,1961,,Adventure,Rescue,novel,Scotland
-1961,72,Biggles Forms a Syndicate,1961,,Adventure,Treasure-hunt,novel,Arabia
-1961,73,Biggles and the Missing Millionaire,1961,,Secret agent,Cold war,novel,Caribbean
-1962,74,Biggles Goes Alone,1962,,Detective,,novel,England
-1962,75,Orchids for Biggles,1962,,Secret agent,Cold war,novel,Peru
-1962,76,Biggles Sets a Trap,1962,,Detective,,novel,England
-1963,77,Biggles Takes it Rough,1963,,Detective,,novel,Scotland
-1963,78,Biggles Takes a hand,1963,,Secret agent,Cold war,novel,England
-1963,79,Biggles' Special Case,1963,,Secret agent,Cold war,novel,Middle East
-1963,80,Biggles and the Plane That Disappeared,1963,,Detective,,novel,England
-1963,81,Biggles Flies to Work,1963,,Detective,,stories,Various
-1964,82,Biggles and the Lost Sovereigns,1964,,Adventure,Treasure-hunt,novel,"Mergui Archipelago, Burma"
-1964,83,Biggles and the Black Mask,1964,,Detective,,novel,England
-1965,84,Biggles Investigates,1965,,Detective,,stories,Various
-1965,85,Biggles and the Plot that Failed,1965,,Adventure,Rescue,novel,Sahara Desert
-1965,86,Biggles Looks Back,1965,,Secret agent,Cold war,novel,Czechoslovakia
-1965,87,Biggles and the Blue Moon,1965,,Adventure,Treasure-hunt,novel,Malaysia
-1965,88,Biggles Scores a Bull,1965,,Detective,,novel,England
-1966,89,Biggles in the Terai,1966,,Adventure,Rescue,novel,Nepal
-1966,90,Biggles and the Gun Runners,1966,,Detective,,novel,Central Africa
-1967,91,Biggles Sorts It Out,1967,,Detective,,novel,Kalahari
-1967,92,Biggles and the Dark Intruder,1967,,Detective,,novel,England
-1967,93,Biggles and the Penitent Thief,1967,,Adventure,Treasure-hunt,novel,Canada
-1968,94,Biggles and the Deep Blue Sea,1968,Features *2* giant squid attacks,Detective,,novel,Indian Ocean
-1968,95,Biggles in the Underworld,1968,,Detective,,novel,England
-1969,96,Biggles and the Little Green God,1969,,Detective,,novel,Chile
-1969,97,Biggles and the Noble Lord,1969,,Detective,,novel,England
-1970,98,Biggles Sees Too Much,1970,,Detective,,novel,England
-1997,99,Biggles Does some Homework,1971,,Detective,,novel,England
+publication_year,story_sequence,title,story_year,notes,story_type,detailed_story_type,book_type,main_location,main_location_broad
+1968,1,The Boy Biggles,1910,,Adventure,Biographical,stories,India,Asia
+1951,2,Biggles Goes to School,1913,,Adventure,Biographical,novel,UK,Europe
+1935,3,Biggles Learns to Fly,1916,,War flying,WWI,stories,France,Europe
+1935,4,Biggles in France,1917,,War flying,WWI,stories,France,Europe
+1956,5,Biggles of 266,1917,,War flying,WWI,stories,France,Europe
+1934,6,Biggles of the Camel Squadron,1918,Finishes with armistice,War flying,WWI,stories,France,Europe
+1935,7,Biggles Flies East,1917,,War flying,WWI,novel,Syria,Middle East
+1939,8,The Rescue Flight,1917,,War flying,WWI,novel,France,Europe
+1932,9,The Camels are Coming,1918,Includes the 1918 German push towards Paris,War flying,WWI,stories,France,Europe
+1999,10,Biggles - Air Ace,1918,,War flying,WWI,stories,France,Europe
+1954,11,Biggles Pioneer Air Fighter,1918,,War flying,WWI,stories,France,Europe
+1933,12,The Cruise of the Condor,1920,First Dickpa story,Adventure,Treasure-hunt,novel,Brazil,Americas
+1934,13,Biggles Flies Again,1930,,Adventure,Misc,stories,Various,Various
+1935,14,The Black Peril,1935,First Ginger story. German planes have swastikas,Secret agent,Inter-war,novel,Russia,Europe
+1935,15,Biggles Hits the Trail,1935,Includes Ginger so must be after Black Peril,Adventure,Treasure-hunt,novel,Tibet,Asia-Pacific
+1936,16,Biggles & Co.,1936,,Adventure,Misc,stories,Various,Various
+1936,17,Biggles in Africa,1936,,Adventure,Rescue,novel,Central Africa,Africa
+1937,18,Biggles - Air Commodore,1937,"Not officially with the police but with the RAF, but a precursor of the post-war detective approach",Detective,,novel,"Elephant Island, Indian Ocean",Asia-Pacific
+1937,19,Biggles Flies West,1937,,Adventure,Treasure-hunt,novel,Caribbean,Americas
+1938,20,Biggles Flies South,1937,,Adventure,Treasure-hunt,novel,Sahara Desert,Africa
+1938,21,Biggles Goes to War,1937,,War flying,other,novel,"Maltovia, Central Europe",Europe
+1940,22,Biggles in the South Seas,1938,,Adventure,Treasure-hunt,novel,French Polynesia,Pacific
+1942,23,Biggles in the Jungle,1938,,Adventure,Misc,stories,Belize,Americas
+1939,24,Biggles in Spain,1938,,Adventure,Misc,stories,Spain,Europe
+1938,25,Biggles Flies North,1938,,Adventure,Misc,stories,Canada,Americas
+1940,26,Biggles Secret Agent,1939,Clearly just before the war,Secret agent,Inter-war,novel,"Lucrania, Central Europe",Europe
+1940,27,Biggles in the Baltic,1939,Features declaration of war,War flying,WWII,novel,Baltic Sea,Europe
+1941,28,Biggles Sees It through,1940,"Finnish-USSR war including peace, so must end with May 1940",Secret agent,WWII,novel,Russia,Europe
+1941,29,Biggles Defies the Swastika,1940,Features April 1940 invasion of Norway so actually overlaps with Biggles Sees it through,War flying,WWII,novel,Norway,Europe
+1941,30,Spitfire Parade,1940,Bad re-writes of WWI stories,War flying,WWII,stories,England,Europe
+1942,31,Biggles Sweeps the Desert,1941,,War flying,WWII,novel,West Africa,Africa
+1943,32,Biggles 'Fails to Return',1942,,Secret agent,WWII,novel,Monaco,Europe
+1943,33,Biggles in Borneo,1943,Features an Australian aircraft carrier! (there wasn't one),War flying,WWII,novel,Borneo,Asia-Pacific
+1945,34,Biggles in the Orient,1943,,War flying,WWII,novel,Calcutta,Asia-Pacific
+1946,35,Biggles Delivers the Goods,1943,,War flying,WWII,novel,"Elephant Island, Indian Ocean",Asia-Pacific
+1943,36,Biggles Charter Pilot,1936,"Set in both c. 1941 and mid 1930s (story within story), but the main stories are those in the 1930s",Adventure,Misc,stories,Various,Various
+1947,37,Comrades in Arms,1941,After the Battle of Britain but still with large forces of german aircraft in the west,War flying,WWII,novel,Germany,Europe
+1947,38,Sergeant Bigglesworth C.I.D.,1946,Features transition from RAF to police,Detective,,novel,Sahara Desert,Africa
+1948,39,Biggles' Second Case,1946,Features a U-boat in hiding after the war,Detective,,novel,Kerguelen Island,Southern Ocean
+1948,40,Biggles Hunts Big Game,1948,,Detective,,novel,Central Africa,Africa
+1949,41,Biggles Takes a Holiday,1949,,Adventure,Rescue,novel,South America,Americas
+1949,42,Biggles Breaks the Silence,1949,Refurbished Wellington bombers,Adventure,Treasure-hunt,novel,Antarctica,Southern Ocean
+1950,43,Biggles Gets his Men,1949,,Detective,,novel,China,Asia-Pacific
+1951,44,Another Job for Biggles,1949,,Detective,,novel,Arabia,Middle East
+1951,45,Biggles Works It Out,1950,,Detective,,novel,Sahara Desert,Africa
+1952,46,Biggles Takes the Case,1950,,Detective,,stories,Various,Various
+1952,47,Biggles Follows On,1950,,Secret agent,Cold war,novel,Prague,Europe
+1950,48,Biggles - Air Detective,1950,,Detective,,stories,England,Europe
+1953,49,Biggles and the Black Raider,1953,,Detective,,novel,Central Africa,Africa
+1953,50,Biggles in the Blue,1953,,Secret agent,Cold war,novel,Caribbean,Americas
+1953,51,Biggles in the Gobi,1953,,Secret agent,Cold war,novel,Gobi desert,Asia-Pacific
+1953,52,Biggles of the Special Air Police,1953,,Detective,,stories,Various,Various
+1954,53,Biggles Cuts It Fine,1954,,Secret agent,Cold war,novel,Indian Ocean,Asia-Pacific
+1954,54,Biggles and the Pirate Treasure,1954,Biggles definitely a detective but many of the stories are throw-backs to the adventure genre,Detective,,stories,Various,Various
+1954,55,Biggles Foreign Legionnaire,1954,,Detective,,novel,Sahara Desert,Africa
+1955,56,Biggles in Australia,1955,First giant squid attack...,Secret agent,Cold war,novel,Australia,Asia-Pacific
+1955,57,Biggles' Chinese Puzzle,1955,,Detective,,stories,Various,Various
+1956,58,No Rest for Biggles,1956,,Secret agent,Cold war,novel,Liberia,Africa
+1956,59,Biggles Takes Charge,1956,,Secret agent,Cold war,novel,Moldavia,Europe
+1957,60,Biggles Makes Ends Meet,1957,,Detective,,novel,Indian Ocean,Asia-Pacific
+1957,61,Biggles of the Interpol,1957,,Detective,,stories,Various,Various
+1957,62,Biggles on the Home Front,1957,,Detective,,novel,England,Europe
+1958,63,Biggles Presses On,1958,,Detective,,stories,Various,Various
+1958,64,Biggles on Mystery Island,1958,,Detective,,novel,Central Pacific,Asia-Pacific
+1958,65,Biggles Buries a Hatchet,1958,,Secret agent,Cold war,novel,Sakhalin,Asia-Pacific
+1959,66,Biggles in Mexico,1959,,Detective,,novel,Mexico,Americas
+1959,67,Biggles' Combined Operation,1959,,Detective,,novel,Greece,Europe
+1959,68,Biggles at World's End,1959,,Adventure,Treasure-hunt,novel,Chile,Americas
+1960,69,Biggles and the Leopards of Zinn,1960,,Detective,,novel,Central Africa,Africa
+1960,70,Biggles Goes Home,1960,,Adventure,Rescue,novel,North East India,Asia-Pacific
+1961,71,Biggles and the Poor Rich Boy,1961,,Adventure,Rescue,novel,Scotland,Europe
+1961,72,Biggles Forms a Syndicate,1961,,Adventure,Treasure-hunt,novel,Arabia,Middle East
+1961,73,Biggles and the Missing Millionaire,1961,,Secret agent,Cold war,novel,Caribbean,Americas
+1962,74,Biggles Goes Alone,1962,,Detective,,novel,England,Europe
+1962,75,Orchids for Biggles,1962,,Secret agent,Cold war,novel,Peru,Americas
+1962,76,Biggles Sets a Trap,1962,,Detective,,novel,England,Europe
+1963,77,Biggles Takes it Rough,1963,,Detective,,novel,Scotland,Europe
+1963,78,Biggles Takes a hand,1963,,Secret agent,Cold war,novel,England,Europe
+1963,79,Biggles' Special Case,1963,,Secret agent,Cold war,novel,Middle East,Middle East
+1963,80,Biggles and the Plane That Disappeared,1963,,Detective,,novel,England,Europe
+1963,81,Biggles Flies to Work,1963,,Detective,,stories,Various,Various
+1964,82,Biggles and the Lost Sovereigns,1964,,Adventure,Treasure-hunt,novel,"Mergui Archipelago, Burma",Asia-Pacific
+1964,83,Biggles and the Black Mask,1964,,Detective,,novel,England,Europe
+1965,84,Biggles Investigates,1965,,Detective,,stories,Various,Various
+1965,85,Biggles and the Plot that Failed,1965,,Adventure,Rescue,novel,Sahara Desert,Africa
+1965,86,Biggles Looks Back,1965,,Secret agent,Cold war,novel,Czechoslovakia,Europe
+1965,87,Biggles and the Blue Moon,1965,,Adventure,Treasure-hunt,novel,Malaysia,Asia-Pacific
+1965,88,Biggles Scores a Bull,1965,,Detective,,novel,England,Europe
+1966,89,Biggles in the Terai,1966,,Adventure,Rescue,novel,Nepal,Asia-Pacific
+1966,90,Biggles and the Gun Runners,1966,,Detective,,novel,Central Africa,Africa
+1967,91,Biggles Sorts It Out,1967,,Detective,,novel,Kalahari,Africa
+1967,92,Biggles and the Dark Intruder,1967,,Detective,,novel,England,Europe
+1967,93,Biggles and the Penitent Thief,1967,,Adventure,Treasure-hunt,novel,Canada,Americas
+1968,94,Biggles and the Deep Blue Sea,1968,Features *2* giant squid attacks,Detective,,novel,Indian Ocean,Asia-Pacific
+1968,95,Biggles in the Underworld,1968,,Detective,,novel,England,Europe
+1969,96,Biggles and the Little Green God,1969,,Detective,,novel,Chile,Americas
+1969,97,Biggles and the Noble Lord,1969,,Detective,,novel,England,Europe
+1970,98,Biggles Sees Too Much,1970,,Detective,,novel,England,Europe
+1997,99,Biggles Does some Homework,1971,,Detective,,novel,England,Europe
