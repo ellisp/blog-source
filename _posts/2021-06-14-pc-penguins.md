@@ -24,6 +24,7 @@ Let's illustrate the method with the Palmer penguins data. We have 333 complete 
 {% highlight R lineanchors %}
 library(palmerpenguins)
 library(tidyverse)
+library(scales)
 
 penguins2 <- drop_na(penguins) %>%
   mutate(row_id = 1:n())

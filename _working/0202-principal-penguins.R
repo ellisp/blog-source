@@ -1,5 +1,6 @@
 library(palmerpenguins)
 library(tidyverse)
+library(scales)
 
 penguins2 <- drop_na(penguins) %>%
   mutate(row_id = 1:n())
