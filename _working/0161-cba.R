@@ -194,13 +194,13 @@ cba_single(
 #' @param seed random seed to fix so results are reproducible
 #' @param ... other parameters passed to \code{cba_single}
 cba_multi <- function(nsim = 1000, seed = 123, ...){
-  output_simple <- tibble('Net Present Value' = numeric(nsim), 
+  output_simple <- data.frame('Net Present Value' = numeric(nsim), 
                           'Internal Rate of Return' = numeric(nsim))
   output_complex_l <- list()
   set.seed(seed)
   
   for(i in 1:nsim){
-    analysis <- cba_single(...)  
+    analysis <- cba_single(    ...)  
     output_simple[i, ] <- c(analysis$'Net Present Value', analysis$'Internal Rate of Return')
     tmp <- analysis$time_series_output
     tmp$id <- i
