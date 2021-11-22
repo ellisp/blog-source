@@ -2,17 +2,21 @@ library(tidyverse)
 library(patchwork)
 
 ggplot(diamonds, aes(x = price)) +
-  geom_density()
+  geom_density() +
+  labs(title = "Price has a nicely skewed rightwards distribution")
 
 ggplot(samp, aes(y = price, x = carat, colour = color)) +
+  geom_smooth(method = "lm") +
   geom_point() +
-  geom_smooth(method = "lm")
+  labs(title = "A linear model of the untransformed has heteroskedasticity challenges")
 
 ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_point() +
   scale_x_log10() +
   scale_y_log10()  +
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm") +
+  labs(title = "A linear model after log transforms is better from a model-building perspective",
+       sutbile = "Standard assumptions justifiung ordinary least squares make more sense after transformation")
 
 
 set.seed(123)
