@@ -43,6 +43,12 @@ for(i in 1:reps){
   results[i, ] <- cbind(mean(exp(preds1)), mean(preds2), mod3)
 }
 
+par(mfrow = c(2, 2), bty = "l")
+plot(mod1, main = "hello")
+title("hi")
+mtext("ho")
+plot(mod2)
+
 true_value <- mean(diamonds$price)
 
 p4 <- ggplot(results, aes(x = naive, y = untransformed)) +
