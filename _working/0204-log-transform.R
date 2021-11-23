@@ -1,22 +1,24 @@
 library(tidyverse)
 library(patchwork)
+library(scales)
 
-ggplot(diamonds, aes(x = price)) +
+p1 <- ggplot(diamonds, aes(x = price)) +
   geom_density() +
-  labs(title = "Price has a nicely skewed rightwards distribution")
+  labs(title = "Price has a nicely skewed rightwards distribution") +
+  scale_x_continuous(label = comma)
 
-ggplot(samp, aes(y = price, x = carat, colour = color)) +
+p2 <- ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_smooth(method = "lm") +
   geom_point() +
   labs(title = "A linear model of the untransformed has heteroskedasticity challenges")
 
-ggplot(samp, aes(y = price, x = carat, colour = color)) +
+p3 <- ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_point() +
   scale_x_log10() +
   scale_y_log10()  +
   geom_smooth(method = "lm") +
   labs(title = "A linear model after log transforms is better from a model-building perspective",
-       sutbile = "Standard assumptions justifiung ordinary least squares make more sense after transformation")
+       subtitle = "Standard assumptions justifiung ordinary least squares make more sense after transformation")
 
 
 set.seed(123)
@@ -43,7 +45,7 @@ for(i in 1:reps){
 
 true_value <- mean(diamonds$price)
 
-p1 <- ggplot(results, aes(x = naive, y = untransformed)) +
+p4 <- ggplot(results, aes(x = naive, y = untransformed)) +
   geom_point() +
   coord_equal() +
   annotate("point", x = true_value, y = true_value, size = 3, colour = "red") +
@@ -54,7 +56,7 @@ p1 <- ggplot(results, aes(x = naive, y = untransformed)) +
        subtitle = "Simple average leads to higher variance than model-based estimate",
        title = "Comparison of different estimation methods from a simple random sample")
 
-p2 <- ggplot(results, aes(x = log_trans, y = untransformed)) +
+p5 <- ggplot(results, aes(x = log_trans, y = untransformed)) +
   geom_point() +
   coord_equal() +
   annotate("point", x = true_value, y = true_value, size = 3, colour = "red") +
@@ -65,7 +67,7 @@ p2 <- ggplot(results, aes(x = log_trans, y = untransformed)) +
        subtitle = "Log-log model leads to underestimates")
 
 
-p3 <- results %>%
+p6 <- results %>%
   gather(variable, value) %>%
   mutate(variable = case_when(
     variable == "log_trans" ~ "Model with log transformation",
@@ -85,6 +87,9 @@ p3 <- results %>%
     colour = "",
     fill = "",
     subtitle = "log-log model is biased low; simple average has higher variance; model with no transformation is best.")
-p3
 
-p1 + p2
+p1
+p2
+p3
+p4 + p5
+p6
