@@ -2,23 +2,40 @@ library(tidyverse)
 library(patchwork)
 library(scales)
 
-p1 <- ggplot(diamonds, aes(x = price)) +
-  geom_density() +
-  labs(title = "Price has a nicely skewed rightwards distribution") +
-  scale_x_continuous(label = comma)
+the_caption = "Source: example analysis of the diamonds dataset in the ggplot2 R package"
+
+set.seed(321)
+samp <- sample_n(diamonds, 1000)
+
+p1 <- ggplot(samp, aes(x = price)) +
+  geom_density(fill = "steelblue", alpha = 0.5, colour = NA) +
+  geom_rug() +
+  labs(title = "Distribution of diamond price is skewed rightwards",
+       subtitle = "(Like many economic and financial variables)",
+       caption = the_caption,
+       x = "Price of an individual diamond") +
+  scale_x_continuous(label = dollar)
 
 p2 <- ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_smooth(method = "lm") +
-  geom_point() +
-  labs(title = "A linear model of the untransformed has heteroskedasticity challenges")
+  geom_point()  +
+  scale_y_continuous(label = dollar_format(accuracy = 1))+
+  labs(title = "A linear model of the untransformed price has heteroskedasticity challenges",
+       subtitle = "Model of form price ~ carat * cut.\nREsiduals are right-skewed and variance increases as expected price increases, breaking the Gauss-Markov assumptions.",
+       caption = the_caption, 
+       x = "Weight of the diamond (carats)",
+       y = "Price of an individual diamond")
 
 p3 <- ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_point() +
   scale_x_log10() +
-  scale_y_log10()  +
+  scale_y_log10(label = dollar_format(accuracy = 1))  +
   geom_smooth(method = "lm") +
   labs(title = "A linear model after log transforms is better from a model-building perspective",
-       subtitle = "Standard assumptions justifiung ordinary least squares make more sense after transformation")
+       subtitle = "Model of form log(price) ~ log(carat) + cut.\nStandard assumptions justifying ordinary least squares make more sense after transformation.",
+       caption = the_caption, 
+       x = "Weight of the diamond (carats)",
+       y = "Price of an individual diamond")
 
 
 set.seed(123)
@@ -43,11 +60,17 @@ for(i in 1:reps){
   results[i, ] <- cbind(mean(exp(preds1)), mean(preds2), mod3)
 }
 
-par(mfrow = c(2, 2), bty = "l")
-plot(mod1, main = "hello")
-title("hi")
-mtext("ho")
-plot(mod2)
+# Plot the standard diagnostics of the two models for the last example
+
+p7 <- function(){
+  par(mfrow = c(2, 2), bty = "l")
+  plot(mod1)
+  } # conventionally good
+
+p8 <- function(){
+  par(mfrow = c(2, 2), bty = "l")
+  plot(mod2)
+  } # unsatisfactory - residuals with curvature, non-normal, and increase as values increase
 
 true_value <- mean(diamonds$price)
 
@@ -94,8 +117,12 @@ p6 <- results %>%
     fill = "",
     subtitle = "log-log model is biased low; simple average has higher variance; model with no transformation is best.")
 
-p1
-p2
-p3
-p4 + p5
-p6
+
+svg_png(p1, "../img/0204-distribution")
+svg_png(p2, "../img/0204-untransformed")
+svg_png(p3, "../img/0204-transformed")
+svg_png(p7, "../img/0204-diagnostics-transformed")
+svg_png(p8, "../img/0204-diagnostics-untransformed")
+svg_png(p4 + p5, "../img/0204-model-comparison-scatter")
+svg_png(p6, "../img/0204-model-comparison-scatter")
+
