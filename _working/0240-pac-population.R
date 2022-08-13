@@ -18,15 +18,6 @@ if(!exists("proj_raw")){
     clean_names()
 }
 
-# see https://blog.datawrapper.de/gendercolor/
-pal <- c("#D4855A", "#C5CB81")
-names(pal) <- c("Female", "Male")
-
-proj_col <- "steelblue"
-ff <- "Calibri"
-
-y1 <- 2020
-y2 <- 2050
 
 
 
@@ -46,6 +37,9 @@ pops <- proj_raw |>
   left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
   rename(pict = Name)
 
+#-------------------some secondary versions of the data for sorting and labels-------
+
+# Proportion of people who are 70 or older:
 prop_old <- pops |>
   filter(obs_time == y1) |>
   group_by(pict) |>
@@ -54,7 +48,7 @@ prop_old <- pops |>
   ungroup()
 
 
-
+# Growth rates
 growth <- pops |>
   filter(obs_time %in% c(y1, y2)) |>
   group_by(pict, obs_time) |>
@@ -64,17 +58,32 @@ growth <- pops |>
   ungroup()
 
 
+# Combine all the three data frames into one
 pops$prop_70_plus <- NULL
 pops$total <- NULL
 pops$cagr <- NULL
 
+# see https://blog.datawrapper.de/gendercolor/
+pal <- c("#D4855A", "#C5CB81")
+names(pal) <- c("Female", "Male")
+
+proj_col <- "steelblue"
+ff <- "Calibri"
+
+y1 <- 2020
+y2 <- 2050
+
+
 pops <- pops |>
   left_join(prop_old, by = "pict") |>
   left_join(growth, by = "pict") |>
+  # make a label for use in the facet titles:
   mutate(pict_label = fct_reorder(
     glue("{pict}\n{comma(signif(total, 2), scale = 1/1000, accuracy = 1, suffix = 'k')}, {percent(cagr, accuracy = 0.1)}"),
     prop_70_plus)) |>
   arrange(pict, age)
+
+#-----------------------Draw plot--------------------
 
 p1 <- ggplot(pops, aes(y = age, fill = sex)) +
   geom_col(data = filter(pops, sex == "Male" & obs_time == y1), 
