@@ -15,17 +15,19 @@ category: R
 
 ## New job!
 
-I have a new job! I am the Director of the [Statistics for Development Division](https://sdd.spc.int/) at the Pacific Community, which is commonly known by its now-old acronym the SPC (this [used to stand for](https://www.spc.int/about-us/history) the South Pacific Commission, then the Secretariat of the Pacific Community, and is now just an orphan  or [pseudo-acronym](https://en.wikipedia.org/wiki/Acronym#Pseudo-acronym) without specific meaning for the 'S').
+I have a new job! I am the Director of the [Statistics for Development Division](https://sdd.spc.int/) at the Pacific Community, which is commonly known by its now-old acronym the SPC (this [used to stand for](https://www.spc.int/about-us/history) the South Pacific Commission, then the Secretariat of the Pacific Community, and is now an orphan  or [pseudo-acronym](https://en.wikipedia.org/wiki/Acronym#Pseudo-acronym) without specific meaning for the 'S').
 
-The new job is going to have less hands-on coding than my last role at Nous, which will probably mean I reinvigorate this blog. One of my original purposes of starting this after all was to give me a coding outlet and motivation to keep my skills from rusting, several roles ago.
+The Pacific Community is the principal scientific and technical organisation in the Pacific region, proudly supporting development since 1947.
+
+The new job is going to have less hands-on coding than my last role at Nous, which will probably mean I reinvigorate this blog. One of my original purposes of starting this after all - seven years ago now! - was to give me a coding outlet and motivation to keep my skills from rusting, several roles ago.
 
 I'm not going to blog about work here, or only briefly in passing, but I might occasionally drop some work-related stuff in when it fits with the overall mood here (and there are definitely a lot of synergies). Also, because I've moved to New Caledonia and I'm naturally going to be thinking a lot more about the Pacific, there's likely to be more Pacific data popping up in my examples.
 
 ## Some Pacific data
 
-Today I'm showcasing the [Pacific Data Hub](https://pacificdata.org/about-us), which is a New Zealand-funded central repository of data about the Pacific and from the Pacific. It's led by the Pacific Community, specifically by the Statistics for Development and Information Services divisions in partnership. It's new and so far most of its data is from the official statistics systems of our members, but we have hopes and plans for a lot more.
+Today I'm showcasing the connection from R to the [Pacific Data Hub](https://pacificdata.org/about-us), which is a central repository of data about the Pacific and from the Pacific. It's led by the Pacific Community, specifically by the Statistics for Development and Information Services divisions in partnership. It's new and so far most of its data is from the official statistics systems of our members, but we have hopes and plans for a lot more. It's currently funded by the New Zealand government.
 
-One of the more complete parts of the Pacific Data Hub is PDH.Stat, our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
+One of the more parts of the Pacific Data Hub that is further developed is PDH.Stat, our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
 
 Here's the image I'm producing today. It's population estimates (for 2020) and projections (for 2050) for 21 Pacific Island countries and territories - all of the Pacific Community Pacific Island members except tiny Pitcairn Island.
 
@@ -34,7 +36,7 @@ Here's the image I'm producing today. It's population estimates (for 2020) and p
     <img src="/img/0240-pop-pyramids-tall.png" width = '100%' alt="Population pyramids with 5 year age bands and sex for 20 Pacific Island country and territories">
 </picture>
 
-Depending on your screen size that should be either 7 countries across and 3 down, or 3 across and 7 down.
+Depending on your screen size that should be either 7 countries across and 3 down, or 3 across and 7 down. It really should be printed out on A3 or viewed on a large screen for best effect.
 
 There's some very interesting things here. 
 
@@ -48,31 +50,158 @@ This isn't because of a catastrophic early adult death rate, but large scale mig
 
 ## Getting and presenting data from PDH.Stat
 
+This is what the data looks like if you're <a href='https://stats.pacificdata.org/vis?tm=population%20projections&pg=0&hc[Topic]=Population&df[ds]=ds%3ASPC2&df[id]=DF_POP_PROJ&df[ag]=SPC&df[vs]=3.0&pd=2017%2C2027&dq=A..MIDYEARPOPEST._T.&ly[rw]=GEO_PICT&ly[cl]=TIME_PERIOD'>browsing for it on the web:</a>
+
+<img src="/img/0240-dot-stat-screenshot.png" width = '100%' alt="Screenshot of the dot stat screen including data description">
+
+Note the nice description of the data and its source, which is intrinsically linked to it. But while navigating this and browsing to see roughly what data and metadata is nice in the browser, it's unpleasant to use for serious analytical work.
+
 Because [PDH.Stat](https://stats.pacificdata.org/) is part of the bigger international community of .Stat implementers, we can leverage development at the OECD and elsewhere. For example, we have made sure that all the data in PDH.Stat is [accessible by RESTful API](https://docs.pacificdata.org/dotstat/api) in the SDMX format; and made PDH.Stat accessible by [plugins for Excel, Power BI, Stata, Python and of course R](https://docs.pacificdata.org/dotstat/plugins). 
 
-For R, we use the rsdmx package which interacts with many of the official sites around the world providing data via SDMX.
+For R, we use the `rsdmx` package which interacts with many of the official sites around the world providing data via SDMX. To get a dataset, you just need to know the provider ID for the Pacific Data Hub (which is `PDH`) and the code of the data flow. this can be found by clicking on the "Developer API" button in the browser when you've got a data set you want (in this case it is `DF_POP_PROJ`), or in the code below I've got a snippet that downloads them all and their names.
 
 *Post continues below R code*
 {% highlight R lineanchors %}
+library(tidyverse)
+library(rsdmx)
+library(scales)
+library(janitor)
+library(ISOcodes)
+library(glue)
 
+if(!exists("proj_raw")){
+  # This is quite slow - several minutes - but the slow part is apparently parsing
+  # the XML in the as_tibble
+  proj_raw <- readSDMX(providerId = "PDH", 
+                       resource = "data", 
+                       flowRef = "DF_POP_PROJ")  |>
+    as_tibble() |>
+    clean_names()
+}
 
+y1 <- 2020
+y2 <- 2050
+
+pops <- proj_raw |>
+  filter(sex != "_T" & age != "_T") |>
+  filter(!geo_pict %in% c("_T", "_TXPNG", "MELXPNG", "MEL", "POL", "MIC")) |>
+  filter(indicator == "MIDYEARPOPEST") |>
+  mutate(age = gsub("^Y", "", age)) |>
+  separate(age, into = c("from", "to"), sep = "T", remove = FALSE) |>
+  mutate(age = gsub("T", "-", age),
+         age = gsub("-999", "+", age, fixed = TRUE),
+         sex = case_when(
+           sex == "M" ~ "Male",
+           sex == "F" ~ "Female"
+         )) |>
+  mutate(age = factor(age)) |>
+  left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
+  rename(pict = Name)
 {% endhighlight %}
 
 
 
-
+then some secondary data objects
 
 {% highlight R lineanchors %}
+#-------------------some secondary versions of the data for sorting and labels-------
+
+# Proportion of people who are 70 or older:
+prop_old <- pops |>
+  filter(obs_time == y1) |>
+  group_by(pict) |>
+  summarise(total = sum(obs_value),
+            prop_70_plus = sum(obs_value[age == "70+"]) / total) |>
+  ungroup()
+
+
+# Growth rates
+growth <- pops |>
+  filter(obs_time %in% c(y1, y2)) |>
+  group_by(pict, obs_time) |>
+  summarise(pop = sum(obs_value)) |>
+  group_by(pict) |>
+  summarise(cagr = (pop[obs_time == y2] / pop[obs_time == y1]) ^ (1 / (y2 - y1)) - 1) |>
+  ungroup()
+
+# Combine all the three data frames into one
+pops$prop_70_plus <- NULL
+pops$total <- NULL
+pops$cagr <- NULL
+
+pops <- pops |>
+  left_join(prop_old, by = "pict") |>
+  left_join(growth, by = "pict") |>
+  # make a label for use in the facet titles:
+  mutate(pict_label = fct_reorder(
+    glue("{pict}\n{comma(signif(total, 2), scale = 1/1000, accuracy = 1, suffix = 'k')}, {percent(cagr, accuracy = 0.1)}"),
+    prop_70_plus)) |>
+  arrange(pict, age)
+{% endhighlight %}
+
+
+and finally the drawing of the chart itself
+
+{% highlight R lineanchors %}
+#-----------------------Draw plot--------------------
+# see https://blog.datawrapper.de/gendercolor/
+pal <- c("#D4855A", "#C5CB81")
+names(pal) <- c("Female", "Male")
+
+proj_col <- "steelblue"
+ff <- "Calibri"
+
+
+p1 <- ggplot(pops, aes(y = age, fill = sex)) +
+  geom_col(data = filter(pops, sex == "Male" & obs_time == y1), 
+           aes(x = obs_value)) +
+  geom_col(data = filter(pops, sex == "Female" & obs_time == y1), 
+           aes(x = -obs_value)) +
+  geom_path(data = filter(pops, sex == "Male" & obs_time == y2),
+            aes(x = obs_value, y = as.numeric(age)),
+            colour = proj_col) +
+  geom_path(data = filter(pops, sex == "Female" & obs_time == y2),
+            aes(x = -obs_value, y = as.numeric(age)),
+            colour = proj_col) +
+  scale_fill_manual(values = pal) +
+  scale_x_continuous(label = comma) +
+  theme_void(base_family = ff) +
+  theme(axis.text.y = element_text(hjust = 1, size = 6),
+        axis.title.x = element_text(),
+        legend.position = "top",
+        plot.caption = element_text(hjust = 0.5, colour = "grey20"),
+        panel.background = element_rect(fill = "grey95", colour = NA),
+        plot.margin = unit(c(3,3,3,3), "mm")) +
+  facet_wrap(~pict_label, scales = "free_x", ncol = 7) +
+  labs(title = glue("Population estimates and projections in {y1} and {y2}"),
+       subtitle = "Pacific Island Country and Territory members of the Pacific Community, sorted by proportion of elderly population.\n",
+       x = "Number of people",
+       fill = "",
+       caption = glue("Blue lines are the projection to {y2}. Numbers in the titles are estimated population in {y1} and projected compound annual growth rate to {y2}."))
+
+# For this blog post I have omitted the actual location of the folder for this output
+png("0240-pop-pyramids-wide.png", width = 7000, height = 4000, res = 600, type = "cairo-png")
+print(p1)
+dev.off()
+
+png("0240-pop-pyramids-tall.png", width = 5000, height = 8000, res = 600, type = "cairo-png")
+print(p1 + facet_wrap(~pict_label, scales = "free_x", ncol = 3))
+dev.off()
+
 
 
 {% endhighlight %}
 
 
-Too choose between the wide or the tall versions of the image I used the `<picture>` HTML tag, which I'd borrowed from [this StackOverflow exchange]()https://stackoverflow.com/questions/23414817/load-images-based-on-screen-sizehttps://stackoverflow.com/questions/23414817/load-images-based-on-screen-size)
+
+
+One other snippet of non-R code I want to include so I don't forget it. I wanted to make the browser choose between the wide or the tall versions of the image based on width of the browser showing it, but still keeping control of the images' polish and precise proportions that I would lose if it was redone in JavaScript. To do this I used the `<picture>` HTML tag, which I'd borrowed from [this StackOverflow exchange](https://stackoverflow.com/questions/23414817/load-images-based-on-screen-sizehttps://stackoverflow.com/questions/23414817/load-images-based-on-screen-size)
 
 {% highlight HTML lineanchors %}
 <picture  > 
-    <source srcset="/img/0240-pop-pyramids-wide.png" width = '100%' media="(min-width: 1000px)">
+    <source srcset="/img/0240-pop-pyramids-wide.png" width = '100%' media="(min-width: 1200px)">
     <img src="/img/0240-pop-pyramids-tall.png" width = '100%' alt="Population pyramids with 5 year age bands and sex for 20 Pacific Island country and territories">
 </picture>
 {% endhighlight %}
+
+OK, go forth and download lots of data from PDH.Stat

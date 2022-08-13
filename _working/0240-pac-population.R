@@ -18,8 +18,8 @@ if(!exists("proj_raw")){
     clean_names()
 }
 
-
-
+y1 <- 2020
+y2 <- 2050
 
 pops <- proj_raw |>
   filter(sex != "_T" & age != "_T") |>
@@ -63,16 +63,6 @@ pops$prop_70_plus <- NULL
 pops$total <- NULL
 pops$cagr <- NULL
 
-# see https://blog.datawrapper.de/gendercolor/
-pal <- c("#D4855A", "#C5CB81")
-names(pal) <- c("Female", "Male")
-
-proj_col <- "steelblue"
-ff <- "Calibri"
-
-y1 <- 2020
-y2 <- 2050
-
 
 pops <- pops |>
   left_join(prop_old, by = "pict") |>
@@ -84,6 +74,13 @@ pops <- pops |>
   arrange(pict, age)
 
 #-----------------------Draw plot--------------------
+# see https://blog.datawrapper.de/gendercolor/
+pal <- c("#D4855A", "#C5CB81")
+names(pal) <- c("Female", "Male")
+
+proj_col <- "steelblue"
+ff <- "Calibri"
+
 
 p1 <- ggplot(pops, aes(y = age, fill = sex)) +
   geom_col(data = filter(pops, sex == "Male" & obs_time == y1), 
