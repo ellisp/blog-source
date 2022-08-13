@@ -8,6 +8,10 @@ library(janitor)
 library(ISOcodes)
 library(glue)
 
+# readSDMX(providerId = "PDH", resource = "dataflow") |>
+#   as_tibble() |>
+#   View()
+
 if(!exists("proj_raw")){
   # This is quite slow - several minutes - but the slow part is apparently parsing
   # the XML in the as_tibble

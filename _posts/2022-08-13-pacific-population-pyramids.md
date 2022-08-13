@@ -7,7 +7,7 @@ tag:
    - WorkRelated
    - Demography
    - Pacific
-description: I show how to access data from the Pacific Data Hub to draw population pyramids of Pacific Island countries and territories
+description: I show how to access data from the Pacific Data Hub to draw population pyramids of Pacific Island countries and territories.
 image: /img/0240-pop-pyramids-wide.png
 socialimage: http://freerangestats.info/img/0240-pop-pyramids-wide.png
 category: R
@@ -27,7 +27,7 @@ I'm not going to blog about work here, or only briefly in passing, but I might o
 
 Today I'm showcasing the connection from R to the [Pacific Data Hub](https://pacificdata.org/about-us), which is a central repository of data about the Pacific and from the Pacific. It's led by the Pacific Community, specifically by the Statistics for Development and Information Services divisions in partnership. It's new and so far most of its data is from the official statistics systems of our members, but we have hopes and plans for a lot more. It's currently funded by the New Zealand government.
 
-One of the more parts of the Pacific Data Hub that is further developed is PDH.Stat, our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
+One of the parts of the Pacific Data Hub that is most developed is PDH.Stat, our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most of those individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
 
 Here's the image I'm producing today. It's population estimates (for 2020) and projections (for 2050) for 21 Pacific Island countries and territories - all of the Pacific Community Pacific Island members except tiny Pitcairn Island.
 
@@ -40,11 +40,13 @@ Depending on your screen size that should be either 7 countries across and 3 dow
 
 There's some very interesting things here. 
 
-In PNG, Solomon Islands, Vanuatu and (to a lesser extent) Kiribati, we see the classic wide base population pyramids familiar in poor, rapidly growing countries where death rates have dropped over the past century but birth rates have not done the same. These shapes are projected to stay similar in the future, just much wider - population growing at around 2% per year, which is fast (the global growth rate right now is about 1% and dropping steadily - the projected average growth from 2020 to 2050 would be much less).
+First is that in 2050, quite a few of these countries are going to have a lot of people in that "70+" age bracket, as shown by the blue lines leaping out to the edge of the facets in cases like Palau, Guam and my own new home New Caledonia. We'll probably need to use more levels of the classification...
 
-In contrast, we see in Fiji a pattern common in middle income countries further along the pathway sometimes called the demographic transition. People have fewer children, the pyramid's walls are steeper in 2020 and nearly vertical in 2050, and population growth rates are accordingly pretty low (0.2%). New Caledonia is even further along that path. 
+Then, in PNG, Solomon Islands, Vanuatu and (to a lesser extent) Kiribati, we see the classic wide base population pyramids familiar in poor, rapidly growing countries where death rates have dropped over the past century but birth rates have not done the same. These shapes are projected to stay similar in the future, just much wider - population growing at around 2% per year, which is fast (the global growth rate right now is about 1% and dropping steadily - the projected average growth from 2020 to 2050 would be much less).
 
-But in some other countries and territories though there are unusual patterns. Examples of one pattern can be seen in Samoa, Marshall Islands, Federated States of Micronesia, Tuvalu and Tonga. These have a wide-base population pyramid showing lots of young people, relatively speaking, in 2020. But projected growth rates are very low. What's happened to the young people from 2020? As the age bands are 5 years and the difference between the 2020 bars and the 2050 blue lines is 30 years, we should see the bulge move up vertically by 6 slots, and stay the same horizontal size barring deaths and migration. But the people who are aged 0 to 20 in 2020 (bottom 4 bars) are simply not projected to be in these countries aged 30 to 50 in 2050.
+In contrast, we see in Fiji a pattern common in middle income countries further along the pathway called the demographic transition. People have fewer children, the pyramid's walls are steeper in 2020 and nearly vertical in 2050, and population growth rates are accordingly pretty low (0.2%). New Caledonia is even further along that path. 
+
+But in some other countries and territories though there are unusual patterns. Examples of one pattern can be seen in Marshall Islands, Federated States of Micronesia, Tuvalu, Samoa and Tonga. These have a wide-base population pyramid showing lots of young people, relatively speaking, in 2020. But projected growth rates are very low. What's happened to the young people from 2020? As the age bands are 5 years and the difference between the 2020 bars and the 2050 blue lines is 30 years, we should see the bulge move up vertically by 6 slots, and stay the same horizontal size barring deaths and migration. But the blue line for ages 30 to 50 is closer to the central axis than are the bars for 0 to 20. The people who are aged 0 to 20 in 2020 (bottom 4 bars) are literally not projected to be in these countries once they are aged 30 to 50 in 2050.
 
 This isn't because of a catastrophic early adult death rate, but large scale migration. It's interesting to see this feature so prominent in the projections, which of course are based in part on a model of net migration based on previous history in each country.
 
@@ -58,12 +60,23 @@ Note the nice description of the data and its source, which is intrinsically lin
 
 Because [PDH.Stat](https://stats.pacificdata.org/) is part of the bigger international community of .Stat implementers, we can leverage development at the OECD and elsewhere. For example, we have made sure that all the data in PDH.Stat is [accessible by RESTful API](https://docs.pacificdata.org/dotstat/api) in the SDMX format; and made PDH.Stat accessible by [plugins for Excel, Power BI, Stata, Python and of course R](https://docs.pacificdata.org/dotstat/plugins). 
 
-For R, we use the `rsdmx` package which interacts with many of the official sites around the world providing data via SDMX. To get a dataset, you just need to know the provider ID for the Pacific Data Hub (which is `PDH`) and the code of the data flow. this can be found by clicking on the "Developer API" button in the browser when you've got a data set you want (in this case it is `DF_POP_PROJ`), or in the code below I've got a snippet that downloads them all and their names.
+For R, we use the `rsdmx` package which interacts with many of the official sites around the world providing data via SDMX. The CRAN version of `rsdmx` is all you need. To get a dataset, you just need to know the provider ID for the Pacific Data Hub (which is `PDH`) and the code of the data flow. This can be found by clicking on the "Developer API" button in the browser when you've got a data set you want (in this case it is `DF_POP_PROJ`), or in this next code snippet you can download them all - codes and names:
 
-*Post continues below R code*
+
 {% highlight R lineanchors %}
 library(tidyverse)
 library(rsdmx)
+
+readSDMX(providerId = "PDH", resource = "dataflow") |>
+  as_tibble() |>
+  View()
+{% endhighlight %}
+
+Further inspection of the metadata, in browser or via the API, can reveal other things you need to know like data descriptions, units and what various codes stand for.
+
+Anyway, assuming we have loaded `tidyverse` and `rsdmx` and know the ID for the data set we want, we can now read the data itself with `readSDMX()` and the correct `flowRef`. This next chunk of code does this, and also some basic tidying up of the data to filter out various regional aggregates (for Polynesia, etc); make the age bracket descriptions more readable; and convert country ISO codes to their readable names thanks to the `ISOcodes` package.
+
+{% highlight R lineanchors %}
 library(scales)
 library(janitor)
 library(ISOcodes)
@@ -99,9 +112,7 @@ pops <- proj_raw |>
   rename(pict = Name)
 {% endhighlight %}
 
-
-
-then some secondary data objects
+Next chunk makes some secondary data objects that calculate the population estimated in 2020, the proportion of it that is 70 or older, and the compound annual growth rate to 2050. I need these to include in the facet titles and to order the facets. Final task in the chunk below is to  join these back to the original data.
 
 {% highlight R lineanchors %}
 #-------------------some secondary versions of the data for sorting and labels-------
@@ -139,8 +150,13 @@ pops <- pops |>
   arrange(pict, age)
 {% endhighlight %}
 
+Now we're ready to draw the chart. Here's the code that does that. There have been a few important design choices here. 
 
-and finally the drawing of the chart itself
+The more controversial one is probably to omit numbers from the horizontal axis. I don't thik they add anything for my purposes other than clutter, just a general sense of the scale for each country (which is provided the population total in the facet title). 
+
+The second big choice was how to show the 2050 projections. The 2020 bars are an easy choice, from demographic convention. The poster published by ourselves that inspired this for me used outline boxes to show the projections for 2050 (it also has a lovely map of where all the countries are in the middle, but this really needs to be printed large to make the whole thing work). Using hollow boxes for 2050 has the advantage that it is instantly relatable to the 2020 bars (basically, they are bars but with transparent fill and grey stroke around the edge). I tried this, and some variants, before deciding that it would be more consistent with the style of my blog to use a different coloured line. Uncluttered and clean.
+
+Anyway, here's the code that defines this plot, and saves two versions (one wide and one tall):
 
 {% highlight R lineanchors %}
 #-----------------------Draw plot--------------------
@@ -188,12 +204,7 @@ png("0240-pop-pyramids-tall.png", width = 5000, height = 8000, res = 600, type =
 print(p1 + facet_wrap(~pict_label, scales = "free_x", ncol = 3))
 dev.off()
 
-
-
 {% endhighlight %}
-
-
-
 
 One other snippet of non-R code I want to include so I don't forget it. I wanted to make the browser choose between the wide or the tall versions of the image based on width of the browser showing it, but still keeping control of the images' polish and precise proportions that I would lose if it was redone in JavaScript. To do this I used the `<picture>` HTML tag, which I'd borrowed from [this StackOverflow exchange](https://stackoverflow.com/questions/23414817/load-images-based-on-screen-sizehttps://stackoverflow.com/questions/23414817/load-images-based-on-screen-size)
 
@@ -204,4 +215,13 @@ One other snippet of non-R code I want to include so I don't forget it. I wanted
 </picture>
 {% endhighlight %}
 
-OK, go forth and download lots of data from PDH.Stat
+If you made it this far, congratulations! Here's the chart again to save you scrolling up:
+
+<picture  > 
+    <source srcset="/img/0240-pop-pyramids-wide.png" width = '100%' media="(min-width: 1200px)">
+    <img src="/img/0240-pop-pyramids-tall.png" width = '100%' alt="Population pyramids with 5 year age bands and sex for 20 Pacific Island country and territories">
+</picture>
+
+OK, all too easy; c'est tout!. 
+
+Go forth and download lots of data from PDH.Stat. We would really love this great asset to be used more, including by our neighbours in the Pacific or its rim that we just know are looking for data to use (Australia, New Zealand, Japan, USA - looking at you here).
