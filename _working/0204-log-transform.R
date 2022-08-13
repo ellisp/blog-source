@@ -21,7 +21,8 @@ p2 <- ggplot(samp, aes(y = price, x = carat, colour = color)) +
   geom_point()  +
   scale_y_continuous(label = dollar_format(accuracy = 1))+
   labs(title = "A linear model of the untransformed price has heteroskedasticity challenges",
-       subtitle = "Model of form price ~ carat * cut.\nREsiduals are right-skewed and variance increases as expected price increases, breaking the Gauss-Markov assumptions.",
+       subtitle = "Model of form price ~ carat * cut.\nResiduals are right-skewed and variance increases as expected price increases, 
+breaking the Gauss-Markov assumptions.",
        caption = the_caption, 
        x = "Weight of the diamond (carats)",
        y = "Price of an individual diamond")

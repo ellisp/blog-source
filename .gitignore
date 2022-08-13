@@ -77,3 +77,6 @@ img/*
 *.sav
 NZES2017*
 *.xls
+
+.jekyll-cache
+_working/data/*
