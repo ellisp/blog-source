@@ -2,8 +2,9 @@ library(tidyverse)
 library(sf)
 library(Cairo)
 library(janitor)
-
-
+library(ggrepel)
+library(maps)
+library(extrafont)
 
 
 sf_use_s2(FALSE)
@@ -21,19 +22,20 @@ unzip(fn)
 eez <- st_read(gsub("_kml\\.zip", ".kml", fn))
 
 pac <- eez |>
-  slice(253:282) |>
+  slice(c(67, 246:282)) |>
   clean_names() |>
   filter(!grepl("Joint", name)) |>
-  filter(!grepl("New Zealand", name)) |>
-  filter(!grepl("Howland and Baker", name)) |>
-  filter(!grepl("Palmyra", name)) |>
-  filter(!grepl("Wake Island", name)) |>
-  filter(!grepl("Matthew and Hunter", name)) |>
-  filter(!grepl("Jarvis", name)) |>
+  filter(!grepl("Triangle between", name)) |>
+  # filter(!grepl("New Zealand", name)) |>
+  # filter(!grepl("Howland and Baker", name)) |>
+  # filter(!grepl("Palmyra", name)) |>
+  # filter(!grepl("Wake Island", name)) |>
+  # filter(!grepl("Matthew and Hunter", name)) |>
+  # filter(!grepl("Jarvis", name)) |>
   st_shift_longitude() |>
   mutate(name2 = gsub(" Exclusive Economic Zon.*", "", name)) |>
   mutate(name2 = gsub("n$", "", name2)) |>
-  mutate(name2 = ifelse(name2 %in% c("Niuea", "Fijia", "Naurua", "Kiribatia"),
+  mutate(name2 = ifelse(name2 %in% c("Niuea", "Fijia", "Naurua", "Kiribatia", "Tuvalua"),
                  str_sub(name2, end = -2),
                  name2)) 
 
@@ -44,8 +46,8 @@ pac_c <- cbind(pac_c, st_coordinates(pac_c)) |>
 
 
 
-
-#https://stackoverflow.com/questions/34011100/plot-pacific-ocean-and-continents-with-ggplot2borders
+# make two worlds together for drawing pacific-centred, adapted from
+# https://stackoverflow.com/questions/34011100/plot-pacific-ocean-and-continents-with-ggplot2borders
 mp1 <- fortify(maps::map(fill=TRUE, plot=FALSE)) |>
   as_tibble()
 mp2 <- mp1 |>
@@ -57,11 +59,15 @@ mp <- rbind(mp1, mp2)
 
 
 ggplot(pac) +
+  geom_hline(yintercept = 0, colour = "darkblue") +
   geom_sf(aes(fill = name2), colour = NA) +
-  geom_polygon(data = filter(mp, long > 110 & long < 300 & lat < 20 & lat > -50),
+  geom_polygon(data = filter(mp, long > 90 & long < 293 & lat < 40 & lat > -50),
                aes(x = long, y = lat, group = group),
                fill = "white") +
-  geom_text(data = pac_c, aes(label = name2, x = x, y = y), colour = "grey40") +
-  theme_void() +
+  geom_text(data = pac_c, aes(label = name2, x = x, y = y), colour = "grey20") +
+  annotate("text", x = 255, y = 1, label = "Equator") +
+  theme_void(base_family = "Calibri") +
   theme(legend.position = "none",
-        panel.background = element_rect(fill = "lightsteelblue", colour = NA))
+        panel.background = element_rect(fill = "lightsteelblue", colour = NA)) +
+  coord_sf(xlim = c(120, 293))
+
