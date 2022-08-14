@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Pacific island population pyramids
-date: 2022-08-13
+date: 2022-08-14
 tag: 
    - DataVisualization
    - WorkRelated
@@ -27,7 +27,7 @@ I'm not going to blog about work here, or only briefly in passing, but I might o
 
 Today I'm showcasing the connection from R to the [Pacific Data Hub](https://pacificdata.org/about-us), which is a central repository of data about the Pacific and from the Pacific. It's led by the Pacific Community, specifically by the Statistics for Development and Information Services divisions in partnership. It's fairly new and so far most of its data is from the official statistics systems of our members, but we have hopes and plans for a lot more. It's currently funded by the New Zealand government.
 
-One of the parts of the Pacific Data Hub that is most developed is PDH.Stat, our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most of those individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
+One of the parts of the Pacific Data Hub that is most developed is [PDH.Stat](https://stats.pacificdata.org/), our implementation of the OECD-originated tool for disseminating aggregate indicator data. The .Stat technology, which is based on the SDMX standard for data and metadata, is commonly used by national statistics offices (including for example [NZ.Stat](https://nzdotstat.stats.govt.nz/wbos/Index.aspx) and the [ABS' .Stat Data Explorer](https://explore.data.abs.gov.au/)), but it is very non-trivial tech to set up and maintain. The median number of staff at Pacific Island country and territory national statistics offices is 14 (compared to just over one thousand at Stats NZ, for example), and it's not feasible for most of those individual countries to manage their own .Stat implementation. So we at the Pacific Community host it collectively and aim to provide a one-stop shop for all the important aggregate information on the Pacific.
 
 Here's the image I'm producing today from some of that data. It's population estimates (for 2020) and projections (for 2050) for 21 Pacific Island countries and territories - all of the Pacific Community Pacific Island members except tiny Pitcairn Island.
 
