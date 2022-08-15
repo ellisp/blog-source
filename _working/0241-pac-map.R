@@ -7,6 +7,19 @@ library(maps)
 library(extrafont)
 library(rnaturalearth) # for downloading dateline
 library(rgdal)         # support for rnatural earth
+library(rsdmx)
+library(ISOcodes)
+library(scales)
+library(RColorBrewer)
+library(glue)
+
+#-----------------population-------------
+
+pops <- readSDMX(providerId = "PDH", 
+                     resource = "data", 
+                     flowRef = "DF_KEYFACTS")  |>
+  as_tibble() |>
+  clean_names()
 
 #-----------------------land borders-------------------
 
@@ -18,8 +31,7 @@ mp2 <- mp1 |>
   mutate(long = long + 360,
          group = group + max(mp1$group) + 1)
 mp <- rbind(mp1, mp2) |>
-  filter(long > 90  & long <360 & lat <50 & lat > -60) |>
-  st_as_sf()
+  filter(long > 90  & long <360 & lat <50 & lat > -60) 
 
 ggplot(mp) +
   geom_polygon(aes(x = long, y = lat, group = group)) +
@@ -74,6 +86,12 @@ pac <- eez |>
   mutate(name2 = ifelse(name2 %in% c("Niuea", "Fijia", "Naurua", "Kiribatia", "Tuvalua"),
                  str_sub(name2, end = -2),
                  name2)) |>
+  mutate(name2 = case_when(
+    name2 == "Micronesia" ~ "Micronesia, Federated States of",
+    name2 == "Northern Mariana" ~ "Northern Mariana Islands",
+    name2 == "Pitcairn Islands" ~ "Pitcairn",
+    TRUE ~ name2
+  )) |>
   mutate(id = 1:n()) |>
   # next 3 lines are for combining the countries that were split by 180 degrees into one
   # eg Tuvalu
@@ -81,35 +99,91 @@ pac <- eez |>
   dplyr::summarise(across(geometry, ~ sf::st_union(., by_feature = TRUE))) |>
   ungroup() 
 
+stopifnot(
+  pac |>
+    anti_join(ISO_3166_1, by = c("name2" = "Name")) |>
+    nrow() == 0)
+
 pac_c <- st_centroid(pac)
 
-pac_a <- st_area(pac) 
+if(!exists("pop_pdh")){
+  pocket <- readSDMX(providerId = "PDH", 
+          resource = "data", 
+          flowRef = "DF_POCKET")  |>
+    as_tibble() |>
+    clean_names() 
+  
+  pop_pdh <- pocket |>
+    filter(indicator %in% c("EEZ", "MIDYEARPOPEST", "POPDENS")) |>
+    group_by(indicator, geo_pict) |>
+    arrange(desc(obs_time)) |>
+    slice(1) |>
+    select(geo_pict, indicator, obs_value) |>
+    spread(indicator, obs_value) |>
+    # people per thousand km2 of EEZ (different to land)
+    mutate(pop_dens_eez = MIDYEARPOPEST / EEZ * 1000)
+}
 
-pac <- cbind(pac, st_coordinates(pac_c), area = pac_a) |>
-  mutate(area2 = as.numeric(area))
+
+
+pac <- cbind(pac, st_coordinates(pac_c)) |>
+  left_join(select(ISO_3166_1, Name, geo_pict = Alpha_2, iso3 = Alpha_3), by = c("name2" = "Name")) |>
+  # note this is EEZ of whole country, so Kiribati has all in one number not split in 3,
+  # and will have 3 reps of the same number
+  left_join(pop_pdh, by = "geo_pict") 
+  
+quantiles <- quantile(pac$pop_dens_eez, prob = seq(0, 1, length = 8), type = 5)
+quantiles[1] <- 0
+quantiles[length(quantiles)] <- quantiles[length(quantiles)] + 1
+
+
+#-----------how much of the world is there in the Pacific?-------------
+
+# what proportion fo the world's surface (which is 510 million km2):
+prop_surface <- percent(sum(pop_pdh$EEZ) / 510e6, accuracy = 0.1)
+
+# proportion of world's population (which is 7.9 billion)
+prop_pop <- percent(sum(pop_pdh$MIDYEARPOPEST) / 7.9e9, accuracy = 0.01)
+
+
+total_land_area <- pop_pdh |>
+  mutate(land_area = MIDYEARPOPEST / POPDENS) |>
+  ungroup() |>
+  summarise(land_area = sum(land_area)) |>
+  pull(land_area)
+# reality check - PNG is about 463k km2 so this (531k) looks right for all PICTs
+
+# proportion of the world's total land area (which is 149 million km2)
+prop_land <- percent(total_land_area / 149e6, accuracy = 0.01)
+
 #-------------------------combined map------------------------
 ff <- "Roboto"
 
 sf_use_s2(FALSE) # so reticules still drawn on right half of map
-m1 <- ggplot(pac) +
-  geom_sf(aes(fill = area2), colour = "grey70", alpha = 0.9) +
+m1 <- pac |>
+  mutate(dens_cat = cut(pop_dens_eez, breaks = round(quantiles), dig.lab = 5)) |> 
+  ggplot() +
+  geom_sf(aes(fill = dens_cat), colour = "grey70", alpha = 0.9) +
   geom_polygon(data = mp,
                aes(x = long, y = lat, group = group),
-               fill = "white") +
-  geom_sf(data = glines, colour = "grey30", linetype = 3) +
+               fill = "white",
+               alpha = 0.8) +
+  geom_sf(data = glines, colour = "steelblue", linetype = 1, alpha = 0.5) +
   annotate("text", x = 182, y = 38, label = "International date line", 
-           colour = "grey30", hjust = 0, family = ff, size = 3) +
+           colour = "steelblue", hjust = 0, family = ff, size = 3) +
   geom_text(aes(label = name2, x = X, y = Y),
-            colour = "grey20", family = ff, size = 3, angle = 15) +
+            colour = "black", family = ff, size = 3, angle = 15) +
   theme_minimal(base_family = ff) +
-  scale_fill_viridis_c() +
-  theme(legend.position = "none",
-        panel.background = element_rect(fill = "lightsteelblue", colour = NA)) +
+  scale_fill_manual(values = brewer.pal(9, "Oranges")) +
+  theme(legend.position = c(0.8, 0.7),
+        panel.background = element_rect(fill = "lightsteelblue", colour = NA),
+        panel.grid = element_blank()) +
   coord_sf(xlim = c(120, 290),  ylim = c(-50, 50)) +
-  labs(title = "Exclusive economic zones of selected Pacific countries and territories",
-       subtitle = "Colours are just to make distinct areas easier to see. Included in this map are SPC Pacific Island countries and territories.",
+  labs(title = "Exclusive economic zones (EEZs) of Pacific Community island countries and territories",
+       subtitle = glue("Together, the EEZs make up around {prop_surface} of the world's surface, {prop_pop} of the world's population and the land is {prop_land} of the world's total land area."),
        x = "",
-       y = "")
+       y = "",
+       fill = "People per 1,000\nsquare km of EEZ")
 
 svg_png(m1, "../img/0241-map1", w = 12, h = 7)
 
