@@ -79,4 +79,6 @@ NZES2017*
 *.xls
 
 .jekyll-cache
+.jekyll-metadata
+
 _working/data/*
