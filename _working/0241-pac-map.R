@@ -121,7 +121,8 @@ if(!exists("pop_pdh")){
     select(geo_pict, indicator, obs_value) |>
     spread(indicator, obs_value) |>
     # people per thousand km2 of EEZ (different to land)
-    mutate(pop_dens_eez = MIDYEARPOPEST / EEZ * 1000)
+    mutate(pop_dens_eez = MIDYEARPOPEST / EEZ * 1000) |>
+    ungroup()
 }
 
 
@@ -161,7 +162,8 @@ ff <- "Roboto"
 
 sf_use_s2(FALSE) # so reticules still drawn on right half of map
 m1 <- pac |>
-  mutate(dens_cat = cut(pop_dens_eez, breaks = round(quantiles), dig.lab = 5)) |> 
+  mutate(dens_cat = cut(pop_dens_eez, breaks = round(quantiles), dig.lab = 5),
+         dens_cat = fct_reorder(gsub(",", "-", dens_cat), pop_dens_eez)) |> 
   ggplot() +
   geom_sf(aes(fill = dens_cat), colour = "grey70", alpha = 0.9) +
   geom_polygon(data = mp,
@@ -177,14 +179,54 @@ m1 <- pac |>
   scale_fill_manual(values = brewer.pal(9, "Oranges")) +
   theme(legend.position = c(0.8, 0.7),
         panel.background = element_rect(fill = "lightsteelblue", colour = NA),
-        panel.grid = element_blank()) +
+        panel.grid = element_blank(),
+        plot.caption = element_text(colour = "grey50")) +
   coord_sf(xlim = c(120, 290),  ylim = c(-50, 50)) +
   labs(title = "Exclusive economic zones (EEZs) of Pacific Community island countries and territories",
        subtitle = glue("Together, the EEZs make up around {prop_surface} of the world's surface, {prop_pop} of the world's population and the land is {prop_land} of the world's total land area."),
        x = "",
        y = "",
-       fill = "People per 1,000\nsquare km of EEZ")
+       fill = "People per 1,000\nsquare km of EEZ",
+       caption = "Source: http://freerangestats.info with data from the Pacific Data Hub")
 
 svg_png(m1, "../img/0241-map1", w = 12, h = 7)
 
 
+#---------------------some more on population density--------------------
+
+
+library(WDI)
+
+if(!exists("densities")){
+  densities <- WDI(indicator = "EN.POP.DNST") |>
+    group_by(country) |>
+    arrange(desc(year)) |>
+    slice(1) |>
+    ungroup()
+}
+
+densities |>
+  mutate(spc = ifelse(iso2c %in% pocket$geo_pict, "Pacific", "Other"),
+         country = fct_reorder(country, EN.POP.DNST)) |>
+  ggplot(aes(y = EN.POP.DNST, x = country, fill = spc)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 4))
+  
+
+world_density <- densities |>
+  filter(country == "World")
+  # World density is 60 people per square km
+
+pop_pdh |>
+  select(geo_pict, pop_dens = POPDENS) |>
+  rbind(select(world_density, geo_pict = iso2c, pop_dens = EN.POP.DNST)) |>
+  left_join(select(ISO_3166_1, Name, geo_pict = Alpha_2), 
+            by = "geo_pict") |>
+  mutate(Name = ifelse(geo_pict == "1W", "World average", Name)) |>
+  mutate(country = fct_reorder(Name, pop_dens)) |>
+  ggplot(aes(x = pop_dens,  y = country, fill = (country == "World average"))) +
+  geom_col() +
+  theme(legend.position = "none") +
+  labs(y = "", 
+       x = "Population density (people per square kilometre of land")
+  
