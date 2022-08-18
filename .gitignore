@@ -82,3 +82,9 @@ NZES2017*
 _working/data/*
 
 *.kml
+.jekyll-cache
+.jekyll-metadata
+
+_working/data/*
+
+
