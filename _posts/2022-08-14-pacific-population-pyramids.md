@@ -107,7 +107,8 @@ pops <- proj_raw |>
            sex == "M" ~ "Male",
            sex == "F" ~ "Female"
          )) |>
-  mutate(age = factor(age)) |>
+  mutate(age = factor(age),
+         sex = fct_relevel(sex, "Male"))|>
   left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
   rename(pict = Name)
 {% endhighlight %}
@@ -163,6 +164,8 @@ Anyway, here's the code that defines this plot, and saves two versions (one wide
 # see https://blog.datawrapper.de/gendercolor/
 pal <- c("#D4855A", "#C5CB81")
 names(pal) <- c("Female", "Male")
+# Reverse order so Male appears on left in legend:
+pal <- pal[2:1]
 
 proj_col <- "steelblue"
 ff <- "Calibri"

@@ -37,7 +37,8 @@ pops <- proj_raw |>
            sex == "M" ~ "Male",
            sex == "F" ~ "Female"
          )) |>
-  mutate(age = factor(age)) |>
+  mutate(age = factor(age),
+         sex = fct_relevel(sex, "Male"))|>
   left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
   rename(pict = Name)
 
@@ -81,6 +82,7 @@ pops <- pops |>
 # see https://blog.datawrapper.de/gendercolor/
 pal <- c("#D4855A", "#C5CB81")
 names(pal) <- c("Female", "Male")
+pal <- pal[2:1]
 
 proj_col <- "steelblue"
 ff <- "Calibri"
@@ -88,14 +90,14 @@ ff <- "Calibri"
 
 p1 <- ggplot(pops, aes(y = age, fill = sex)) +
   geom_col(data = filter(pops, sex == "Male" & obs_time == y1), 
-           aes(x = obs_value)) +
-  geom_col(data = filter(pops, sex == "Female" & obs_time == y1), 
            aes(x = -obs_value)) +
+  geom_col(data = filter(pops, sex == "Female" & obs_time == y1), 
+           aes(x = obs_value)) +
   geom_path(data = filter(pops, sex == "Male" & obs_time == y2),
-            aes(x = obs_value, y = as.numeric(age)),
+            aes(x = -obs_value, y = as.numeric(age)),
             colour = proj_col) +
   geom_path(data = filter(pops, sex == "Female" & obs_time == y2),
-            aes(x = -obs_value, y = as.numeric(age)),
+            aes(x = obs_value, y = as.numeric(age)),
             colour = proj_col) +
   scale_fill_manual(values = pal) +
   scale_x_continuous(label = comma) +
