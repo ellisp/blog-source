@@ -14,7 +14,7 @@ library(RColorBrewer)
 library(glue)
 
 #-----------------population-------------
-
+# "Key facts" (latest value of various indicators) for Pacific Island countries, use it for population and density labels:
 pops <- readSDMX(providerId = "PDH", 
                      resource = "data", 
                      flowRef = "DF_KEYFACTS")  |>
@@ -48,7 +48,8 @@ if(!exists("glines")){
 }
 
 #------------------------exclusive economic zones------------------------
-
+# Note for future users - this is dated June 2022, so presumably it changes from time to time.
+# Check out the Pacific Data Hub for later versions.
 
 fn1 <- "global_ffa_spc_sla_pol_june2022_kml.zip"
 fn2 <- gsub("_kml\\.zip", ".kml", fn1)
