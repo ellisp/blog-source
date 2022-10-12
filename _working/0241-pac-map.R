@@ -174,8 +174,8 @@ m1 <- pac |>
   geom_sf(data = glines, colour = "steelblue", linetype = 1, alpha = 0.5) +
   annotate("text", x = 182, y = 38, label = "International date line", 
            colour = "steelblue", hjust = 0, family = ff, size = 3) +
-  # geom_text(aes(label = name2, x = X, y = Y),
-  #           colour = "black", family = ff, size = 3, angle = 15) +
+   geom_text(aes(label = name2, x = X, y = Y),
+             colour = "black", family = ff, size = 3, angle = 15) +
   theme_minimal(base_family = ff) +
   scale_fill_manual(values = brewer.pal(9, "Oranges")) +
   theme(legend.position = c(0.8, 0.7),
@@ -190,7 +190,7 @@ m1 <- pac |>
        fill = "People per 1,000\nsquare km of EEZ",
        caption = "Source: http://freerangestats.info with data from the Pacific Data Hub")
 
-svg_png(m1, "../img/0241-map1-no-labels", w = 12, h = 7)
+svg_png(m1, "../img/0241-map1", w = 12, h = 7)
 
 
 #---------------------some more on population density--------------------
