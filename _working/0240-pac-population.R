@@ -82,6 +82,7 @@ pops <- pops |>
 # see https://blog.datawrapper.de/gendercolor/
 pal <- c("#D4855A", "#C5CB81")
 names(pal) <- c("Female", "Male")
+# Reverse order so Male appears on left in legend:
 pal <- pal[2:1]
 
 proj_col <- "steelblue"
