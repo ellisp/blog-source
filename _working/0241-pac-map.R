@@ -13,14 +13,6 @@ library(scales)
 library(RColorBrewer)
 library(glue)
 
-#-----------------population-------------
-# "Key facts" (latest value of various indicators) for Pacific Island countries, use it for population and density labels:
-pops <- readSDMX(providerId = "PDH", 
-                     resource = "data", 
-                     flowRef = "DF_KEYFACTS")  |>
-  as_tibble() |>
-  clean_names()
-
 #-----------------------land borders-------------------
 
 # make two worlds together for drawing pacific-centred, adapted from
@@ -33,9 +25,11 @@ mp2 <- mp1 |>
 mp <- rbind(mp1, mp2) |>
   filter(long > 90  & long <360 & lat <50 & lat > -60) 
 
-ggplot(mp) +
+demomp <- ggplot(mp) +
   geom_polygon(aes(x = long, y = lat, group = group)) +
   coord_map()
+
+svg_png(demomp, "../img/0241-land-map")
 
 #------------------international date line-----------------------------
 
