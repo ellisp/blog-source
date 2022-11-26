@@ -286,8 +286,9 @@ Excludes core funding for SPC and for PFTAC, which would require extra data sour
 # of the Solomon Islands HIES, and US$1.7m for a project in PNG with health survey all of which went to nearly nothing 
 # in 2014; and ABS support of US$1m that went down to US$570k the next year
 
-
-
+# these charts exclude PFTAC because we can't separate out the statistics adviser from the others:
+filter(pamd, grepl("pftac", `Project titles`, ignore.case = TRUE)) |>
+  distinct(`Project titles`)
 
 
 
