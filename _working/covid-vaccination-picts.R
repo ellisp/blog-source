@@ -98,8 +98,9 @@ model <- glm(covid_2shot_rate ~ log(gdp_pc), data = data,
 # why is the t test not significant but F  test is? (and Chi squarte too)
 summary(model)
 anova(model, test = "F")
+# well all of these are various approximations to things... and the sample size is small
 
-# Definitely not significant if we drop Papua New Guinea
+# Definitely not significant by conventional tests if we drop Papua New Guinea
 anova(glm(covid_2shot_rate ~ log(gdp_pc), data = filter(data, Name != "Papua New Guinea"),
           family = "quasibinomial", weights = population),
       test = "F")
