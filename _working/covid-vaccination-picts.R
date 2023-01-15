@@ -5,6 +5,7 @@ library(janitor)
 library(ISOcodes)
 library(ggrepel)
 library(scales)
+library(boot)
 
 pocket <- readSDMX(providerId = "PDH", 
                    resource = "data", 
@@ -29,27 +30,38 @@ count(vaccination, unit_measure)
 v2 <- vaccination |>
   # rate of sectond booster administered
   filter(indicator == "COVIDVACAD2RT") |>
-  mutate(obs_time = as.Date(obs_time))
+  mutate(obs_time = as.Date(obs_time)) |>
+  mutate(covid_2shot_rate = obs_value / 100)
   
-v2 |>
-  filter(obs_value > 99 & obs_time < as.Date("2022-01-01")) |>
-  write_csv("anomalous-vaccination-rates.csv")
+# v2 |>
+#   filter(obs_value > 99 & obs_time < as.Date("2022-01-01")) |>
+#   write_csv("anomalous-vaccination-rates.csv")
 
+the_caption = "Analysis by freerangestats.info; source: Pacific Data Hub, https://stats.pacificdata.org/"
 
-v2 |>
+p1 <- v2 |>
   # remove some anomalies
   filter(!(obs_value > 99 & obs_time < as.Date("2022-01-01"))) |>
-  ggplot(aes(x = obs_time, y = obs_value)) +
+  inner_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
+  mutate(Name = fct_reorder(Name, covid_2shot_rate)) |>
+  ggplot(aes(x = obs_time, y = covid_2shot_rate)) +
   geom_line() +
-  facet_wrap(~geo_pict)
+  facet_wrap(~Name) +
+  scale_y_continuous(label = percent) +
+  labs(x = "", 
+       y = "Proportion of eligible population with 2 or more Covid vaccination shots",
+       title = "Covid vaccination rates over time in the Pacific",
+       caption = the_caption) +
+  theme(axis.text.x = element_text(hjust = 1, angle = 45))
+
+svg_png(p1, "../img/0245-vaccination-time", w = 12, h = 6)
 
 latest_vaccination <- v2 |>
   arrange(desc(obs_time)) |>
   group_by(geo_pict) |>
   slice(1) |>
   select(geo_pict,
-         covid_2shot_rate = obs_value) |>
-  mutate(covid_2shot_rate = covid_2shot_rate / 100) |>
+         covid_2shot_rate) |>
   ungroup()
 
 pocket |>
@@ -75,23 +87,52 @@ pop <- pocket |>
   ungroup()
 
 
-gdp |>
+data <- gdp |>
   left_join(pop, by = "geo_pict") |>
   left_join(latest_vaccination, by = "geo_pict") |>
-  left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
+  left_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) 
+
+model <- glm(covid_2shot_rate ~ log(gdp_pc), data = data,
+             family = "quasibinomial", weights = population)
+
+# why is the t test not significant but F  test is? (and Chi squarte too)
+summary(model)
+anova(model, test = "F")
+
+# Definitely not significant if we drop Papua New Guinea
+anova(glm(covid_2shot_rate ~ log(gdp_pc), data = filter(data, Name != "Papua New Guinea"),
+          family = "quasibinomial", weights = population),
+      test = "F")
+
+# Let's use bootstrap to resolve this propblem
+mf <- function(d, w){
+  m <- glm(covid_2shot_rate ~ log(gdp_pc), data = d[w,],
+      family = "quasibinomial", weights = population)
+  return(coef(m)[2])
+}
+
+set.seed(42)
+booted <- boot(data, mf, R = 999)
+boot.ci(booted)
+
+
+p2 <- data |>
   ggplot(aes(x = gdp_pc, y = covid_2shot_rate)) +
   # returns a misleading warning that can be ignored, see https://github.com/tidyverse/ggplot2/issues/5053:
-  geom_smooth(aes(weight = population), method = "glm", colour = "grey70", 
-              formula = y ~ x, method.args = list(family = "binomial")) +
+  geom_smooth(aes(weight = population), method = "glm", 
+              formula = y ~ x, method.args = list(family = "quasibinomial"),
+              colour = "grey70", fill = "grey85") +
   geom_point(aes(size = population)) +
   geom_text_repel(colour = "steelblue", aes(label = Name), seed = 123) +
   scale_size_area(label = comma) +
   scale_x_log10(label = dollar_format(accuracy = 1)) +
   scale_y_continuous(label = percent, limits = c(0, 1)) +
-  labs(x = "GDP per capita, US dollars",
+  labs(x = "GDP per capita, US dollars (logarithmic scale)",
        y = "Proportion of eligible population with 2 or more Covid vaccination shots",
        size = "Population:",
        title = "Covid vaccination and GDP per capita in the Pacific",
-       subtitle = "Grey line is from population-weighted logistic regression")
+       subtitle = "Grey line is from population-weighted logistic regression.",
+       caption = the_caption)
 
   
+svg_png(p2, "../img/0245-vaccination-v-gdp", w = 8, h = 7)
