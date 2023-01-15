@@ -92,6 +92,6 @@ gdp |>
        y = "Proportion of eligible population with 2 or more Covid vaccination shots",
        size = "Population:",
        title = "Covid vaccination and GDP per capita in the Pacific",
-       subtitle = "Grey line is fit by population-weighted logistic regression")
+       subtitle = "Grey line is from population-weighted logistic regression")
 
   
