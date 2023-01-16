@@ -32,16 +32,11 @@ v2 <- vaccination |>
   filter(indicator == "COVIDVACAD2RT") |>
   mutate(obs_time = as.Date(obs_time)) |>
   mutate(covid_2shot_rate = obs_value / 100)
-  
-# v2 |>
-#   filter(obs_value > 99 & obs_time < as.Date("2022-01-01")) |>
-#   write_csv("anomalous-vaccination-rates.csv")
+
 
 the_caption = "Analysis by freerangestats.info; source: Pacific Data Hub, https://stats.pacificdata.org/"
 
 p1 <- v2 |>
-  # remove some anomalies
-  filter(!(obs_value > 99 & obs_time < as.Date("2022-01-01"))) |>
   inner_join(ISO_3166_1, by = c("geo_pict" = "Alpha_2")) |>
   mutate(Name = fct_reorder(Name, covid_2shot_rate)) |>
   ggplot(aes(x = obs_time, y = covid_2shot_rate)) +
