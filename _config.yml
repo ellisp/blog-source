@@ -15,6 +15,7 @@ fbauthor: https://www.facebook.com/peterstats
 exclude:
  - MonitorBlog-7f7bbca4f2e9.json
  - .Rproj.user
+ - .git
 jekyll_ga:
   service_account_email: ellisp@monitorblog-1214.iam.gserviceaccount.com
   key_file: MonitorBlog-7f7bbca4f2e9.json
