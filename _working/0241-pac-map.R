@@ -5,6 +5,7 @@ library(janitor)
 library(ggrepel)
 library(maps)
 library(extrafont)
+devtools::install_github("ropensci/rnaturalearth") # see https://github.com/ropensci/rnaturalearth/issues/64
 library(rnaturalearth) # for downloading dateline
 library(rgdal)         # support for rnatural earth
 library(rsdmx)
@@ -12,6 +13,7 @@ library(ISOcodes)
 library(scales)
 library(RColorBrewer)
 library(glue)
+
 
 #-----------------------land borders-------------------
 
