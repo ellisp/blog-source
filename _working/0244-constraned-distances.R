@@ -27,11 +27,34 @@ m2 <- m1 / rowSums(m1)
 stopifnot(all(unique(round(rowSums(m2), 4)) == 1))
 
 
-p2 <- function(){print(
-  ggpairs(as_tibble(m2))
+p2a <- function(){print(
+  ggpairs(as_tibble(m2)) +
+    labs(title = "Simulated simplex data (x + y + z = 1)")
 )}
-svg_png(p2, "../img/0244-simplex-data")
+svg_png(p2a, "../img/0244-simplex-data")
 
+
+p2b <- function(){print(
+  m2 |>
+    as_tibble() |>
+    mutate(across(x:z, ~log(.x))) |>
+    ggpairs() +
+    labs(title = "Simulated simplex data after logarithm transform")
+  )
+}
+
+
+p2c <- function(){print(
+  m2 |>
+    as_tibble() |>
+    mutate(across(x:z, ~sqrt(.x))) |>
+    ggpairs() +
+    labs(title = "Simulated simplex data after square root transform")
+  )
+  }
+
+svg_png(p2b, "../img/0244-simplex-log-data")
+svg_png(p2c, "../img/0244-simplex-sqrt-data")
 
 #' ILR (Isometric log-ratio) transformation.
 #' see https://stats.stackexchange.com/questions/259208/how-to-perform-isometric-log-ratio-transformation#:~:text=The%20ILR%20(Isometric%20Log%2DRatio,time%20spent%20in%20various%20activities.

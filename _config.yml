@@ -7,7 +7,7 @@ kramdown:
 permalink: /blog/:year/:month/:day/:title
 description: I write about applications of data and analytical techniques like statistical modelling and simulation to real-world situations. I show how to access and use data, and provide examples of analytical products and the code that produced them. 
 comments: true
-gems:
+plugins:
   - jekyll-sitemap
 url: http://freerangestats.info 
 author: Peter Ellis
@@ -15,6 +15,7 @@ fbauthor: https://www.facebook.com/peterstats
 exclude:
  - MonitorBlog-7f7bbca4f2e9.json
  - .Rproj.user
+ - .git
 jekyll_ga:
   service_account_email: ellisp@monitorblog-1214.iam.gserviceaccount.com
   key_file: MonitorBlog-7f7bbca4f2e9.json
@@ -23,4 +24,4 @@ jekyll_ga:
   end: now                  # End of report
   metric: ga:pageviews      # Metric code
   sort: true                # Sort posts by this metric
-keep_files: [img]
+keep_files: [.git, img, presentations, covid-tracking, data] 
