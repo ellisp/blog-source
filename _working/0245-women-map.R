@@ -2,6 +2,7 @@ library(tidyverse)
 library(rnaturalearth)
 library(sf)
 library(WDI)
+library(extrafont)
 library(RColorBrewer)
 
 #-----------------data prep--------------------
@@ -41,11 +42,13 @@ centers <- st_centroid(m, of_largest_polygon = TRUE) |>
     country == "Kiribati" ~ 173,
     TRUE  ~ x
   )) |>
-  # a couple of manual adjustments to make things more readable
+  # a couple of manual adjustments to make things more readable, avoiding overlaps
   mutate(x = case_when(
     geounit == "North Korea" ~ x - 1.5,
     geounit == "Vietnam" ~ x + 1,
     geounit == "Laos" ~ x - 0.8,
+    geounit == "Indonesia" ~ x - 1.8,
+    geounit == "Malaysia" ~ 101.7, # location of Kuala Lumpur
     TRUE ~ x
   )) |>
   # create scaled latitude coordinates for our rectangles and segments:
@@ -115,7 +118,8 @@ p <- centers |>
         legend.position = c(0.8, 0.2)) +
   labs(y = "",
        x = "Proportion of Parliamentarians that are women",
-       colour = "Sub-region")
+       colour = "Sub-region",
+       title = "Women parliamentarians in the Asia-Pacific")
 
 svg_png(p, "../img/0245-wom-dots", w = 8, h = 7)
 
