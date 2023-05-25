@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Log transforms, geometric means and estimating population totals
-date: 2024-02-28
+date: 2023-06-30
 tag: 
    - Transformations
    - Tools
