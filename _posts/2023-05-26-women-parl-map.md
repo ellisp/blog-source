@@ -12,7 +12,7 @@ category: R
 ---
 
 
-In a workshop session on data visualization yesterday, Christophe Bontemps of the Statistical Institute for Asia and Pacific (SIAP) used as an example a range of infographics attempting to show, on a map of Asia and the Pacific, the proportion of members of Parliament that are women. The point of the exercise was to illustrate the challenges with the various ways it could be done - using colours, shapes or sizes of glyphs drawn in the countries centres, or as a choropleth map - none of the methods were particularly satisfactory.
+In a workshop session on data visualization earlier this week, Christophe Bontemps of the Statistical Institute for Asia and Pacific (SIAP) used as an example a range of infographics attempting to show, on a map of Asia and the Pacific, the proportion of members of Parliament that are women. The point of the exercise was to illustrate the challenges with the various ways it could be done - using colours, shapes or sizes of glyphs drawn in the countries centres, or as a choropleth map - none of the methods were particularly satisfactory.
 
 ## Building a nice map showing proportions
 
