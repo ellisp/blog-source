@@ -49,7 +49,7 @@ p1 <- v2 |>
        caption = the_caption) +
   theme(axis.text.x = element_text(hjust = 1, angle = 45))
 
-svg_png(p1, "../img/0245-vaccination-time", w = 12, h = 6)
+svg_png(p1, "../img/0246-vaccination-time", w = 12, h = 6)
 
 latest_vaccination <- v2 |>
   arrange(desc(obs_time)) |>
@@ -131,4 +131,4 @@ p2 <- data |>
        caption = the_caption)
 
   
-svg_png(p2, "../img/0245-vaccination-v-gdp", w = 8, h = 7)
+svg_png(p2, "../img/0246-vaccination-v-gdp", w = 8, h = 7)
