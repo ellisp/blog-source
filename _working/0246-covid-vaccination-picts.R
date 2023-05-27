@@ -127,8 +127,9 @@ p2 <- data |>
        y = "Proportion of eligible population with 2 or more Covid vaccination shots",
        size = "Population:",
        title = "Covid vaccination and GDP per capita in the Pacific",
-       subtitle = "Grey line is from population-weighted logistic regression.",
+       subtitle = "Grey line is from population-weighted logistic regression. Relationship is not statistically significant.",
        caption = the_caption)
 
   
 svg_png(p2, "../img/0246-vaccination-v-gdp", w = 8, h = 7)
+

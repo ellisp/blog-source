@@ -4,7 +4,8 @@ title: Showing women proportion of Parliamentarians on a map
 date: 2023-05-26
 tag: 
    - Spatial
-   - DataVisualisation
+   - Pacific
+   - Visualisation
 description: I have a go at showing the proportion of members of Parliament that are women on a map of the world, as an experiment in a tricky data visualisation
 image: /img/0245-wom-map.svg
 socialimage: http://freerangestats.info/img/0245-wom-map.png
