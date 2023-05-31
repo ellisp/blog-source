@@ -5,32 +5,69 @@ library(ggdag)
 library(patchwork)
 #----------------simulating data-------------
 
-sim_confounder <- function(zx = 0, xy = 0.15, zy = 0.5, n = 1000, seed = 123){
+# In the below I call a variable `z` that in the diagrams is called `C`
+
+#' Simulate a 3 variable situation where a nuisance variable is a confounder
+#' 
+#' @param zx coefficient for impact of z on x
+#' @param xy coefficient for impact of x on y
+#' @param zy coefficient for impact of z on y
+#' @param n sample size
+#' @param seed random seed set for reproducibility
+#' @returns a tibble of three variables x, y and z. x causes y 
+#' and z is a confounder ie it impacts on both x and y
+sim_confounder <- function(zx, xy = 0.15, zy = 0.5, n = 1000, seed = 123){
   set.seed(seed)
   z <- rnorm(n)
   x <- zx * z + rnorm(n)
   y <- xy * x + zy * z + rnorm(n)
-  return(tibble(x, y, z))
+  return(tibble::tibble(x, y, z))
 }
 
 
-sim_collider <- function(xz = 0, xy = 0.15, yz = 0.5, n = 1000, seed = 123){
+#' Simulate a 3 variable situation where a nuisance variable is a confounder
+#' 
+#' @param xz coefficient for impact of x on z
+#' @param xy coefficient for impact of x on y
+#' @param yz coefficient for impact of y on z
+#' @param n sample size
+#' @param seed random seed set for reproducibility
+#' @returns a tibble of three variables x, y and z. x causes y 
+#' and z is a collider ie it is impacted on by both x and y
+sim_collider <- function(xz, xy = 0.15, yz = 0.5, n = 1000, seed = 123){
   set.seed(seed)
   x <- rnorm(n)
   y <- xy * x + rnorm(n)
   z <- xz * x + yz * y + rnorm(n)
-  return(tibble(x, y, z))
+  return(tibble::tibble(x, y, z))
 }
 
-sim_mediator <- function(xz = 0, xy = 0.15, zy = 0.5, n = 1000, seed = 123){
+#' Simulate a 3 variable situation where a nuisance variable is a confounder
+#' 
+#' @param xz coefficient for impact of x on z
+#' @param xy coefficient for impact of x on y
+#' @param zy coefficient for impact of z on y
+#' @param n sample size
+#' @param seed random seed set for reproducibility
+#' @returns a tibble of three variables x, y and z. x causes y 
+#' and z is a mediator ie x impacts on z and z impacts on y, so some of the 
+#' impact of x on y comes via z
+sim_mediator <- function(xz, xy = 0.15, zy = 0.5, n = 1000, seed = 123){
   set.seed(seed)
   x <- rnorm(n)
   z <- xz * x + rnorm(n)
   y = xy * x + zy * z + rnorm(n)
-  return(tibble(x, y, z))
+  return(tibble::tibble(x, y, z))
 }
 
+# Correlations of example different datasets:
+round(cor(sim_confounder(0.3, n = 10000)), 2)
+round(cor(sim_collider(0.3, n = 10000)), 2)
+round(cor(sim_mediator(0.3, n = 10000)), 2)
+# other than xy correlation being low for the collider, you couldn't tell these apart
 
+
+#-----------generate data and fit regressions, for various values of a
 
 the_a <- seq(from= -0.7, to = 0.7, length.out = 10)
 the_n <- 10000
@@ -40,8 +77,8 @@ res_conf <- lapply(the_a, sim_confounder, n = the_n) |>
   mutate(a = rep(the_a, each = the_n),
          var = "Confounder") |>
   group_by(a, var) |>
-  summarise(`Simple coefficient` = coef(lm(y ~ x))[2],
-            `Partial coefficient` = coef(lm(y ~ x + z))[2],
+  summarise(`Simple coefficient` = coef(lm(y ~ x))[['x']],
+            `Partial coefficient` = coef(lm(y ~ x + z))[['x']],
             `Causal effect` = 0.15)
 
 res_coll <- lapply(the_a, sim_collider, n = the_n) |>
@@ -49,8 +86,8 @@ res_coll <- lapply(the_a, sim_collider, n = the_n) |>
   mutate(a = rep(the_a, each = the_n),
          var = "Collider") |>
   group_by(a, var) |>
-  summarise(`Simple coefficient` = coef(lm(y ~ x))[2],
-            `Partial coefficient` = coef(lm(y ~ x + z))[2],
+  summarise(`Simple coefficient` = coef(lm(y ~ x))[['x']],
+            `Partial coefficient` = coef(lm(y ~ x + z))[['x']],
             `Causal effect` = 0.15)
 
 res_medi <- lapply(the_a, sim_mediator, n = the_n) |>
@@ -58,8 +95,8 @@ res_medi <- lapply(the_a, sim_mediator, n = the_n) |>
   mutate(a = rep(the_a, each = the_n),
          var = "Mediator") |>
   group_by(a, var) |>
-  summarise(`Simple coefficient` = coef(lm(y ~ x))[2],
-            `Partial coefficient` = coef(lm(y ~ x + z))[2],
+  summarise(`Simple coefficient` = coef(lm(y ~ x))[['x']],
+            `Partial coefficient` = coef(lm(y ~ x + z))[['x']],
             `Causal effect` = `Simple coefficient`)
 
 res <- bind_rows(res_conf, res_coll, res_medi) |>
