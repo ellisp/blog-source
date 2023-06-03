@@ -25,7 +25,7 @@ sim_confounder <- function(zx, xy = 0.15, zy = 0.5, n = 1000, seed = 123){
 }
 
 
-#' Simulate a 3 variable situation where a nuisance variable is a confounder
+#' Simulate a 3 variable situation where a nuisance variable is a collider
 #' 
 #' @param xz coefficient for impact of x on z
 #' @param xy coefficient for impact of x on y
@@ -42,7 +42,7 @@ sim_collider <- function(xz, xy = 0.15, yz = 0.5, n = 1000, seed = 123){
   return(tibble::tibble(x, y, z))
 }
 
-#' Simulate a 3 variable situation where a nuisance variable is a confounder
+#' Simulate a 3 variable situation where a nuisance variable is a mediator
 #' 
 #' @param xz coefficient for impact of x on z
 #' @param xy coefficient for impact of x on y
@@ -178,7 +178,7 @@ print_p <- function(){
   print(d1 + d2 + d3 + p + 
           plot_layout(design = design) +
           plot_annotation(title = "Statistical control requires causal justification",
-                          subtitle = "Only when the variable is a confounder is it correct to 'control' for it in a regression.",
+                          subtitle = "Only when the variable is a confounder is it always correct to 'control' for it in a regression.",
                           theme = theme(text = element_text(family = the_font)))
       )
 }
