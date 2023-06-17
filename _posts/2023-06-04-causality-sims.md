@@ -8,7 +8,7 @@ tag:
    - Simulations
 description: I do some simulations to reproduce a great figure by Wysocki et al; and show different data where the causal relationship between x and y is in the presence of a third variable that is either a confounder, collider or mediator.
 image: /img/0247-results-with-dags.svg
-socialimage: http://freerangestats.info/img/0247--results-with-dags.png
+socialimage: http://freerangestats.info/img/0247-results-with-dags.png
 category: R
 ---
 
