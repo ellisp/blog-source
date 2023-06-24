@@ -1,37 +1,57 @@
 
-library(tidyverse)
 library(DescTools)
 library(microbenchmark)
 library(modi)
 library(reldist)
 library(sampling)
+library(tidyverse)
+library(glue)
+library(kableExtra)
 
 #' Weighted percent rank
 #' 
+#' @param x a vector
+#' @param weights weights eg survey or frequency weights
+#' @param q quantiles to compute as the basis for cutting x, 
+#'   passed through to reldist::wtd.quantile 
 #' @details
-#' This is a bit of a hack, not sure I have it exactly right
-#' with regards to ties, etc
-#' 
+#' This is a bit of a hack, a homemande version of dplyr::percent_rank
+#' I haven't thought through things like NAs, ties, etc
+#' @importFrom reldist wtd.quantile
+#' @export
 wt_percent_rank <- function(x, 
                             weights, 
-                            probs = (0:1000) / 1000, 
-                            as_percentile = TRUE, ...){
+                            q = (0:1000) / 1000){
   # fastest method to calculate breaks
-  breaks <- reldist::wtd.quantile(x, w = weights, q = probs)
+  breaks <- reldist::wtd.quantile(x, weight = weights, q = q)
   # problem sometimes with ties in the breaks. This forces a way through:
   breaks <- unique(breaks)
   breaks[1] <- -Inf
   # cut the data where the quantile breaks are:
   y <- cut(x, breaks = breaks, labels = FALSE) # labels = FALSE for speed
-  if(as_percentile){
-    # convert this into a number from 0 to 100
-    y <- as.numeric(y) - 1
-    y <- y / max(y) * 100
-  } 
+  
+  # convert this into a number from 0 to 100
+  y <- as.numeric(y) - 1
+  y <- y / max(y)
   return(y)
 }
 
+# for unweighted data, wt_percent_rank should give identical
+# results to percent_rank
+x <- rnorm(1000)
+tibble(homemade = wt_percent_rank(x, weights = rep(1, length(x))),
+      dplyr = percent_rank(x)) |>
+  mutate(difference = homemade - dplyr) |>
+  arrange(desc(abs(difference)))
 
+# think hard about how this work, is it how I expect
+table(wt_percent_rank(rnorm(1000), weights = rep(1, 1000), q = (0:5) / 5))
+table(wt_percent_rank(rnorm(1000), weights = rep(1, 1000), q = (0:10) / 10))
+table(wt_percent_rank(rnorm(1000), weights = rep(1, 1000), q = (0:11) / 11))
+table(wt_percent_rank(rnorm(1000), weights = rep(1, 1000), q = (0:100) / 100))
+table(wt_percent_rank(rnorm(1000), weights = rep(1, 1000), q = (0:101) / 101))
+
+#----------------define population-----------------
 n <- 1e4
 N <- 1e7
 set.seed(123)
@@ -47,15 +67,9 @@ marginal_total <- population |>
 population |>
   group_by(educ) |>
   summarise(mean(income))
-# 
-# ggplot(population, aes(x = income, colour = as.factor(educ))) +
-#   geom_density() +
-#   scale_x_log10(label = dollar)
-# 
-# ggplot(population, aes(x = income)) +
-#   geom_density() +
-#   scale_x_log10(label = dollar)
 
+#---------------draw a sample------------------------
+# Sampling, with unequal probabilities
 # the slow part here is actually the sampling with unequal probabilities. Not
 # sure why so slow. See benchmarking later for why we use this strata()
 # function.
@@ -63,32 +77,55 @@ sample_rows <- sampling::strata(population, size = n,
                      pik = population$prob_sample, method = "systematic")
 
 sample <-  population[sample_rows$ID_unit, ] |>
+  # join with marginal totals and calculate weights necessary
+  # so weights add up to the marginal totals
   left_join(marginal_total, by = "educ") |>
   group_by(educ) |>
   mutate(wt = Freq / n()) |>
   ungroup() |>
+  # calculate unweighted and weighted percentile ranks
   mutate(uw_perc = percent_rank(income) * 100,
-         w_perc = wt_percent_rank(income, weights = wt),
+         w_perc = wt_percent_rank(income, weights = wt) * 100,
          difference = w_perc - uw_perc)
 
 # check that the weights add up to the population number
 stopifnot(sum(sample$wt) == N)
 
-# it *looks* like the unweighted and weighted percentils are indistinguishable:
-ggplot(sample, aes(x = uw_perc, y = w_perc)) +
-  geom_point()
+# visual check that the sum of weights in each category
+# of educ matches the population totals (they do):
+count(sample, educ, wt = wt, name = "Sum of weights") |>
+  left_join(marginal_total, by = "educ")
 
-# And the correlation is practically 1:
-cor(sample[, c("uw_perc", "w_perc")])
-# but this line is actually slightly curved!
+#-----------visual comparisons-------------
+
+the_title = str_wrap("Comparison between weighted and unweighted percentiles 
+                        in a simulated right-skewed variable from a complex 
+                        survey.", 80)
+
+# it *looks* like the unweighted and weighted percentils are indistinguishable:
+p1 <- ggplot(sample, aes(x = uw_perc, y = w_perc)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, colour = "steelblue") +
+  labs(title = the_title,
+  subtitle = str_squish(glue("Correlation = 
+                       {round(cor(sample$uw_perc, sample$w_perc), 3)}.
+                       Blue line shows equality.")),
+  x = "Unweighted percentile",
+  y = "Weighted percentile")
+# Note  this line is slightly curved.
+
+svg_png(p1, "../img/0250-scatter1")
 
 # at the higher incomes and lower incomes there is no difference -
 # we know you are the richest or the poorest. But for people in the
 # middle it makes a real difference:
-ggplot(sample, aes(x = uw_perc, y = difference)) +
+p2 <- ggplot(sample, aes(x = uw_perc, y = difference)) +
   geom_point(size= 0.11) +
   labs(x = "Unweighted percentile",
-       y = "Weighted minus unweighted percentile")
+       y = "Weighted minus\nunweighted percentile",
+       title = the_title)
+
+svg_png(p2, "../img/0250-scatter2")
 
 # check that the average weights are higher for the higher
 # education groups, as we wanted it to be
@@ -99,7 +136,10 @@ sample |>
             mean(uw_perc),
             mean(w_perc),
             n(),
-            sum(wt)) 
+            sum(wt)) |>
+  kable() |>
+  kable_styling() |>
+  writeClipboard()
 
 # unweighted mean of the unweighted percentile is 50:
 mean(sample$uw_perc)
@@ -111,13 +151,6 @@ weighted.mean(sample$w_perc, w = sample$wt)
 # but weighted mean of the unweighted percentile isn't!
 weighted.mean(sample$uw_perc, w = sample$wt)
 
-tibble(unweighted_mean = mean(sample$income), 
-       unweighted_se = sd(sample$income) / sqrt(nrow(sample)),
-       weighted_mean = weighted.mean(sample$income, w = sample$wt),
-       weighted_uw_perc = weighted.mean(sample$uw_perc, w = sample$wt),
-       weighted_w_perc = weighted.mean(sample$w_perc, w = sample$wt),
-       population = mean(population$income)) |>
-  t()
 
 #===================speed tests==================
 
@@ -200,3 +233,18 @@ microbenchmark(
 # not using labels for cut and using the quickest quantile
 # calculation we have.
 
+
+#----------percentile rank for large sample-----------
+# simulate similar size data to that which is in
+# https://www.demographic-research.org/volumes/vol48/26/48-26.pdf
+psid_eg <- tibble(
+  x = exp(rnorm(200000, 8, 1)),
+  w = exp(rnorm(200000)),
+  year = sample(1:10, size = 200000, replace = TRUE))
+)
+
+system.time({
+  psid_eg |>
+    group_by(year) |>
+    mutate(wpr = wt_percent_rank(x, weights = w))
+})
