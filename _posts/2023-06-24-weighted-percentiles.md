@@ -15,7 +15,7 @@ category: R
 
 This interesting paper came out recently: [A test of the predictive validity of relative versus absolute income for self-reported health and well-being in the United States](https://www.demographic-research.org/volumes/vol48/26/), by David Brady, Michaela Curran and Richard Carpiano. It uses a large sample of longitudinal data to exploit between-individual and within-individual (across time) variation in absolute and relative income to explore which one is more associated with well-being. Seems that in the USA, relative income is more important.
 
-"Relative income" here is defined as your position (percentile rank) in the national distribution of incomes in a particular year. The average relative income should be 50 by definition. I noticed that the mean percentile reported in table A.1 was 57, not 50, which led to this [slightly confusing (for me, anyway) exchange on Twitter](https://twitter.com/ellis2013nz/status/1671996132757757953). It sparked my interest in a broader question - what is the relationship between weighted and unweighted percentile rank when using survey data?
+"Relative income" here is defined as your position (percentile rank) in the national distribution of incomes in a particular year. The average relative income should be 50 by definition. I noticed that the mean percentile reported in table A.1 was 57, not 50, which led to this [slightly confusing (for me, anyway) exchange on Twitter](https://twitter.com/ellis2013nz/status/1671996132757757953). It sparked my interest in a broader question, not really related to the paper itself - what is the relationship between weighted and unweighted percentile rank when using survey data?
 
 ## Weighted percentile rank
 
@@ -136,7 +136,7 @@ This is what the mean income looks like for my different education levels:
 ```
 OK, now I need to draw a sample. I originally did this with `dplyr::slice_sample()` but found it slow. The `strata()` function in Yves Tillé and Alina Matei's `sampling` package is about twice as fast (benchmarking later in this post) so I used that instead. The code below draws that sample, does the post-stratification weighting (by simply joining the sample to the marginal totals data frame calculated earlier and creating weights forced to add up to those marginal totals) and then calculates the percentile ranks (both weighted and unweighted).
 
-BTW, the reason I was particularly attuned to speed in this overall exercise is that David Brady had commented that Stata was very slow in calculating the weighted percentile ranks. But apart from drawing the sample, everything I was doing in R turned out to be very fast; even calculating percentile ranks on 200,000 observations grouped by year (so similar to the actual data in the original paper) only takes a few seconds.
+BTW, the reason I was particularly attuned to speed in this overall exercise is that I had heard that Stata was very slow in calculating the weighted percentile ranks. But apart from drawing the sample, everything I was doing in R turned out to be very fast; even calculating percentile ranks on 200,000 observations grouped by year (so similar to the actual data in the original paper) only takes a few seconds.
 
 *Post continues after R code*
 {% highlight R lineanchors %}
@@ -220,8 +220,6 @@ print(p2)
 {% endhighlight %}
 
 A couple of other interesting observations. The unweighted mean of the unweighted percentile is 50; and so is the weighted mean of the weighted percentile. But the unweighted mean of the weighted percentile is low - about 47 - and the weighted mean of the unweighted percentile is high - about 53. This all makes sense based on the above reasoning.
-
-I now believe the reason the mean percentile in the original paper is about 57 is for a similar reason to what we see here. The percentiles were probably calculated on an unweighted basis (as David said, the correlation was 0.99 so for linear modelling purposes it makes very little difference, and because they were using Stata it is much faster for them to use the unweighted one); so the average shown in Table A.1 is a weighted average of the unweighted percentile. I haven't checked this in David's code, I don't think it matters very much at all, but I'm pleased I've at least found what I think is a plausible line of reasoning on this.
 
 Here are some summary stats on the sample:
 
@@ -444,3 +442,7 @@ system.time({
 {% endhighlight %}
 
 That's all, cheerio.
+
+### Versioning of this blog post
+
+An earlier version of this post had some speculation about the original referenced paper without me adequately checking what was actually happening. As it's not relevant for my main point that paragraph has been removed.

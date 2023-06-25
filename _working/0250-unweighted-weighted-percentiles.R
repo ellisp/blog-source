@@ -248,3 +248,4 @@ system.time({
     group_by(year) |>
     mutate(wpr = wt_percent_rank(x, weights = w))
 })
+# < 5 seconds
