@@ -1,0 +1,15 @@
+body {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-family: 'Roboto';
+  font-size: 12px;
+}
+
+h1 {
+	font-family: 'Prosto One';
+}
+
+h2, h3, h4, h5, h6 {
+	font-family: 'Sarala';
+}
+

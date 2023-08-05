@@ -1,0 +1,190 @@
+---
+layout: post
+title: Model life tables
+date: 2023-08-06
+tag: 
+   - Demography
+   - Animation
+description: I make an animation of the .
+image: /img/0252-model-life-tables.gif
+socialimage: http://freerangestats.info/img/0252-model-life-tables.gif
+category: R
+---
+<p>
+I am working to improve my knowledge of demography. This is something I've only had a relatively superficial engagement with but it's an important part of the responsibilities of the team where I work.
+</p>
+
+<p>
+A key tool in demography is a "life table", which is basically a table where rows are ages or age groups and columns are different calculations, the key one of which is the chance of a cohort in that age group dying in a given year. The cumulative probability of survival lets you directly calculate life expectancy from any given age.
+</p>
+
+<p>
+In a country with a very effective statistical system, these life tables can be estimated pretty directly. You take the number of people dying at each age from the death registrations, and the denominator of people per age cohort from the latest population projection. 
+</p>
+
+<p>
+But if your death registry data is incomplete or your population projection is unreliable, it is a much tougher job. And death registration is incomplete in many countries; enough so that indicator 17.19.2 against the Sustainable Development Goal "Partnerships for the Goals" includes a target for 80% of deaths to be registered; a target that many countries are going to struggle to meet by 2030. 
+</p>
+
+<p>
+To meet this use case (very common in developing countries), the United Nations provides a set of <a href = 'https://www.un.org/development/desa/pd/data/model-life-tables'>model life tables</a>:
+</p>
+
+<blockquote>
+"The United Nations and the demographic research community at large commonly use two sets of standard model life table families to derive a variety of mortality indicators and underlying mortality patterns for estimation and projection (Coale-Demeny, 1966 and 1989; United Nations, 1982). These two sets of model life tables, designed primarily for use in developing countries or for estimating historic populations, are limited to mortality patterns for a life span from age 20 to 75. A revised set of model life tables, extending the initials sets from life expectancy at birth (e(0)) from age 75.0 up to 92.5, uses both a limited life table as an asymptotic pattern and the classic Lee-Carter approach to derive intermediate age patterns (Buettner, 2002)."
+</blockquote>
+
+<p>
+The basic procedure, as I understand it, is that you 
+<ul>
+<li>get a few statistics that you *can* measure - like infant or under five mortality (which can be estimated with care from survey or census data) and chance of surviving to age 60 if you are 15</li> 
+<li>use your judgement and demographer community wisdom to decide the "family" of life tables that is most appropriate for your country, and </li>
+<li>then from that family you pick the particular model life table that most closely matches the statistic or statistics that you do have. </li>
+</ul>
+</p>
+
+<p>In essence, you are relying on a "typical" shape for the mortality at other ages.</p>
+
+<p>These are the families available, grouped under the two types of "Coale-Demeny" or "United Nations":</p>
+
+<pre>
+  type              family             n
+  <chr>             <chr>          <int>
+1 CD East           East           21222
+2 CD North          North          21222
+3 CD South          South          21222
+4 CD West           West           21222
+5 UN Chilean        Chilean        21222
+6 UN Far_East_Asian Far_East_Asian 21222
+7 UN General        General        21222
+8 UN Latin          Latin          21222
+9 UN South_Asian    South_Asian    21222
+  </pre>
+
+<p>Those values of 'n' are the number of rows of data associated with each family. Each family has 81 complete life tables for each of male and female - a life table for each value of "life expectancy at birth" from 20 to 100. The life tables contain mortalities for 131 ages, from 0 to 130. And 81 * 131 * 2 = 21222:</p>
+
+<pre>
+> range(mlt_raw$age)
+[1]   0 130
+> range(mlt_raw$e0)
+[1]  20 100
+> 81*131*2
+[1] 21222
+</pre>
+
+<p>So this lets us do some interesting comparisons. For example, you can look at the relationship between infant mortality and life expectancy for each family of the model life tables:</p>
+
+<object type="image/svg+xml" data='/img/0252-facets.svg' width='100%'><img src='/img/0252-facets.png' width='100%'></object>
+
+<p>Here's the code for everything so far - downloading the model life tables from the UN, reading them into R, counting the families and drawing that plot of life expectancies:</p>
+
+{% highlight R lineanchors %}
+
+#-------------functionality and import data----------------
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(glue)
+
+download.file("https://www.un.org/en/development/desa/population/publications/pdf/mortality/EMLT/MLT_UN2011_130_1y_complete.xlsx",
+              destfile = "model-life-tables.xlsx", mode = "wb")
+
+mlt_raw <- read_excel("model-life-tables.xlsx", sheet = "Sheet1") |>
+  clean_names()
+
+#---------------exploration-----------------
+mlt_raw  |>
+  count(type, family)
+
+# see https://blog.datawrapper.de/gendercolor/
+pal <- c("#D4855A", "#C5CB81")
+names(pal) <- c("Female", "Male")
+
+# life expectancy plot:
+mlt_raw |>
+  # filter to age == 0 so we can see life expectancy at birth
+  filter(age == 0) |>
+  arrange(desc(mx1)) |>
+  ggplot(aes(x = mx1, y = e0, colour = sex)) +
+  geom_line() +
+  facet_wrap(~family) +
+  scale_x_sqrt() +
+  scale_y_sqrt() +
+  scale_colour_manual(values = pal) +
+  labs(x = "mx1 for age zero i.e. raw infant mortality",
+       y = "life expectancy at birth")
+{% endhighlight %}
+
+<p>OK so that's a nice representation of the overall life expectancy, but what about the gritty detail of the mortality rates at each individual age? A nice way to look at this is via an animation:</p>
+
+<img src='/img/0252-model-life-tables.gif' width = '100%'>
+
+<p>I quite like this for giving you an overview of the mortality rates of the different families and different life expectancies, but it's not great for comparing say two different families with the same life expectancy. </p>
+
+<p>The animation was produced with this code:</p>
+
+{% highlight R lineanchors %}
+#------------animation---------
+types <- unique(mlt_raw$type)  
+e0s <- unique(mlt_raw$e0)
+
+
+dir.create("tmp_mlt")
+for(the_type in types){
+  for(e in e0s){
+    d <- mlt_raw |>
+      filter(type == the_type & e0 == e)
+    p <- d |>
+      ggplot(aes(x = age, y = mx1, colour = sex)) +
+      geom_line() +
+      scale_colour_manual(values = pal) +
+      labs(x = "Age",
+           y = "Death rate",
+           colour = "",
+           title = glue("Model life table type = {the_type}"),
+           subtitle = glue("Life expectancy = {e}")) +
+      theme(legend.position = c(0.2, 0.8))
+    
+    png(glue("tmp_mlt/model-{the_type}_le-{e}.png"), width = 2500, height = 1500, res = 300, type = "cairo")
+    print(p)
+    dev.off()
+  }
+}
+
+# Convert all the single frames into a GIF.
+# Requires ImageMagick to be installed. Can uncomment and run it here or do 
+# it directly in a system / shell window
+projdir <- setwd("tmp_mlt")
+system('magick -loop 0 -delay 30 *.png "model-life-tables.gif"')
+setwd(projdir)
+{% endhighlight %}
+
+<p>To better make the comparisons that I felt the animation wasn't good at (particularly family to family of model life table), I made a shiny app. See below, or:
+<ul>
+  <li><a href = "https://ellisp.shinyapps.io/model-life-tables/">Full screen version</a></li>
+  <li><a href = "">Source code</a></li>
+</ul>
+
+
+</p>
+<!-- wrapper style for resizing iframes from http://www.collaboration133.com/how-to-scale-iframe-content-in-ie-chrome-firefox-and-safari/2717/ -->
+<style>
+  #scaled-frame { width: 850px; height: 530px; border: 0px; }
+  #scaled-frame {
+  zoom: 0.75;
+  -moz-transform: scale(0.75);
+  -moz-transform-origin: 0 0;
+  -o-transform: scale(0.75);
+  -o-transform-origin: 0 0;
+  -webkit-transform: scale(0.75);
+  -webkit-transform-origin: 0 0;
+  overflow: hidden;
+  }
+
+  @media screen and (-webkit-min-device-pixel-ratio:0) {
+  #scaled-frame  { zoom: 1;  }
+  }
+</style>
+<div style="height: 404px">
+  <iframe id="scaled-frame" src="https://ellisp.shinyapps.io/model-life-tables/" style = "overflow-y: hidden;"></iframe>
+</div>
