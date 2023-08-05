@@ -1,10 +1,16 @@
+# Shiny app to explore the UN's model life tables
+# Peter Ellis August 2023
+#
+# see `../0252-model life tables.R` for the prep that creates the .rda objects
+# that are called here
+
 library(shiny)
 library(dplyr)
 library(ggplot2)
 library(glue)
-library(fresh) # for use_googlefont
-library(showtext)
-library(curl)
+library(fresh)    # for use_googlefont with HTML
+library(showtext) # for fonts in ggplot2 graphics
+library(curl)     # to make showtext work
 
 load("pal.rda")
 load("families.rda")
