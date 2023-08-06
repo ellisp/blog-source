@@ -4,8 +4,9 @@ title: Model life tables
 date: 2023-08-06
 tag: 
    - Demography
+   - shiny
    - Animation
-description: I make an animation of the .
+description: I make an animation and a basic Shiny app to explore the United Nations' model life tables used for demographic estimates in countries where direct estimation of mortality rates by age isn't possible.
 image: /img/0252-model-life-tables.gif
 socialimage: http://freerangestats.info/img/0252-model-life-tables.gif
 category: R
@@ -15,7 +16,7 @@ I am working to improve my knowledge of demography. This is something I've only 
 </p>
 
 <p>
-A key tool in demography is a "life table", which is basically a table where rows are ages or age groups and columns are different calculations, the key one of which is the chance of a cohort in that age group dying in a given year. The cumulative probability of survival lets you directly calculate life expectancy from any given age.
+A key tool in demography is a "life table", which is basically a table where rows are ages or age groups and columns are different calculations relating to the chance of the cohort in that age group dying in a given year. The cumulative probability of survival lets you directly calculate life expectancy from any given age.
 </p>
 
 <p>
@@ -35,15 +36,17 @@ To meet this use case (very common in developing countries), the United Nations 
 </blockquote>
 
 <p>
-The basic procedure, as I understand it, is that you 
+The basic procedure to use these, as I understand it, is that you: 
 <ul>
-<li>get a few statistics that you *can* measure - like infant or under five mortality (which can be estimated with care from survey or census data) and chance of surviving to age 60 if you are 15</li> 
+<li>get one or more statistics that you *can* measure - like infant or under five mortality (which can be estimated with care from survey or census data) and probability of surviving to age 60 if you are 15</li> 
 <li>use your judgement and demographer community wisdom to decide the "family" of life tables that is most appropriate for your country, and </li>
 <li>then from that family you pick the particular model life table that most closely matches the statistic or statistics that you do have. </li>
 </ul>
 </p>
 
-<p>In essence, you are relying on a "typical" shape for the mortality at other ages.</p>
+<p>Alternatively it is possible to model the curves (of death rate ~ age) directly with a logistic function of some sort - using the curves of the model tables as a starting point and modifying the parameters according to the statistics available. That takes me beyond today's scope I think.</p>
+
+<p>In essence, either way, you are relying on a "typical" shape for the mortality at the ages that you can't measure mortality directly.</p>
 
 <p>These are the families available, grouped under the two types of "Coale-Demeny" or "United Nations":</p>
 
@@ -85,6 +88,7 @@ library(tidyverse)
 library(readxl)
 library(janitor)
 library(glue)
+library(ggrepel)
 
 download.file("https://www.un.org/en/development/desa/population/publications/pdf/mortality/EMLT/MLT_UN2011_130_1y_complete.xlsx",
               destfile = "model-life-tables.xlsx", mode = "wb")
@@ -96,8 +100,9 @@ mlt_raw <- read_excel("model-life-tables.xlsx", sheet = "Sheet1") |>
 mlt_raw  |>
   count(type, family)
 
-# see https://blog.datawrapper.de/gendercolor/
-pal <- c("#D4855A", "#C5CB81")
+# Colors for genders. Not sure I'm happy with these, but I want something that's not blue and pink and
+# gives roughly same perceptual prominence to both colours.
+pal <- c("brown", "darkblue")
 names(pal) <- c("Female", "Male")
 
 # life expectancy plot:
@@ -115,7 +120,51 @@ mlt_raw |>
        y = "life expectancy at birth")
 {% endhighlight %}
 
-<p>OK so that's a nice representation of the overall life expectancy, but what about the gritty detail of the mortality rates at each individual age? A nice way to look at this is via an animation:</p>
+<p>Alternatively we can look at a more summarised version of the data by comparing a couple of particular demographic statistics, at a given life expectancy, for the different model life tables. Here's my attempt at repeating (but adding in a sex dimension) Figure 1 from <a href = 'http://demographicestimation.iussp.org/content/introduction-model-life-tables'>this UNFPA instructional site</a>.</p>
+
+<object type="image/svg+xml" data='/img/0252-scatter.svg' width='100%'><img src='/img/0252-scatter.png' width='100%'></object>
+
+<p>I like this plot. It lets you see at a glance how the different families of model life table vary in at least one or two important ways. For example, we can see that the "South" (Coale-Demeny) and "South Asian" (UN) tables have relatively high child mortality (and then of course compensating low adult mortality) for a given life expectancy.</p>
+
+<p>That was done with this code. Note my struggles in the comments with exactly what is meant age 5, age 60 etc. and hence which column to use from the life table; significant expertise with life tables involves understanding the exact ways adjustments are made for things like the difference between age x and the average age when people are age x; the fact that young people die earlier in their first year rather than later; and so on:</p>
+
+{% highlight R lineanchors %}
+# recreate Figure 1 from 
+# http://demographicestimation.iussp.org/content/introduction-model-life-tables
+
+# Note that age means "age from x to x + n" where n is the age interval ie. 1
+# so age==4 means 4 to 5
+# lx1 is the number of people at the beginning of that period. It starts at
+# 100000 for age 0. lx1_2 is sort of adjusted for people perhaps in the middle
+# of hte period, or some adjustment for different birthdays?
+# so taking this together, lx1 when age == 5 will be the number of people alive
+# at the beginning of age 5 to age 6
+u5m <- mlt_raw |>
+  filter(e0 == 60) |>
+  filter(age == 5) |>
+  group_by(family, sex, type_mlt)  |>
+  mutate(under_five = (100000 - lx1) / 100000) |>
+  select(family, sex, type_mlt, under_five)
+
+am <- mlt_raw |>
+  filter(e0 == 60) |>
+  group_by(family, sex, type_mlt) |>
+  summarise(adult = 1 - lx1[age == 60] / lx1[age == 15])
+  
+u5m |>
+  left_join(am, by = c("family", "sex", "type_mlt")) |>
+  ggplot(aes(x = under_five, y = adult, colour = type_mlt)) +
+  facet_wrap(~sex) +
+  geom_point() +
+  geom_text_repel(aes(label = family), size = 2.7) +
+  labs(x = "Under five mortality",
+       y = "Adult mortality",
+       colour = "Model life table type",
+       title = "Comparison of different families of Model Life Table",
+       subtitle = "Life expectancy = 60")
+{% endhighlight %}
+
+<p>OK so that's a nice representation of the overall life expectancy, but what about the gritty detail of the mortality rates at each individual age? One way to look at this is via an animation:</p>
 
 <img src='/img/0252-model-life-tables.gif' width = '100%'>
 
@@ -139,14 +188,16 @@ for(the_type in types){
       geom_line() +
       scale_colour_manual(values = pal) +
       labs(x = "Age",
-           y = "Death rate",
-           colour = "",
-           title = glue("Model life table type = {the_type}"),
-           subtitle = glue("Life expectancy = {e}")) +
+          y = "Death rate",
+          colour = "",
+          title = glue("Model life table type = {the_type}"),
+          subtitle = glue("Life expectancy = {e}")) +
+      theme_minimal(base_family = "Calibri") +
       theme(legend.position = c(0.2, 0.8))
     
-    png(glue("tmp_mlt/model-{the_type}_le-{e}.png"), width = 2500, height = 1500, res = 300, type = "cairo")
-    print(p)
+    png(glue("tmp_mlt/model-{the_type}_le-{e}.png"), 
+        width = 1300, height = 800, res = 300, type = "cairo")
+      print(p)
     dev.off()
   }
 }
@@ -188,3 +239,7 @@ setwd(projdir)
 <div style="height: 404px">
   <iframe id="scaled-frame" src="https://ellisp.shinyapps.io/model-life-tables/" style = "overflow-y: hidden;"></iframe>
 </div>
+
+If I had a bit more oomph I would add some tooltips and stuff, but I think I've done enough to feel I'm getting the hang of this thing.
+
+As mentioned earlier, this isn't an area of deep expertise for me. I'm quite likely to have got some details of the terminology wrong, for example, so use the above with caution, and please add comments for anything you spot that I can correct.

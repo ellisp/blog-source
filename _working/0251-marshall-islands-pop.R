@@ -198,12 +198,15 @@ for(i in 1:10){
   pops[i, ]$pop <- sum(new_data$people)
 }
 
-p3 <- mip |>
+mip_plot_data <- mip |>
   mutate(source = "Census") |>
-  rbind(mutate(pops, source = "Projection")) |>
+  rbind(mutate(pops, source = "Projection"))
+p3 <- mip_plot_data |>
   ggplot(aes(x = year, y = pop, colour = source)) +
   geom_line() +
-  geom_point() +
+  geom_text(aes(label = comma(pop, accuracy = 1000)), 
+            hjust = 0,
+            data = filter(mip_plot_data, year == max(year))) +
   labs(x = "",
        y = "",
        colour = "",
@@ -216,10 +219,11 @@ p3 <- mip |>
 #-------alternative based on crude birth and death rates--------
 
 crude <- tibble(
-  year = c(1988, 1999, 2011),
-  cdr = c(8.9, 4.9, 3.7), # Table 8.7 2011 report
-  cbr = c(NA, 41.8, 32.1)  # Table 8.3 2011 report
+  year = c(1988, 1999, 2011, 2021),
+  cdr = c(8.9, 4.9, 3.7, NA), # Table 8.7 2011 report
+  cbr = c(NA, 41.8, 32.1, 16.6)  # Table 8.3 2011 report
 )
+
 conflicts_prefer(dplyr::lag)
 
 crude_l <- crude |>
@@ -227,7 +231,10 @@ crude_l <- crude |>
   group_by(variable) |>
   arrange(variable, year) |>
   mutate(source = "Census",
-         growth = (value / lag(value)) ^ (1/(year - lag(year))) - 1)
+         growth = (value / lag(value)) ^ (1/(year - lag(year))) - 1,
+         growth_to_use = ifelse(variable == "cbr",
+                                growth[year == 2021],
+                                growth[year == 2011]))
 
 new_crude <- expand.grid(variable = c("cdr", "cbr"), 
                          year = 2012:2021,
@@ -237,10 +244,13 @@ crude_l2 <- crude_l |>
   bind_rows(new_crude) |>
   arrange(variable, year) |>
   group_by(variable) |>
+  fill(growth_to_use) |>
   mutate(value = if_else(
     is.na(value),
-    value[year == 2011] * (1 + growth[year == 2011]) ^ (year - 2011),
-    value))
+    value[year == 2011] * (1 + growth_to_use) ^ (year - 2011),
+    value)) |>
+  filter(!(source == "Projection" & variable == "cbr" & year == 2021)) |>
+  filter(!(source == "Census" & variable == "cdr" & year == 2021))
 
 crude_l2
 
@@ -272,16 +282,18 @@ for(i in 2:nrow(crude_l3)){
 p5 <- crude_l3 |>
   ggplot(aes(x = year, y = pop, colour = source)) +
   geom_line() +
-  #geom_point() +
+  geom_text(aes(label = comma(pop, accuracy = 1000)), 
+            hjust = 0,
+            data = filter(crude_l3, year %in% c(2011, 2021))) +
   labs(x = "",
        y = "",
        colour = "",
        title = "",
-       subtitle = "Projection if no migration and crude birth and death rates grew at 1999-2011 rate") +
+       subtitle = "Projection if no migration and crude birth and death rates grew at best estimates") +
   scale_y_continuous(label = comma)
   
 
 p3 +p5 +plot_layout(ncol = 1)
 
 
-
+p4
