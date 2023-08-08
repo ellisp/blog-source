@@ -117,7 +117,7 @@ setwd(projdir)
 #---------prep for shiny app-----------
 families <- list(
   "CD" = c("East", "North", "South", "West"),
-  "UN" = c("Chilean", "Far_East_asian", "General", "Latin", "South_Asian")
+  "UN" = c("Chilean", "Far_East_Asian", "General", "Latin", "South_Asian")
 )
 
 save(mlt_raw, file = "0252-model-life-tables/mlt_raw.rda")

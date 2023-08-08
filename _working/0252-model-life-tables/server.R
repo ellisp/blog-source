@@ -20,6 +20,10 @@ server <- function(input, output) {
            title = glue("Model life table family = {input$family}"),
            subtitle = glue("Life expectancy = {input$e0}")) +
       theme(legend.position = c(0.2, 0.8))
+    
+    if(input$yscale == "Logarithmic"){
+      p <- p + scale_y_log10()
+    }
 
     return(p)
     

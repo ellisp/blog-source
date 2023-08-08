@@ -21,6 +21,8 @@ shinyUI(fluidPage(
             sliderInput("e0", 
                         "Life expectancy at birth",
                         min = 20, max = 100, step = 1, round = TRUE, value = 60),
+            radioButtons("yscale", "Vertical scale", choices = c("Original", "Logarithmic"),
+                         selected = "Original", inline = TRUE),
             
             HTML("<p>Produced by freerangestats.info. Read the original 
                  <a href='http://freerangestats.info/blog/2023/08/06/model-life-tables'>blog post</a>.</p>")
