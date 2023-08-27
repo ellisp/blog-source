@@ -50,7 +50,7 @@ between the two questions.  It is defined as (observed - expected) / sqrt(expect
     HTML("<p>This cross-tab tool was built by <a href='http://ellisp.github.io'>Peter's Stats Stuff</a> with
 data from the <a href='http://www.nzes.org/'>New Zealand Election Study</a> but is not affiliated with that
 Study.</p><p>Use at your own risk.</p>
-<p><a href='https://github.com/ellisp/ellisp.github.io/tree/source/_working/0108'>Source code is on GitHub.</a></p>
+<p><a href='https://github.com/ellisp/blog-source/tree/master/_working/0108'>Source code is on GitHub.</a></p>
 <P>For a more complex multivariate exploration of the probability of voting for different parties
 for people with different <i>combinations</i> of variables, check out this web app on <a href ='https://ellisp.shinyapps.io/individual-vote-nzes/'>
          Modelled individual party vote</a>.")
