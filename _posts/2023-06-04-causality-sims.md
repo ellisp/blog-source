@@ -179,7 +179,7 @@ It only remains to draw and polish the chart, which is basic ggplot2 stuff. Prob
 #------------------draw plot-------------------
 the_font <- "Calibri"
 tg <- guide_legend(direction = "vertical", keywidth = unit(3, "cm"))
-p <- res |>x
+p <- res |>
   gather(method, coefficient, -a, -var) |>
   mutate(method = fct_relevel(method, "Causal effect", after = Inf),
          var = fct_relevel(var, "Confounder")) |>
@@ -194,7 +194,7 @@ p <- res |>x
   labs(colour = "", linetype = "",
        y = expression("Coefficient "~beta),
        caption = "Reproducing (inexactly) a figure by Wysocki, Lawson and Rhemtulla in \n'Statistical Control Requires Causal Justification'. http://freerangestats.info") +
-  theme_light(base_family = main_font) + 
+  theme_light(base_family = the_font) + 
   theme(plot.caption = element_text(colour = "grey50"),
         strip.text = element_text(size = rel(1), face = "bold"),
         legend.position = "top")
