@@ -87,7 +87,7 @@ p <- d1 |>
   gg_circle(xc = dc2[1, ]$can_x, yc = dc2[1, ]$can_y, r = dc2[1, ]$can_x, 
             color = "orange", fill = "orange", alpha = 0.5) +
   coord_equal() +
-  labs(x = "", y = "") +
+  labs(x = "", y = "", title = "Find the radius of the brown circle") +
   annotate("text", x = 0.8, y = 0.95, label = "y==sqrt(x)", parse = TRUE, colour = "red") +
   annotate("text", x = 0.8, y = 0.70, label = "x^2 + y^2 == 1", parse = TRUE, colour = "purple")
 
