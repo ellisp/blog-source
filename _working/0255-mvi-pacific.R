@@ -4,8 +4,10 @@ library(readxl)
 library(ggrepel)
 library(spcstyle)
 
-download.file("https://www.un.org/ohrlls/sites/www.un.org.ohrlls/files/files/mvi_results.xlsx", 
-              destfile  ="mvi_results.xlsx", mode = "wb")
+if(!file.exists("mvi_results.xlsx")){
+  download.file("https://www.un.org/ohrlls/sites/www.un.org.ohrlls/files/files/mvi_results.xlsx", 
+                destfile  ="mvi_results.xlsx", mode = "wb")
+}
 
 mvi <- read_excel("mvi_results.xlsx", sheet = "MVI scores", skip = 1) |>
   filter(!is.na(Country))
@@ -18,7 +20,7 @@ sv <- read_excel("mvi_results.xlsx", sheet = "Structural vulnerability") |>
 lsr <- read_excel("mvi_results.xlsx", sheet = "Lack of structural resilience") |>
   select(-Country) |>
   gather(variable, value, -ISO) |>
-  mutate(type = "Lack of sructural resilience")
+  mutate(type = "Lack of structural resilience")
 
 
 
@@ -88,7 +90,10 @@ mvi <- mvi |>
 
 #------------------overview of 2 dimensions-----------
 
-mc <- "grey50"
+mc <- "grey82"                # colour for median annotations
+pc <- c("grey70", "blue3") # colours for points and bars
+
+
 p1 <- mvi |>
   ggplot(aes(x = svi,
              y = lsri,
@@ -104,13 +109,14 @@ p1 <- mvi |>
                   aes(label = Country), size = 3) +
   coord_equal() +
   labs(x = "Structural vulnerability",
-       y = "Lack of of social resilience",
-       title = "The two indexes that make up the Multidimensional Vulnerability Index") +
-  scale_colour_manual(values = c("grey70", spc_cols(2))) +
+       y = "Lack of of structural resilience",
+       title = "The two indexes that make up the Multidimensional Vulnerability Index",
+       subtitle = "Highlighting Pacific Island countries, and selected other countries with high levels of vulnerability") +
+  scale_colour_manual(values = pc) +
   theme(legend.position = "none",
         panel.grid = element_blank())
 
-svg_png(p1, "../img/0255-two-indexes", w = 8, h = 7)
+
 
 
 p2 <- components |>
@@ -125,7 +131,7 @@ p2 <- components |>
   ggplot(aes(x = value, y = country2, fill = is_pict)) +
   facet_wrap(~variable) +
   geom_col() +
-  scale_fill_manual(values = c("grey70", spc_cols(2))) +
+  scale_fill_manual(values = pc) +
   theme(legend.position = "none") +
   labs(title = "Original variables making up the Structural Vulnerability Index",
        subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
@@ -143,7 +149,7 @@ p3 <- components |>
   ggplot(aes(x = value, y = country2, fill = is_pict)) +
   facet_wrap(~variable) +
   geom_col() +
-  scale_fill_manual(values = c("grey70", spc_cols(2))) +
+  scale_fill_manual(values = pc) +
   theme(legend.position = "none")  +
   labs(title = "Original variables making up the Lack of Structural Resilience Index",
        subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
@@ -162,7 +168,7 @@ p4 <- components |>
   ggplot(aes(x = value, y = country2, fill = is_pict)) +
   facet_wrap(~variable) +
   geom_col() +
-  scale_fill_manual(values = c("grey70", spc_cols(2))) +
+  scale_fill_manual(values = pc) +
   theme(legend.position = "none") +
   labs(title = "Constructed concepts making up the Structural Vulnerability Index",
        subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
@@ -180,14 +186,15 @@ p5 <- components |>
   ggplot(aes(x = value, y = country2, fill = is_pict)) +
   facet_wrap(~variable) +
   geom_col() +
-  scale_fill_manual(values = c("grey70", spc_cols(2))) +
+  scale_fill_manual(values = pc) +
   theme(legend.position = "none")  +
   labs(title = "Constructed concepts making up the Lack of Structural Resilience Index",
        subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
        x = "", y = "")
 
-p1
-p2
-p4
-p3
-p5
+svg_png(p1, "../img/0255-two-indexes", w = 8, h = 7)
+svg_png(p4, "../img/0255-sv-concepts", w = 10, h = 7)
+svg_png(p5, "../img/0255-lsr-concepts", w = 10, h = 7)
+svg_png(p2, "../img/0255-sv-variables", w = 10, h = 7)
+svg_png(p3, "../img/0255-lsr-variables", w = 10, h = 7)
+
