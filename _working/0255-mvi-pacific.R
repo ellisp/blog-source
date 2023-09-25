@@ -117,80 +117,50 @@ p1 <- mvi |>
         panel.grid = element_blank())
 
 
+group_plot <- function(comp_trans){
+  p <- comp_trans |>
+    group_by(country2, variable, type, is_pict) |>
+    summarise(value = median(value, na.rm = TRUE)) |>
+    ungroup() |>
+    mutate(country2 = fct_reorder(country2, value),
+           variable = str_wrap(variable, 30),
+           country2 = fct_relevel(country2, "Median non-Pacific")) |>
+    ggplot(aes(x = value, y = country2, fill = is_pict)) +
+    facet_wrap(~variable) +
+    geom_col() +
+    scale_fill_manual(values = pc) +
+    theme(legend.position = "none") +
+    labs(subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
+         x = "", y = "")
+  return(p)
+    
+}
 
 
 p2 <- components |>
   filter(type == "Structural vulnerability") |>
   filter(raw_var) |>
-  group_by(country2, variable, type, is_pict) |>
-  summarise(value = median(value, na.rm = TRUE)) |>
-  ungroup() |>
-  mutate(country2 = fct_reorder(country2, value),
-         variable = str_wrap(variable, 30),
-         country2 = fct_relevel(country2, "Median non-Pacific")) |>
-  ggplot(aes(x = value, y = country2, fill = is_pict)) +
-  facet_wrap(~variable) +
-  geom_col() +
-  scale_fill_manual(values = pc) +
-  theme(legend.position = "none") +
-  labs(title = "Original variables making up the Structural Vulnerability Index",
-       subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-       x = "", y = "")
+  group_plot() +
+  labs(title = "Original variables making up the Structural Vulnerability Index")
 
 p3 <- components |>
   filter(type != "Structural vulnerability") |>
   filter(raw_var) |>
-  group_by(country2, variable, type, is_pict) |>
-  summarise(value = median(value, na.rm = TRUE)) |>
-  ungroup() |>
-  mutate(country2 = fct_reorder(country2, value),
-         variable = str_wrap(variable, 30),
-         country2 = fct_relevel(country2, "Median non-Pacific")) |>
-  ggplot(aes(x = value, y = country2, fill = is_pict)) +
-  facet_wrap(~variable) +
-  geom_col() +
-  scale_fill_manual(values = pc) +
-  theme(legend.position = "none")  +
-  labs(title = "Original variables making up the Lack of Structural Resilience Index",
-       subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-       x = "", y = "")
+  group_plot() +
+  labs(title = "Original variables making up the Lack of Structural Resilience Index")
 
 
 p4 <- components |>
   filter(type == "Structural vulnerability") |>
   filter(!raw_var) |>
-  group_by(country2, variable, type, is_pict) |>
-  summarise(value = median(value, na.rm = TRUE)) |>
-  ungroup() |>
-  mutate(country2 = fct_reorder(country2, value),
-         variable = str_wrap(variable, 30),
-         country2 = fct_relevel(country2, "Median non-Pacific")) |>
-  ggplot(aes(x = value, y = country2, fill = is_pict)) +
-  facet_wrap(~variable) +
-  geom_col() +
-  scale_fill_manual(values = pc) +
-  theme(legend.position = "none") +
-  labs(title = "Constructed concepts making up the Structural Vulnerability Index",
-       subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-       x = "", y = "")
+  group_plot() +
+  labs(title = "Constructed concepts making up the Structural Vulnerability Index")
 
 p5 <- components |>
   filter(type != "Structural vulnerability") |>
   filter(!raw_var) |>
-  group_by(country2, variable, type, is_pict) |>
-  summarise(value = median(value, na.rm = TRUE)) |>
-  ungroup() |>
-  mutate(country2 = fct_reorder(country2, value),
-         variable = str_wrap(variable, 30),
-         country2 = fct_relevel(country2, "Median non-Pacific")) |>
-  ggplot(aes(x = value, y = country2, fill = is_pict)) +
-  facet_wrap(~variable) +
-  geom_col() +
-  scale_fill_manual(values = pc) +
-  theme(legend.position = "none")  +
-  labs(title = "Constructed concepts making up the Lack of Structural Resilience Index",
-       subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-       x = "", y = "")
+  group_plot() +
+  labs(title = "Constructed concepts making up the Lack of Structural Resilience Index")
 
 svg_png(p1, "../img/0255-two-indexes", w = 8, h = 7)
 svg_png(p4, "../img/0255-sv-concepts", w = 10, h = 7)
