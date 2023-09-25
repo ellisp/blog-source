@@ -111,7 +111,8 @@ p1 <- mvi |>
   labs(x = "Structural vulnerability",
        y = "Lack of of structural resilience",
        title = "The two indexes that make up the Multidimensional Vulnerability Index",
-       subtitle = "Highlighting Pacific Island countries, and selected other countries with high levels of vulnerability") +
+       subtitle = "Highlighting Pacific Island countries, and selected other countries with high levels of vulnerability",
+       caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC") +
   scale_colour_manual(values = pc) +
   theme(legend.position = "none",
         panel.grid = element_blank())
@@ -131,7 +132,7 @@ group_plot <- function(comp_trans){
     scale_fill_manual(values = pc) +
     theme(legend.position = "none") +
     labs(subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-         x = "", y = "")
+         x = "", y = "", caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC")
   return(p)
     
 }
