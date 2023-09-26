@@ -9,7 +9,9 @@ if(!file.exists("mvi_results.xlsx")){
 }
 
 mvi <- read_excel("mvi_results.xlsx", sheet = "MVI scores", skip = 1) |>
-  filter(!is.na(Country))
+  filter(!is.na(Country)) |>
+  # fix an encoding problem with the space in South Sudan that doesn't print properly:
+  mutate(Country = ifelse(grepl("South.+Sudan", Country), "South Sudan", Country))
 
 sv <- read_excel("mvi_results.xlsx", sheet = "Structural vulnerability") |>
   select(-Country) |>
