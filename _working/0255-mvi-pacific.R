@@ -93,7 +93,28 @@ mvi <- mvi |>
 
 mc <- "grey82"                # colour for median annotations
 pc <- c("grey70", "blue3") # colours for points and bars
+the_caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC"
 
+p0 <- mvi |>
+  filter(is_pict == "Pacific Island") |>
+  bind_rows(tibble(Country = "Other countries", `MVI - Score` = 0)) |>
+  mutate(Country = fct_reorder(Country, `MVI - Score`)) |>
+  ggplot(aes(x = `MVI - Score`, y = Country)) +
+  geom_segment(xend = 0, aes(yend = Country), colour = pc[2]) +
+  geom_point(aes(colour = Country), size = 3) +
+  geom_text(data = filter(mvi, is_pict != "Pacific Island"), colour = mc, y = 1, label = "|") +
+  geom_vline(xintercept = median(mvi$`MVI - Score`), colour = mc, linewidth = 2, alpha = 0.5) +
+  annotate("text", x = 51.5, y = 13.41, label = "World median", colour = mc, hjust = 1) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        legend.position = "none",
+        axis.ticks = element_blank()) +
+  scale_colour_manual(values = rep(c("transparent", pc[2]), times = c(1, 100))) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0, max(mvi$`MVI - Score`))) +
+  labs( y = "",
+        title = "Multidimensional Vulnerability Index",
+        subtitle = "Pacific Island countries compared to all developing countries",
+        caption = the_caption)
 
 p1 <- mvi |>
   ggplot(aes(x = svi,
@@ -113,7 +134,7 @@ p1 <- mvi |>
        y = "Lack of of structural resilience",
        title = "The two indexes that make up the Multidimensional Vulnerability Index",
        subtitle = "Highlighting Pacific Island countries, and selected other countries with high levels of vulnerability",
-       caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC") +
+       caption = the_caption) +
   scale_colour_manual(values = pc) +
   theme(legend.position = "none",
         panel.grid = element_blank(), 
@@ -141,7 +162,7 @@ group_plot <- function(comp_trans){
           axis.ticks = element_blank(),
           strip.background = element_rect(fill = "white")) +
     labs(subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
-         x = "", y = "", caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC")
+         x = "", y = "", caption = the_caption)
   return(p)
 }
 
@@ -171,6 +192,7 @@ p5 <- components |>
   group_plot() +
   labs(title = "Constructed concepts making up the Lack of Structural Resilience Index")
 
+svg_png(p0, "../img/0255-overall-index", w = 8, h = 5)
 svg_png(p1, "../img/0255-two-indexes", w = 8, h = 7)
 svg_png(p4, "../img/0255-sv-concepts", w = 11, h = 8)
 svg_png(p5, "../img/0255-lsr-concepts", w = 10, h = 7)
