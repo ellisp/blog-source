@@ -2,7 +2,6 @@
 library(tidyverse)
 library(readxl)
 library(ggrepel)
-library(spcstyle)
 
 if(!file.exists("mvi_results.xlsx")){
   download.file("https://www.un.org/ohrlls/sites/www.un.org.ohrlls/files/files/mvi_results.xlsx", 
@@ -115,7 +114,8 @@ p1 <- mvi |>
        caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC") +
   scale_colour_manual(values = pc) +
   theme(legend.position = "none",
-        panel.grid = element_blank())
+        panel.grid = element_blank(), 
+        panel.border = element_blank())
 
 
 group_plot <- function(comp_trans){
@@ -130,11 +130,17 @@ group_plot <- function(comp_trans){
     facet_wrap(~variable) +
     geom_col() +
     scale_fill_manual(values = pc) +
-    theme(legend.position = "none") +
+    theme(legend.position = "none",
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.minor.y = element_blank(), 
+          panel.border = element_blank(),
+          strip.text = element_text(size = rel(0.8), face = "plain", colour = "grey20"),
+          axis.ticks = element_blank(),
+          strip.background = element_rect(fill = "white")) +
     labs(subtitle = "One of the two indexes making up the Multidimensional Vulnerability Index",
          x = "", y = "", caption = "Data from https://www.un.org/ohrlls/mvi, analysis by SPC")
   return(p)
-    
 }
 
 
@@ -164,7 +170,7 @@ p5 <- components |>
   labs(title = "Constructed concepts making up the Lack of Structural Resilience Index")
 
 svg_png(p1, "../img/0255-two-indexes", w = 8, h = 7)
-svg_png(p4, "../img/0255-sv-concepts", w = 10, h = 7)
+svg_png(p4, "../img/0255-sv-concepts", w = 11, h = 8)
 svg_png(p5, "../img/0255-lsr-concepts", w = 10, h = 7)
 svg_png(p2, "../img/0255-sv-variables", w = 10, h = 7)
 svg_png(p3, "../img/0255-lsr-variables", w = 10, h = 7)
