@@ -102,7 +102,7 @@ mvi <- mvi |>
   rename(svi = `Structural vulnerability index`,
          lsri = `Lack of Structural Resilience Index`)
 
-#------------------overview of 2 dimensions-----------
+#------------------overview of 1 and of 2 dimensional versions of the index-----------
 
 mc <- "grey82"                # colour for median annotations
 pc <- c("grey70", "blue3") # colours for points and bars
@@ -153,7 +153,9 @@ p1 <- mvi |>
         panel.grid = element_blank(), 
         panel.border = element_blank())
 
+#------------------plots of the concepts and original variables--------
 
+# a lot of shared code coming up so put a lot of stuff into one function:
 group_plot <- function(comp_trans){
   p <- comp_trans |>
     group_by(country2, variable, type, is_pict) |>
@@ -269,7 +271,7 @@ g1 <- ggraph(mvi_graph, layout = "fr") +
 
 svg_png(g1, "../img/0255-construction", w = 23, h = 13)
 
-#-----------------network graph showing one country's results------------------
+#-----------------network graph showing one country's results at a time------------------
 
 combined <- mvi |>
   select(Country, 
