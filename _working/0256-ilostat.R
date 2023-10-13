@@ -68,50 +68,50 @@ d1 <- d0 |>
   filter(classif1 == "HHT_AGGREGATE_TOTAL") 
   
 
-d1 |>
+p1 <- d1 |>
   filter(classif1 == "HHT_AGGREGATE_TOTAL") |>
   ggplot(aes(x = time, y = obs_value, linetype = classif2, shape = classif2, colour = sex)) +
   facet_wrap( ~ country) +
   geom_point() +
-  geom_line()
+  geom_line()  +
+  labs(title = lab1,
+       subtitle = "Relatively unpolished plot with some codes rather than labels",
+       x = "",
+       y = "")
 
-d1 |>
-  mutate(country =fct_reorder(country, obs_value)) |>
-  ggplot(aes(x = time, y = obs_value, linetype = classif2, shape = classif2, colour = sex)) +
-  facet_grid(classif2 ~ country) +
-  geom_point() +
-  geom_line() +
-  labs(title = the_label)
+svg_png(p1, "../img/0256-rural-urban", w = 8, h = 6)
 
-
-
+# we can get the code lists for the classifications following 
+# a straightforward naming convention. this wasn't obvious to
+# me fro the helpfile but wasn't too hard to guess/work out:
 hht <- sdmx_ilostat(dsd = "CL_HHT")
+sex <- sdmx_ilostat(dsd = "CL_SEX")
+# Note we could have done this for the country codes too.
 
 d2 <- d0 |>
   filter(classif2 == "GEO_COV_NAT") |>
   filter(classif1 != "HHT_AGGREGATE_TOTAL")  |>
   left_join(hht, by = c("classif1" = "code")) |>
-  rename(hht_label = label)
+  rename(hht_label = label) |> 
+  left_join(select(sex, code, sex_label = label), 
+            by = c("sex" = "code"))
 
-d2 |>
+
+p2 <- d2 |>
   mutate(country =fct_reorder(country, obs_value)) |>
   mutate(hht_label = str_wrap(hht_label, 15),
          # use the ordering info that came with the classification:
          hht_label = fct_reorder(hht_label, ORDER)) |>
   ggplot(aes(x = time, y = obs_value, 
-             colour = sex)) +
+             colour = sex_label)) +
   facet_grid(hht_label ~ country) +
   geom_point() +
   geom_line() +
-  labs(title = lab1)
+  labs(title = lab1,
+       x = "", y = "", colour = "")
 
-# we can get the code lists for the classifications following 
-# a straightforward naming convention. this wasn't obvious to
-# me fro the helpfile but wasn't too hard to guess/work out:
-sdmx_ilostat(dsd = "CL_HHT")
-sdmx_ilostat(dsd = "CL_SEX")
-filter(sdmx_ilostat(dsd = "CL_AGE"), IS_TOTAL == "Y")
-sdmx_ilostat(dsd = "CL_GEO_COV")
+svg_png(p2, "../img/0256-hh-type", w = 10, h = 7.5)
+
 
 
 #----------------scatter plot of gender stuff------------
@@ -181,3 +181,29 @@ p4 <- ratios_both |>
        caption = the_caption)
 
 svg_png(p4, "../img/0256-scatter", w = 8, h = 6.5)
+
+
+#-----------alternative approach with countrycode---------
+
+
+p5 <- lfpr |>
+  filter(classif1 == "AGE_AGGREGATE_TOTAL" &
+           sex =="SEX_T") |>
+  mutate(country = countrycode(ref_area, origin = "iso3c", destination = "country.name"),
+         region = countrycode(ref_area, origin = "iso3c", destination = "un.region.name")) |>
+  filter(region == "Oceania") |>
+  ggplot(aes(x = time, y = obs_value)) +
+  facet_wrap(~country) +
+  geom_line(colour = "red") +
+  scale_y_continuous(label = percent_format(scale = 1), limits = c(0, 100)) +
+  labs(caption = the_caption,
+       title = "Labour force participation rates",
+       x = "",
+       y = "") +
+  theme(strip.text = element_text(size = rel(0.8), face = "plain"))
+
+
+svg_png(p5, "../img/0256-pacific", w = 10, h = 7)
+
+
+unique(x$country)
