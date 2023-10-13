@@ -20,10 +20,10 @@ the_caption <- "Source: Data from ILOSTAT, analysis by freerangestats.info"
 
 toc <- get_ilostat_toc()
 
-toc |>
-  filter(grepl("unemployment", indicator.label)) |>
-  count(indicator, indicator.label, sort = TRUE) |>
-  View()
+# toc |>
+#   filter(grepl("unemployment", indicator.label)) |>
+#   count(indicator, indicator.label, sort = TRUE) |>
+#   View()
 
 
 get_data_from_label <- function(the_label, freq = "A"){
@@ -116,15 +116,10 @@ svg_png(p2, "../img/0256-hh-type", w = 10, h = 7.5)
 
 #----------------scatter plot of gender stuff------------
 
-toc |>
-  filter(grepl("participation", indicator.label)) |>
-  count(indicator, indicator.label, sort = TRUE) |>
-  View()
-
-
-
-
-
+# toc |>
+#   filter(grepl("participation", indicator.label)) |>
+#   count(indicator, indicator.label, sort = TRUE) |>
+#   View()
 
 lfpr <- get_data_from_label("Labour force participation rate by sex and age (%)")
 
