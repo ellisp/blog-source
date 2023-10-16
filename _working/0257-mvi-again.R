@@ -34,7 +34,7 @@ v20[!v20 %in% mvi$Country]
 # Palestine not in the mvi.
 
 mvi2 <- mvi |>
-  mutate(type = ifelse(Country %in% v20, "Member of V-20", "Not a member of V-20")) |>
+  mutate(type = ifelse(Country %in% v20, "Member of V20", "Not a member of V20")) |>
   left_join(gdp_ppp_pc, by = c("ISO" = "iso3c"))
 
 # note there are seven countries with no GDP PPP per capita values
@@ -47,14 +47,15 @@ mvi2 |>
             median(gdp_pc, na.rm = TRUE),
             median(`MVI - Score`))
 
-pal <- c("Member of V-20" = "blue","Not a member of V-20" = "darkred")
+ff = "Roboto"
+pal <- c("Member of V20" = "darkred","Not a member of V20" = "darkblue")
 
-mvi2 |>
+p1 <- mvi2 |>
   ggplot(aes(x = svi, y = lsri, colour = type)) +
   geom_point() +
   scale_colour_manual(values = pal)
 
-mvi2 |>
+p2 <- mvi2 |>
   ggplot(aes(x = gdp_pc, y = `MVI - Score`, colour = type)) +
 #  geom_smooth(method = "lm", se = TRUE) +
   geom_point() +
@@ -68,18 +69,27 @@ mvi2 |>
 
 
 
-mvi2 |>
+p3 <- mvi2 |>
   ggplot(aes(x = gdp_pc, y = `MVI - Score`, colour = type)) +
   #  geom_smooth(method = "lm", se = TRUE) +
   geom_point() +
-  geom_text_repel(data = filter(mvi2, (`MVI - Score` < 50 & type == "Member of V-20")|
-                                  (`MVI - Score` > 60 & type != "Member of V-20")),
-                  aes(label = Country)) +
-  annotate("label", x = 2000, y = 37, colour = pal[1], fontface = "italic",
-           label.size = 0, fill = "grey90",
+  geom_text_repel(data = filter(mvi2, (`MVI - Score` < 50 & type == "Member of V20")|
+                                  (`MVI - Score` > 60 & type != "Member of V20")),
+                  aes(label = Country), size = 2.8) +
+  annotate("label", x = 800, y = 37, colour = pal[1], fontface = "italic",
+           label.size = 0, fill = "grey90", hjust = 0,
            label = "Member of V20 but lower than average vulnerability according to MVI") +
-  annotate("label", x = 2000, y = 73, colour = pal[2], fontface = "italic",
-           label.size = 0, fill = "grey90",
+  annotate("label", x = 800, y = 73, colour = pal[2], fontface = "italic",
+           label.size = 0, fill = "grey90", hjust = 0,
            label = "Not a member of V20 but high vulnerability according to MVI") +
   scale_x_log10(label = dollar) +
-  scale_colour_manual(values = pal)
+  scale_colour_manual(values = pal) +
+  labs(x = "GDP per capita, PPP, 2017 prices",
+       y = "Multidimensional Vulnerability Index",
+       colour = "",
+       title = "Membership of the 'V20' group of vulnerable coutries", 
+       subtitle = "Compared to scores on the UN's Multidimensional Vulnerability Index (MVI)",
+       caption = "Source: UN https://www.un.org/ohrlls/mvi (MVI), World Bank World Development Indicators (GDP), analysis by freerangestats.info
+Palestine is a member of V20 but does not have a MVI. Seven countries have an MVI but are missing GDP data.")
+
+svg_png(p3, "../img/0257-discrepancies", w = 9, h = 7)
