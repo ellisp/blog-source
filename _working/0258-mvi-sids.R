@@ -149,7 +149,7 @@ economic |>
   anti_join(development, by = "Country") |>
   pull(Country)
 
-# In Sachs but not UN
+# In Sachs but not UN - 58 countries
 sachs_mvi |>
   filter(!Country %in% mvi$Country) |>
   arrange(Country) |>
@@ -164,11 +164,16 @@ mvi |>
 
 mvi_both <- sachs_mvi |>
   select(Country, Regions, mvi_sachs) |>
-  inner_join(mvi, by = "Country")
+  inner_join(mvi, by = "Country") |>
+  mutate(pic = if_else(Regions == "SIDS_Pacific", "Pacific", "Other"),
+         sid = if_else(grepl("SIDS", Regions), "SIDS", "Other")) |>
+  mutate(pic = fct_relevel(pic, "Other", after = Inf),
+         sid = fct_relevel(sid, "Other", after = Inf))
+
 library(MASS)
 p <- mvi_both |>
   ggplot(aes(x = mvi_sachs, y = `MVI - Score`)) +
-  geom_smooth(method = "lm", colour = "grey80", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, colour = "grey80") +
   geom_point(aes(colour = Regions), size = 2) +
   geom_point(data = filter(mvi_both, Regions == "SIDS_Pacific"),
                  aes(colour = Regions), size = 3, colour = "black", shape = 1) +
@@ -180,3 +185,31 @@ p <- mvi_both |>
        subtitle = "Around 40 countries missing from the Sachs et al comparison")
 
 svg_png(p, "../img/0258-scatter", w = 11, h = 7.5)
+
+
+rbind(
+  mvi_both |>
+    group_by(sid) |>
+    summarise(across(where(is.numeric), \(x)mean(x, na.rm = TRUE))) |>
+    select(` ` = sid, `MVI - UN` = `MVI - Score`,
+           `MVI - Sachs` = mvi_sachs),
+  
+  mvi_both |>
+    group_by(pic) |>
+    summarise(across(where(is.numeric), \(x)mean(x, na.rm = TRUE)))  |>
+    select(` ` = pic, `MVI - UN` = `MVI - Score`,
+           `MVI - Sachs` = mvi_sachs),
+  
+  mvi_both |>
+    summarise(across(where(is.numeric), \(x)mean(x, na.rm = TRUE)))  |>
+    mutate(` `= "All countries") |>
+    select(` `, `MVI - UN` = `MVI - Score`,
+           `MVI - Sachs` = mvi_sachs)
+) |>
+  filter(` ` != "Other") |>
+  mutate(`MVI - Sachs - rescaled` = `MVI - Sachs` / 26.5 * 52.8) |>
+  kable(digits = 1) |>
+  kable_styling()
+
+
+library(kableExtra)
