@@ -2,6 +2,61 @@
 
 source("0255-mvi-pacific.R")
 
+library(WDI)
+
+# GDP per capita, constant 2017 USD
+gdppc <- WDI(indicator = "NY.GDP.PCAP.PP.KD") |>
+  as_tibble() |>
+  rename(gdp = NY.GDP.PCAP.PP.KD)
+
+mvi |>
+  filter(is_pict == "Pacific Island") |>
+  left_join(gdppc, by = c("ISO" = "iso3c")) |>
+  group_by(ISO) |>
+  filter(!is.na(gdp)) |>
+  arrange(desc(year)) |>
+  slice(1)
+  
+
+
+d <- gdppc |>
+  filter(!is.na(gdp)) |>
+  group_by(iso3c) |>
+  arrange(desc(year)) |>
+  slice(1) |>
+  ungroup() |>
+  inner_join(mvi, by = c("iso3c" = "ISO")) 
+
+p <- d |>
+  ggplot(aes(x = gdp, y = `MVI - Score`, colour = is_pict)) +
+  geom_point() +
+  geom_vline(xintercept = median(d$gdp, na.rm = TRUE), colour = mc) +
+  geom_hline(yintercept = median(d$`MVI - Score`), colour = mc) +
+  geom_abline(intercept = 132, slope = -20, colour = "orange") +
+  geom_text_repel(data = filter(d, is_pict == "Pacific Island" | `MVI - Score` > 65 | `MVI - Score` < 42), 
+                  aes(label = Country), size = 3, seed = 124) +
+  scale_x_log10(label = dollar_format(accuracy = 1))  +
+  scale_colour_manual(values = pc) +
+  annotate(geom = "text", x = 8000, y = 64, label = "More vulnerable than poor", hjust = 0, colour = "orange") +
+  annotate(geom = "text", x = 1000, y = 49, label = "More poor than vulnerable", hjust = 0, colour = "orange") +
+  theme(legend.position = "none",
+        panel.grid = element_blank(), 
+        panel.border = element_blank()) +
+  labs(x = "GDP per capita, PPP, 2022 or 2021",
+       title = "Rough comparison of GDP per capita and vulnerability",
+       subtitle = "Grey lines are median GDP per capita and vulnerability
+Orange line roughly divides all countries into two")
+
+svg_png(p, "../img/0258-gdp-and-mvi.png", w = 10, h = 8)
+
+
+
+
+
+
+
+
+#---------------------------------------
 
 sids <- c(
   "Antigua and Barbuda",
