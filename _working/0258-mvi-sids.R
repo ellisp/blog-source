@@ -3,6 +3,7 @@
 source("0255-mvi-pacific.R")
 
 library(WDI)
+library(kableExtra)
 
 # GDP per capita, constant 2017 USD
 gdppc <- WDI(indicator = "NY.GDP.PCAP.PP.KD") |>
@@ -15,6 +16,7 @@ mvi |>
   group_by(ISO) |>
   filter(!is.na(gdp)) |>
   arrange(desc(year)) |>
+  filter(year == 2021) |>
   slice(1)
   
 
@@ -66,7 +68,7 @@ p <- d |>
   theme(legend.position = "none",
         panel.grid = element_blank(), 
         panel.border = element_blank()) +
-  labs(x = "GDP per capita, Purchasing Power Parity, 2022 or 2021",
+  labs(x = "GDP per capita, Purchasing Power Parity, 2021",
        title = "Rough comparison of GDP per capita and vulnerability",
        subtitle = "Grey lines are median GDP per capita and vulnerability
 Orange line roughly divides all countries into two")
@@ -291,4 +293,4 @@ rbind(
   kable_styling()
 
 
-library(kableExtra)
+
