@@ -27,12 +27,36 @@ d <- gdppc |>
   ungroup() |>
   inner_join(mvi, by = c("iso3c" = "ISO")) 
 
+#------------find a line that divides the data into two---------------
+# We want a backwards diagonal line that goes through the medians and has
+# half the countries on each side - so we can split into those that are
+# 'more poor than vulnerable' and vice versa
+center <- (c(median(log10(d$gdp), na.rm = TRUE), median(d$`MVI - Score`)))
+
+test_slope <- function(b){
+  a <- center[2] - b * center[1]
+  more_poor <- mean((a + b * log10(d$gdp)) < d$`MVI - Score`)
+  return(abs(0.5 - more_poor))
+}
+test_slope(-20)
+
+# optim doesn't work here so we just use brute force, try a big range of plausible vlaues
+tests <- tibble(possible_slopes = seq(from = -10, to = -30, length.out = 1000)) |>
+  mutate(disc = Vectorize(test_slope)(possible_slopes)) |>
+  arrange(disc)
+
+# get the actual slope and intercept that work best
+b <- tests[1, ]$possible_slopes
+a <- center[2] - b * center[1]
+
+#-------------------draw chart------------------
+
 p <- d |>
   ggplot(aes(x = gdp, y = `MVI - Score`, colour = is_pict)) +
   geom_point() +
   geom_vline(xintercept = median(d$gdp, na.rm = TRUE), colour = mc) +
   geom_hline(yintercept = median(d$`MVI - Score`), colour = mc) +
-  geom_abline(intercept = 132, slope = -20, colour = "orange") +
+  geom_abline(intercept = a, slope = b, colour = "orange") +
   geom_text_repel(data = filter(d, is_pict == "Pacific Island" | `MVI - Score` > 65 | `MVI - Score` < 42), 
                   aes(label = Country), size = 3, seed = 124) +
   scale_x_log10(label = dollar_format(accuracy = 1))  +
