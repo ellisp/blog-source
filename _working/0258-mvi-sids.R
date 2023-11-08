@@ -42,12 +42,12 @@ p <- d |>
   theme(legend.position = "none",
         panel.grid = element_blank(), 
         panel.border = element_blank()) +
-  labs(x = "GDP per capita, PPP, 2022 or 2021",
+  labs(x = "GDP per capita, Purchasing Power Parity, 2022 or 2021",
        title = "Rough comparison of GDP per capita and vulnerability",
        subtitle = "Grey lines are median GDP per capita and vulnerability
 Orange line roughly divides all countries into two")
 
-svg_png(p, "../img/0258-gdp-and-mvi.png", w = 10, h = 8)
+svg_png(p, "../img/0258-gdp-and-mvi", w = 10, h = 8)
 
 
 
