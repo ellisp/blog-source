@@ -88,3 +88,5 @@ _working/data/*
 _working/data/*
 
 
+*.json
+*.json.gz
