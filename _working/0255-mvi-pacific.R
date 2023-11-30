@@ -129,6 +129,10 @@ p0 <- mvi |>
         subtitle = "Pacific Island countries compared to all developing countries",
         caption = the_caption)
 
+write_csv(p0$data, file = "mvi-pacific.csv")
+write_csv(filter(mvi, is_pict != "Pacific Island"), file = "mvi-other-countries.csv")
+print(median(mvi$`MVI - Score`))
+
 p1 <- mvi |>
   ggplot(aes(x = svi,
              y = lsri,
