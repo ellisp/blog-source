@@ -87,11 +87,11 @@ viti_levu <- crop(fiji_grid, extent(c(1.87, 1.99, 3.84, 3.97) * 1e6))
 suva <- crop(fiji_grid, extent(c(1.965, 1.98, 3.87, 3.888) * 1e6))
 central_suva <- crop(fiji_grid, extent(c(1.964, 1.971, 3.872, 3.881) * 1e6))
 
-plot(viti_levu)
-plot(suva)
-plot(central_suva)
-persp(suva)
-image(suva, maxpixels = Inf, col = brewer.pal(11, "RdYlBu")[11:1])
+pal <- brewer.pal(11, "RdYlBu")[11:1]
+par(bty = "n")
+plot(viti_levu, col = pal, xaxt = "n", yaxt = "n")
+plot(suva, col = pal, xaxt = "n", yaxt = "n")
+plot(central_suva, col = pal, xaxt = "n", yaxt = "n")
 
 
 viti_levu_qm <- quadmesh(viti_levu)
