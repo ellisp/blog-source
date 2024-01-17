@@ -71,7 +71,7 @@ fiji_grid_tb |>
 plot(fiji_grid, xlim = c(1.87, 1.99) * 1e6, ylim = c(3.84, 3.97) * 1e6)
 
 
-viti_levu <- crop(fiji_grid, ext(c(1.87, 1.99, 3.84, 3.97) * 1e6))
+viti_levu <- crop(fiji_grid, ext(c(1.82, 2.02, 3.84, 3.97) * 1e6))
 
 suva <- crop(fiji_grid, ext(c(1.965, 1.98, 3.87, 3.888) * 1e6))
 central_suva <- crop(fiji_grid, ext(c(1.964, 1.971, 3.872, 3.881) * 1e6))
@@ -89,6 +89,8 @@ plot(central_suva, col = pal, axes = FALSE, background = "grey80")
 plot(viti_levu, col = pal, axes = FALSE, background = "grey80", perimeter = FALSE)
 inset(central_suva, col = pal, scale = 0.6, perimeter = FALSE, background = "grey90")
 
+library(mapview)
+mapview(viti_levu, maxpixels = 2600000)
 
 sm <- raster_to_matrix(suva)
 sm[is.na(sm)] <- 0
