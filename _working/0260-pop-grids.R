@@ -7,13 +7,14 @@ download.file("https://drive.google.com/uc?export=download&id=1FomfQUt5U1yhxjkYD
               destfile = "fiji-pop-grid.tif", mode = "wb")
 
 
-library(raster)
+library(terra)
 library(tidyverse)
 library(RColorBrewer)
 library(quadmesh)
 library(rayshader)
 library(rgl)
-fiji_grid <- raster("fiji-pop-grid.tif")
+library(RColorBrewer)
+fiji_grid <- rast("fiji-pop-grid.tif")
 
 plot(fiji_grid)
 attributes(fiji_grid)
@@ -23,31 +24,25 @@ dim(fiji_grid)
 summary(fiji_grid)
 
 
-# https://gis.stackexchange.com/questions/200417/very-basic-question-on-extracting-data-from-tif-raster-layer-in-r-projection-n
-projection(fiji_grid)
+crs(fiji_grid)
 
+ef <- ext(fiji_grid)
 
 plot(fiji_grid, xlim = c(2.05, 2.1) * 1e6, ylim = c(4.04, 4.08) * 1e6)
-
-ext <- attributes(fiji_grid)$extent
-attributes(fiji_grid)$ncols
-attributes(fiji_grid)$nrows
-dim(fiji_grid)
-
-ext@xmin
 
 x <- tibble(
   orig_col_number = 1:ncol(fiji_grid),
   col_name = paste0("V", orig_col_number),
-  xcoord = seq(from = ext@xmin, to = ext@xmax, length.out = ncol(fiji_grid))
+  xcoord = seq(from = ef$xmin, to = ef$xmax, length.out = ncol(fiji_grid))
 )
 
 # convert into a sparse tibble
 fiji_grid_tb <- fiji_grid |>
-  as.matrix() |>
-  as.data.frame() |>
+  raster_to_matrix() |>
+  t() |>
+  as.data.frame() |> 
   mutate(orig_row_number = 1:n(),
-         ycoord = seq(from = ext@ymax, to = ext@ymin, length.out = n())) |>
+         ycoord = seq(from = ef$ymax, to = ef$ymin, length.out = n())) |>
   gather(col_name, value, -ycoord, -orig_row_number) |>
   drop_na() |>
   left_join(x, by = "col_name") |>
@@ -63,7 +58,6 @@ count(fiji_grid_tb, value, sort =  TRUE) |>
 fiji_grid_tb |>
   filter(value > 400)
 
-
 fiji_grid_tb |>
   arrange(value) |>
   ggplot(aes(x = xcoord, y = ycoord, colour = value)) +
@@ -74,45 +68,26 @@ fiji_grid_tb |>
   scale_colour_viridis_c()
 
 
-fiji_grid_tb |>
-  filter(xcoord > 1.84e6 & xcoord < 1.99e6 & ycoord > 3.84e6 & ycoord < 3.97e6) |>
-  summary()
-
 plot(fiji_grid, xlim = c(1.87, 1.99) * 1e6, ylim = c(3.84, 3.97) * 1e6)
 
-library(RColorBrewer)
 
-viti_levu <- crop(fiji_grid, extent(c(1.87, 1.99, 3.84, 3.97) * 1e6))
+viti_levu <- crop(fiji_grid, ext(c(1.87, 1.99, 3.84, 3.97) * 1e6))
 
-suva <- crop(fiji_grid, extent(c(1.965, 1.98, 3.87, 3.888) * 1e6))
-central_suva <- crop(fiji_grid, extent(c(1.964, 1.971, 3.872, 3.881) * 1e6))
+suva <- crop(fiji_grid, ext(c(1.965, 1.98, 3.87, 3.888) * 1e6))
+central_suva <- crop(fiji_grid, ext(c(1.964, 1.971, 3.872, 3.881) * 1e6))
 
 pal <- brewer.pal(11, "RdYlBu")[11:1]
-par(bty = "n")
-plot(viti_levu, col = pal, xaxt = "n", yaxt = "n")
-plot(suva, col = pal, xaxt = "n", yaxt = "n")
-plot(central_suva, col = pal, xaxt = "n", yaxt = "n")
+library(viridis)
+pal <- viridis(100, direction = 1, option = "C")
+
+par(bty = "l")
+plot(viti_levu, col = pal, axes = FALSE, background = "white")
+plot(suva, col = pal, axes = FALSE, background = "grey80")
+plot(central_suva, col = pal, axes = FALSE, background = "grey80")
 
 
-viti_levu_qm <- quadmesh(viti_levu)
-# doesn't work
-# shade3d(viti_levu_qm)
-# clear3d(viti_levu_qm)
-
-suva_qm <- quadmesh(suva)
-# doesn't work
-# shade3d(suva_qm)
-
-
-# does work
-library(rasterVis)
-plot3D(viti_levu, col = brewer.pal(11, "RdYlBu")[11:1])
-
-plot3D(suva)
-
-gplot(suva) +
-  geom_point(aes(colour = value)) +
-  coord_equal()
+plot(viti_levu, col = pal, axes = FALSE, background = "grey80", perimeter = FALSE)
+inset(central_suva, col = pal, scale = 0.6, perimeter = FALSE, background = "grey90")
 
 
 sm <- raster_to_matrix(suva)
@@ -131,7 +106,7 @@ csm <- raster_to_matrix(central_suva)
 csm[is.na(csm)] <- 0
 csm |>
   sphere_shade(texture = "desert") |>
-  plot_3d(heightmap = csm)
+  plot_3d(heightmap = csm, zscale = 5)
 
 
 
@@ -145,7 +120,7 @@ vl <- viti_levu |>
   raster_to_matrix()
 vl[is.na(vl)] <- 0
 vl |>
-  sphere_shade(texture = "bw") |>
+  sphere_shade(texture = "desert") |>
   plot_3d(heightmap = vl, zscale = 5)
 
 # so the grids are actually a bit pointillistic. Lots of zeroes and 5s
@@ -195,11 +170,3 @@ sm2 |>
 sm |>
   sphere_shade(texture = "bw") |>
   plot_3d(heightmap = sm, zscale = 5)
-
-vl2 <- viti_levu |>
-  raster_to_matrix() |>
-  smooth_matrix(replace_na = 0, smooth = 0.5, frac = 0.1)
-
-vl2 |>
-  sphere_shade(texture = "desert") |>
-  plot_3d(heightmap = vl2)
