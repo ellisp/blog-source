@@ -3,9 +3,15 @@
 # used the direct link generator https://sites.google.com/site/gdocs2direct/
 # to generate a downloadable link from the google drive share link, which was
 #   https://drive.google.com/file/d/1FomfQUt5U1yhxjkYDKW7SbSLp7J-tHM_/view
-download.file("https://drive.google.com/uc?export=download&id=1FomfQUt5U1yhxjkYDKW7SbSLp7J-tHM_",
+if(!file.exists("fiji-pop-grid.tif")){
+  download.file("https://drive.google.com/uc?export=download&id=1FomfQUt5U1yhxjkYDKW7SbSLp7J-tHM_",
               destfile = "fiji-pop-grid.tif", mode = "wb")
+}
 
+if(!file.exists("fiji-provinces.geojson")){
+  download.file("https://pacificdata.org/data/dataset/f45cd559-7350-4362-91ad-0c922853fb5c/resource/0d2bdd5b-9c28-47fd-9dd8-2917daeb276d/download/2017_phc_fji_pid_4326.geojson",
+                destfile = "fiji-provinces.geojson", mode = "wb")
+}
 
 library(terra)
 library(tidyverse)
@@ -14,7 +20,64 @@ library(quadmesh)
 library(rayshader)
 library(rgl)
 library(RColorBrewer)
+library(sf)
+library(mapview)
+
 fiji_grid <- rast("fiji-pop-grid.tif")
+fiji_prov <- st_read("fiji-provinces.geojson")
+
+
+
+ps <- unique(fiji_prov$Province)
+i <- 10
+fiji_prov |>
+  filter(Province == ps[i]) |>
+  ggplot() +
+  geom_sf() +
+  labs(title = ps[i])
+
+fiji_prov |>
+  filter(!Province %in% ps[c(3,5,7)]) |>
+  ggplot() +
+  geom_sf(aes(fill = Province), linewidth = 0) +
+  theme(legend.position = "right")
+
+#  problems with provinces that go across the 180 degree line
+fiji_prov |>
+#  filter(!Province %in% ps[c(3,5,7)]) |>
+  ggplot() +
+  geom_sf() +
+  coord_sf(xlim = c(175, 180))
+
+fiji_prov |>
+  filter(!Province %in% ps[c(3,5,7)]) |>
+  st_centroid()
+
+# 3,5,7 - cross 180 degrees
+# 2 - island above viti levu
+# 15 way up north
+# 4 Kadavu islands on right
+# 6 Lomaiviti, islands to right
+fiji_prov |>
+  filter(Province %in% ps[c(1, 8, 9:13, 14)]) |>
+  ggplot() +
+  geom_sf(aes(fill = Province), colour = NA) +
+  theme(legend.position = "right")
+  
+fiji_selected <- fiji_prov |>
+  filter(Province %in% ps[c(1, 8, 9:13, 14)]) |>
+  st_transform(crs = crs(fiji_grid))
+
+# doesn't work
+# mapview(fiji_selected)
+library(tmap)
+
+fiji_selected |>
+  tm_shape() +
+  tm_polygons()
+
+d <- crop(fiji_grid, fiji_selected)  
+
 
 plot(fiji_grid)
 attributes(fiji_grid)
@@ -123,52 +186,47 @@ vl <- viti_levu |>
 vl[is.na(vl)] <- 0
 vl |>
   sphere_shade(texture = "desert") |>
-  plot_3d(heightmap = vl, zscale = 5)
+  plot_3d(heightmap = vl, zscale = 1)
 
 # so the grids are actually a bit pointillistic. Lots of zeroes and 5s
 table(sm)
 
 
-library(mgcv)
-smooth_matrix <- function(m, family = quasipoisson, trunc_level = -Inf, 
-                          replace_na = NULL, smooth = 0.5, frac = 1, seed = 123,
-                          ...){
-  
-  set.seed(123)
-  
-  stopifnot(length(dim(m)) == 2)
-  stopifnot(smooth >= 0 & smooth <= 1)
-  
-  if(!is.null(replace_na)){
-    m[is.na(m)] <- replace_na
-  }
-  
-  d <- as.data.frame(m)
-  names(d) <- paste0(1:ncol(d))
-  d$row <- 1:nrow(d)
-  ds <- gather(d, col, value, -row)
-  ds$col <- as.numeric(ds$col)
-  mod <- mgcv::gam(value ~ s(row, col, ...), family = family, 
-                   data = sample_frac(ds, size = frac))
-  ds$fit <- pmax(trunc_level, predict(mod, newdata = ds))
-  ds$fit <- ds$fit * smooth + ds$value * (1 - smooth)
-  ds$value <- NULL
-  d2 <- spread(ds, col, fit) |>
-    arrange(row) |>
-    select(-row)
-  m2 <- as.matrix(d2)
-  
-  stopifnot(ncol(m2) == ncol(m))
-  stopifnot(nrow(m2) == nrow(m))
-  return(m2)
-}
+#------------smoothing--------
+# there is a problem that a lot of the NAs are probably meant to be 0s.
+# NA should be coast?
 
-# this isn't working visually
-sm2 <- smooth_matrix(sm, smooth = 0.99, trunc_level = 0, frac = 0.8)
-sm2 |>
-  sphere_shade(texture = "bw") |>
-  plot_3d(heightmap = sm2, zscale = 0.2)
+# vl3 <- crop(fiji_grid, fiji_selected)  
+vl0 <- viti_levu
+vl0[is.na(vl0)] <- 0
 
-sm |>
-  sphere_shade(texture = "bw") |>
-  plot_3d(heightmap = sm, zscale = 5)
+vl2 = focal(vl0, w = matrix(1, nrow = 5, ncol = 5), fun = mean)
+
+mapview(vl2, maxpixels = 2600000)
+
+tmap_mode("view")
+
+vl2 |>
+  tm_shape() +
+  tm_raster()
+
+vl2m <-  raster_to_matrix(vl2) 
+
+vl2m |>  sphere_shade(texture = "desert") |>
+  plot_3d(heightmap = vl2m, zscale = 1)
+
+
+vl3m <- vl3 |>  
+  raster_to_matrix() 
+
+vl3m |>
+  sphere_shade(texture = "desert") |>
+  plot_3d(heightmap = vl3m, zscale = 1)
+
+render_camera(theta=10,  phi=35, zoom = 0.6, fov=90)
+vl2m |>  
+  sphere_shade(texture = "desert") |>
+  plot_3d(heightmap = vl2m, zscale = 1)
+
+plot_3d(fiji_selected)
+
