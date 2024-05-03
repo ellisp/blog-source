@@ -69,8 +69,9 @@ rm(mort_past, mort_future, pop_past, pop_future)
 #'   start_year plus one.
 #' @param mort_f as mort_m but for females. Must have same number of rows and
 #'   columns as mort_m.
-#' @param sex_ratio_birth number of boys born for every girl born.
-pop_proj_no_mig <- function(start_pop_m, 
+#' @param sex_ratio_birth number of boys born for every girl born, vector with
+#'   length of years to be projected.
+pop_proj <- function(start_pop_m, 
                             start_pop_f, 
                             start_year, 
                             end_year, 
@@ -152,6 +153,11 @@ pop_proj_no_mig <- function(start_pop_m,
 
 
 un_proj <- function(the_country){
+  
+  if(!the_country %in% unique(indicators$Location)){
+    stop("Country not found")
+  }
+  
   this_fert <- fert_all |>
     filter(Location == the_country & Variant == "Medium") |>
     filter(Time %in% 2020:2100) |>
@@ -218,21 +224,22 @@ un_proj <- function(the_country){
   this_pop_f <- this_pop$PopFemale * 1000
   
   # reality check
-  length(this_pop_m)
   # Population in millions; should be about 0.3 if the_country is Vanuatu, about 1400 if India:
   (sum(this_pop_m) + sum(this_pop_f) ) / 1e6
   
+  # net migration
   this_cnmr <- indicators |>
     filter(Location == the_country & Time %in% 2020:2100) |>
     arrange(Time) |>
     pull(CNMR) / 1000
   
+  # sex ratio at birth
   this_srb <- indicators |>
     filter(Location == the_country & Time %in% 2020:2100) |>
     arrange(Time) |>
     pull(SRB) / 100
   
-  this_proj <- pop_proj_no_mig(
+  this_proj <- pop_proj(
                   start_pop_m = this_pop_m, 
                   start_pop_f = this_pop_f, 
                   start_year = 2020, 
@@ -240,13 +247,14 @@ un_proj <- function(the_country){
                   fertility = this_fert, 
                   mort_m = this_mort_m,
                   mort_f = this_mort_f,
-                  net_migration = this_cnmr
+                  net_migration = this_cnmr,
+                  sex_ratio_birth = this_srb
     
   )
   return(this_proj)
 }
 
-the_country <- "Vanuatu"
+the_country <- "India"
 my_proj <- un_proj(the_country)
 
 projected_pop <- apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)
@@ -266,8 +274,9 @@ comp_data |>
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates")
 
-# My projection too high: Samoa, Vanuatu, Fiji, Tonga, Australia, Brazil, New Zealand, Egypt, Georgia, France
-# My projection too low: India, China,
+# My projection too high: Samoa, Vanuatu, Fiji, Tonga, Australia, Brazil, New Zealand, Egypt, Georgia, France, Germany,
+# Israel, Peru, Mexico, Canada (except at very end), Palau
+# My projection too low: India, China, United States of America
 
 #-----------------------thinking about migration----------------
 
