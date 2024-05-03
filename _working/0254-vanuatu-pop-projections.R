@@ -21,16 +21,18 @@ files <- c("WPP2022_Fertility_by_Age1.zip",
 # large (largest is fertility for single age, 78MB)
 options(timeout=600)
 
-# download the zip files:
-for(i in 1:length(files)){
-  download.file(glue("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/CSV_FILES/{files[i]}"),
-                 destfile = glue("data-pop-proj-2022/{files[i]}"), mode = "wb")
-}
-
-
-# unzip them
-for(i in 1:length(files)){
-  unzip(glue("data-pop-proj-2022/{files[i]}"), exdir = "data-pop-proj-2022")
+if(!file.exists("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv")){
+  # download the zip files:
+  for(i in 1:length(files)){
+    download.file(glue("https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/CSV_FILES/{files[i]}"),
+                   destfile = glue("data-pop-proj-2022/{files[i]}"), mode = "wb")
+  }
+  
+  
+  # unzip them
+  for(i in 1:length(files)){
+    unzip(glue("data-pop-proj-2022/{files[i]}"), exdir = "data-pop-proj-2022")
+  }
 }
 
 fert_all <- read_csv("data-pop-proj-2022/WPP2022_Fertility_by_Age1.csv")
@@ -75,13 +77,12 @@ pop_proj_no_mig <- function(start_pop_m,
                             fertility, 
                             mort_m,
                             mort_f,
-                            sex_ratio_birth = 1.045){
+                            sex_ratio_birth = rep(1.045, end_year - start_year + 1),
+                            net_migration = rep(0, end_year - start_year + 1)){
   
   stopifnot(nrow(fertility) == 35)
   
   
-  prop_boys <- sex_ratio_birth / (1 + sex_ratio_birth)          
-  prop_girls <- 1 - prop_boys
   ncols <- end_year - start_year + 1
   
   stopifnot(ncol(fertility) == ncols)
@@ -91,14 +92,17 @@ pop_proj_no_mig <- function(start_pop_m,
   stopifnot(length(start_pop_m) < 120)
   stopifnot(length(start_pop_f) > 50)
   stopifnot(length(start_pop_f) < 120)
-  
+  stopifnot(length(net_migration) == ncols)
+  stopifnot(length(sex_ratio_birth) == ncols)
   
   stopifnot(nrow(mort_m) == nrow(mort_f))
-  # fill in with ones for years
+  # fill in with high probability of death for ages beyond where we have mortality data
   if(nrow(mort_m) < 121){
-    extra_deaths <- matrix(1, nrow = 121 - nrow(mort_m), ncol = ncol(mort_m))
-    mort_m <- rbind(mort_m, extra_deaths)
-    mort_f <- rbind(mort_f, extra_deaths)
+    extra_deaths_m <- matrix(max(mort_m), nrow = 121 - nrow(mort_m), ncol = ncol(mort_m))
+    extra_deaths_f <- matrix(max(mort_f), nrow = 121 - nrow(mort_f), ncol = ncol(mort_f))
+    
+    mort_m <- rbind(mort_m, extra_deaths_m)
+    mort_f <- rbind(mort_f, extra_deaths_f)
   }
   
   # Create matrices for male and female population for the full projections
@@ -113,21 +117,29 @@ pop_proj_no_mig <- function(start_pop_m,
   PopM[1:length(start_pop_m), 1] <- start_pop_m
   PopF[1:length(start_pop_f), 1] <- start_pop_f
   
-  # subsequent years get modified by births and deaths and people aging one year
+  # subsequent years get modified by people aging one year, deaths, births, and net migration
   for (i in 2 : ncols) {
     
     # Age one and above:
-    for (j in 2: 121) {
-      PopM[j, i] <- PopM[j-1, i-1] * (1-mort_m[j-1, i-1])
-      PopF[j, i] <- PopF[j-1, i-1] * (1-mort_f[j-1, i-1])
-    }
+    PopM[2:121, i] <- PopM[1:120, i-1] * (1 - mort_m[1:120, i-1])
+    PopF[2:121, i] <- PopF[1:120, i-1] * (1 - mort_f[1:120, i-1])
     
-    # Age zero. Fertility rate by the number of women in the middle of the year:
-    PopM[1, i] <- as.matrix(t(PopF[16:50, i-1] + PopF[16:50, i]) / 2) %*% 
-      as.matrix(fertility[, i-1]) * prop_boys
+    # Age zero. Fertility rate by the number of women in the middle of the previous year.
+    # Note that PopF rows 16:50 equates to women age 15:49
+    reproducing_women <- (PopF[16:50, i-1] + PopF[16:50, i]) / 2
     
-    PopF[1, i] <- as.matrix(t(PopF[16:50, i-1] + PopF[16:50, i]) / 2) %*% 
-      as.matrix(fertility[, i-1]) * prop_girls 
+    prop_boys <- sex_ratio_birth[i] / (1 + sex_ratio_birth[i])          
+    prop_girls <- 1 - prop_boys
+    
+    PopM[1, i] <-  reproducing_women %*% fertility[, i-1] * prop_boys
+    
+    PopF[1, i] <- reproducing_women %*% fertility[, i-1] * prop_girls 
+    
+    # migration. This assumes that net migrants have the same age and sex profile as
+    # the overall population, which seems unlikely, but not obvious where to
+    # get the age profile of net migrants from the published data.
+    PopM[, i] <- PopM[, i] * (net_migration[i] + 1)
+    PopF[, i] <- PopF[, i] * (net_migration[i] + 1)
   }
   
   # Return a list of the two matrices
@@ -137,93 +149,135 @@ pop_proj_no_mig <- function(start_pop_m,
   ))
 }
 
-van_fert <- fert_all |>
-  filter(Location == "Vanuatu" & Variant == "Medium") |>
-  filter(Time %in% 2020:2100) |>
-  select(Time, AgeGrp, ASFR) |>
-  mutate(Time = as.character(Time),
-         # turn into proportions, not rates per 1000:
-         ASFR = ASFR / 1000) |>
-  pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = ASFR) |>
-  arrange(AgeGrp) |>
-  select(-AgeGrp) |>
-  as.matrix()
 
-# should be 35 ie fertilities for ages 15 to 49
-stopifnot(nrow(van_fert) == 35)
-# should be 81, 1 column for each year from 2020 to 2081
-stopifnot(ncol(van_fert) == 81)
 
-van_mort <- mort_all |>
-  filter(Location == "Vanuatu" & Variant == "Medium") |>
-  filter(Time %in% 2020:2100) |>
-  # next step important because we will be sorting by AgeGrp
-  mutate(AgeGrp = case_when(
-    AgeGrp == "100+" ~ 100,
-    TRUE ~ as.numeric(as.character(AgeGrp))
-  ))
+un_proj <- function(the_country){
+  this_fert <- fert_all |>
+    filter(Location == the_country & Variant == "Medium") |>
+    filter(Time %in% 2020:2100) |>
+    # Age-Specific Fertility rate
+    select(Time, AgeGrp, ASFR) |>
+    mutate(Time = as.character(Time),
+           # turn into proportions, not rates per 1000:
+           ASFR = ASFR / 1000) |>
+    pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = ASFR) |>
+    arrange(AgeGrp) |>
+    select(-AgeGrp) |>
+    as.matrix()
   
-van_mort_m <- van_mort |>
-  select(Time, AgeGrp, DeathMale) |>
-  mutate(Time = as.character(Time)) |>
-  pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = DeathMale) |>
-  arrange(AgeGrp) |>
-  select(-AgeGrp) |>
-  as.matrix()
-
-van_mort_f <- van_mort |>
-  select(Time, AgeGrp, DeathFemale) |>
-  mutate(Time = as.character(Time)) |>
-  pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = DeathFemale) |>
-  arrange(AgeGrp) |>
-  select(-AgeGrp) |>
-  as.matrix()
-
-
-van_pop <- pop_all |>
-  filter(Location == "Vanuatu" & Variant == "Medium") |>
-  filter(Time == 2020) |>
-  # next step important because we will be sorting by AgeGrp
-  mutate(AgeGrp = case_when(
-    AgeGrp == "100+" ~ 100,
-    TRUE ~ as.numeric(as.character(AgeGrp))
-  )) |>
-  arrange(AgeGrp) 
-
-# convert to units, not thousands of people:
-van_pop_m <- van_pop$PopMale * 1000
-van_pop_f <- van_pop$PopFemale * 1000
-
-# reality check
-length(van_pop_m)
-sum(van_pop_m) + sum(van_pop_f) # should be about 300k
-
-
-van_proj <- pop_proj_no_mig(
-                start_pop_m = van_pop_m, 
-                start_pop_f = van_pop_f, 
-                start_year = 2020, 
-                end_year = 2100, 
-                fertility = van_fert, 
-                mort_m = van_mort_m,
-                mort_f = van_mort_f
+  # should be 35 rows ie fertilities for ages 15 to 49
+  stopifnot(nrow(this_fert) == 35)
+  # should be 81 columns, 1 column for each year from 2020 to 2100
+  stopifnot(ncol(this_fert) == 81)
   
-)
+  this_mort <- mort_all |>
+    filter(Location == the_country & Variant == "Medium") |>
+    filter(Time %in% 2020:2100) |>
+    # next step important because we will be sorting by AgeGrp
+    mutate(AgeGrp = case_when(
+      AgeGrp == "100+" ~ 100,
+      TRUE ~ suppressWarnings(as.numeric(as.character(AgeGrp)))
+    ))
+    
+  this_mort_m <- this_mort |>
+    select(Time, AgeGrp, DeathMale) |>
+    mutate(Time = as.character(Time)) |>
+    # deaths per unit, not per thousand:
+    mutate(DeathMale = DeathMale / 1000) |>
+    pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = DeathMale) |>
+    arrange(AgeGrp) |>
+    select(-AgeGrp) |>
+    as.matrix()
+  
+  this_mort_f <- this_mort |>
+    select(Time, AgeGrp, DeathFemale) |>
+    mutate(Time = as.character(Time)) |>
+    # deaths per unit, not per thousand:
+    mutate(DeathFemale = DeathFemale / 1000) |>
+    pivot_wider(id_cols = AgeGrp, names_from = Time, values_from = DeathFemale) |>
+    arrange(AgeGrp) |>
+    select(-AgeGrp) |>
+    as.matrix()
+  
+  # check the years are correct, didn't get mangled or reordered
+  stopifnot(all(colnames(this_mort_f) == 2020:2100))
+  stopifnot(all(colnames(this_mort_m) == 2020:2100))
+  
+  this_pop <- pop_all |>
+    filter(Location == the_country & Variant == "Medium") |>
+    filter(Time == 2020) |>
+    # next step important because we will be sorting by AgeGrp
+    mutate(AgeGrp = case_when(
+      AgeGrp == "100+" ~ 100,
+      TRUE ~ suppressWarnings(as.numeric(as.character(AgeGrp)))
+    )) |>
+    arrange(AgeGrp) 
+  
+  # convert to units, not thousands of people:
+  this_pop_m <- this_pop$PopMale * 1000
+  this_pop_f <- this_pop$PopFemale * 1000
+  
+  # reality check
+  length(this_pop_m)
+  # Population in millions; should be about 0.3 if the_country is Vanuatu, about 1400 if India:
+  (sum(this_pop_m) + sum(this_pop_f) ) / 1e6
+  
+  this_cnmr <- indicators |>
+    filter(Location == the_country & Time %in% 2020:2100) |>
+    arrange(Time) |>
+    pull(CNMR) / 1000
+  
+  this_srb <- indicators |>
+    filter(Location == the_country & Time %in% 2020:2100) |>
+    arrange(Time) |>
+    pull(SRB) / 100
+  
+  this_proj <- pop_proj_no_mig(
+                  start_pop_m = this_pop_m, 
+                  start_pop_f = this_pop_f, 
+                  start_year = 2020, 
+                  end_year = 2100, 
+                  fertility = this_fert, 
+                  mort_m = this_mort_m,
+                  mort_f = this_mort_f,
+                  net_migration = this_cnmr
+    
+  )
+  return(this_proj)
+}
 
-projected_pop <- apply(van_proj$PopM, 2, sum) + apply(van_proj$PopM, 2, sum)
-indicators |>
-  filter(Location == "Vanuatu" & Variant == "Medium" & Time %in% 2020:2100) |>
+the_country <- "Vanuatu"
+my_proj <- un_proj(the_country)
+
+projected_pop <- apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)
+
+comp_data <- indicators |>
+  filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
   select(Time, UN = TPopulation1Jan) |>
-  mutate(New = projected_pop / 1000) |>
+  mutate(New = as.numeric(projected_pop / 1000) )
+
+# First year should be an exact match:
+stopifnot(comp_data[1, ]$UN == comp_data[1, ]$New)
+
+comp_data |>
   gather(variable, value, -Time) |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
-  geom_line()
+  geom_line() +
+  labs(title = the_country,
+       subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates")
 
+# My projection too high: Samoa, Vanuatu, Fiji, Tonga, Australia, Brazil, New Zealand, Egypt, Georgia, France
+# My projection too low: India, China,
 
 #-----------------------thinking about migration----------------
 
-# ok so there's an assumption of net zero migration it seems, for the forecast period:
+# ok for Vanuatu so there's an assumption of net zero migration it seems, for the forecast period
+# but that's not the case for other countries:
 indicators |>
-  filter(Location == "Vanuatu") |>
+  filter(Location == the_country) |>
   ggplot(aes(x = Time, y = CNMR)) +
-  geom_line()
+  geom_line() +
+  geom_vline(xintercept = 2022, lty = 2) +
+  geom_hline(yintercept = 0, lty = 2) +
+  labs(title = the_country,
+       subtitle = "Net migration per thousand people")
