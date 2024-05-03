@@ -17,8 +17,8 @@ files <- c("WPP2022_Fertility_by_Age1.zip",
            "WPP2022_Demographic_Indicators_Medium.zip"
            )
 
-# let downloads take 10 minutes rather than 1 minute max, as files are large
-# (largest is fertility for single age, 78MB)
+# let downloads take up to 10 minutes rather than 1 minute max, as files are
+# large (largest is fertility for single age, 78MB)
 options(timeout=600)
 
 # download the zip files:
@@ -43,14 +43,31 @@ indicators <-   read_csv("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medi
 mort_all <- rbind(mort_past, mort_future)
 pop_all <- rbind(pop_past, pop_future)
 
-#----------------------projections for Vanuatu-------------------
+# clean up
+rm(mort_past, mort_future, pop_past, pop_future)
+
+#----------------------projections for one country-------------------
 
 # adapting the implementation of the method for cohort component projection at 
 # https://farid-flici.github.io/tuto.html
 
 
-#' @param start_pop_m is a vector of ages at beginning of year starting age 0
-#' @param fertility is a matrix with rows for females aged 15 to 49 and a column for each year
+#' @param start_pop_m is a vector of population of males at single year age
+#'   periods beginning of year starting age 0
+#' @param start_pop_f as start_pop_m but for females
+#' @param start_year first year ie the year for which the actual population
+#'   number refers to
+#' @param end_year end year for the population projection
+#' @param fertility a matrix with rows for female agegroups 15 to 49 and a
+#'   column for each year, values are births per woman (not per thousand women)
+#'   that year and age. Must have 35 rows and number of columns equal to
+#'   end_year minus start_year plus one.
+#' @param mort_m a matrix with rows for age 0 to at least 50 and columns for
+#'   each year, for males. Must have number of columns equal to end_year minus
+#'   start_year plus one.
+#' @param mort_f as mort_m but for females. Must have same number of rows and
+#'   columns as mort_m.
+#' @param sex_ratio_birth number of boys born for every girl born.
 pop_proj_no_mig <- function(start_pop_m, 
                             start_pop_f, 
                             start_year, 
@@ -89,8 +106,8 @@ pop_proj_no_mig <- function(start_pop_m,
   PopM <- matrix(0, nrow=121, ncol = ncols)
   PopF <- matrix(0, nrow=121, ncol = ncols)
   
-  rownames(PopF) <- rownames(PopM) <- c(0:120)
-  colnames(PopF) <- colnames(PopM) <- c(start_year:end_year)
+  rownames(PopF) <- rownames(PopM) <- c(0:120)                # ages
+  colnames(PopF) <- colnames(PopM) <- c(start_year:end_year)  # years
   
   # first year gets populated with the actual population numbers that we have:
   PopM[1:length(start_pop_m), 1] <- start_pop_m
@@ -98,10 +115,14 @@ pop_proj_no_mig <- function(start_pop_m,
   
   # subsequent years get modified by births and deaths and people aging one year
   for (i in 2 : ncols) {
+    
+    # Age one and above:
     for (j in 2: 121) {
       PopM[j, i] <- PopM[j-1, i-1] * (1-mort_m[j-1, i-1])
       PopF[j, i] <- PopF[j-1, i-1] * (1-mort_f[j-1, i-1])
     }
+    
+    # Age zero. Fertility rate by the number of women in the middle of the year:
     PopM[1, i] <- as.matrix(t(PopF[16:50, i-1] + PopF[16:50, i]) / 2) %*% 
       as.matrix(fertility[, i-1]) * prop_boys
     
@@ -130,7 +151,8 @@ van_fert <- fert_all |>
 
 # should be 35 ie fertilities for ages 15 to 49
 stopifnot(nrow(van_fert) == 35)
-stopifnot(ncolw(van_fert) == 81)
+# should be 81, 1 column for each year from 2020 to 2081
+stopifnot(ncol(van_fert) == 81)
 
 van_mort <- mort_all |>
   filter(Location == "Vanuatu" & Variant == "Medium") |>
@@ -188,11 +210,19 @@ van_proj <- pop_proj_no_mig(
   
 )
 
-van_proj$PopM
+projected_pop <- apply(van_proj$PopM, 2, sum) + apply(van_proj$PopM, 2, sum)
+indicators |>
+  filter(Location == "Vanuatu" & Variant == "Medium" & Time %in% 2020:2100) |>
+  select(Time, UN = TPopulation1Jan) |>
+  mutate(New = projected_pop / 1000) |>
+  gather(variable, value, -Time) |>
+  ggplot(aes(x = Time, y = value, colour = variable)) +
+  geom_line()
 
 
-#-----------------------adding in migration----------------
+#-----------------------thinking about migration----------------
 
+# ok so there's an assumption of net zero migration it seems, for the forecast period:
 indicators |>
   filter(Location == "Vanuatu") |>
   ggplot(aes(x = Time, y = CNMR)) +
