@@ -1,9 +1,7 @@
-
-
-
 library(tidyverse)
 library(glue)
 library(scales)
+library(patchwork)
 
 dir.create("data-pop-proj-2022", showWarnings = FALSE)
 
@@ -29,19 +27,18 @@ if(!file.exists("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv"))
                    destfile = glue("data-pop-proj-2022/{files[i]}"), mode = "wb")
   }
   
-  
   # unzip them
   for(i in 1:length(files)){
     unzip(glue("data-pop-proj-2022/{files[i]}"), exdir = "data-pop-proj-2022")
   }
 }
 
-fert_all <- read_csv("data-pop-proj-2022/WPP2022_Fertility_by_Age1.csv")
-mort_past <- read_csv("data-pop-proj-2022/WPP2022_DeathsBySingleAgeSex_Medium_1950-2021.csv")
+fert_all    <- read_csv("data-pop-proj-2022/WPP2022_Fertility_by_Age1.csv")
+mort_past   <- read_csv("data-pop-proj-2022/WPP2022_DeathsBySingleAgeSex_Medium_1950-2021.csv")
 mort_future <- read_csv("data-pop-proj-2022/WPP2022_DeathsBySingleAgeSex_Medium_2022-2100.csv")
-pop_past <- read_csv("data-pop-proj-2022/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv")
-pop_future <- read_csv("data-pop-proj-2022/WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv")
-indicators <-   read_csv("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv")
+pop_past    <- read_csv("data-pop-proj-2022/WPP2022_Population1JanuaryBySingleAgeSex_Medium_1950-2021.csv")
+pop_future  <- read_csv("data-pop-proj-2022/WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv")
+indicators  <- read_csv("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv")
 
 mort_all <- rbind(mort_past, mort_future)
 pop_all <- rbind(pop_past, pop_future)
@@ -72,6 +69,20 @@ rm(mort_past, mort_future, pop_past, pop_future)
 #'   columns as mort_m.
 #' @param sex_ratio_birth number of boys born for every girl born, vector with
 #'   length of years to be projected.
+#' @param net_migration vector of proportions of the population that migrate to
+#'   the country, net of those who leave. Defaults to a vector of zeroes.
+#' @param female_share_migration vector of proportions of net migrants that are
+#'   female. Defaults to a vector of 0.5s.
+#' @param migration_age_weights vector of relative distribution of the age of
+#'   net migrants. Must be 121 values representing relative proportion of net
+#'   migrants aged zero to 120. Defaults to a normal distribution of mean 28 and
+#'   standard deviation 11. Note that this distribution currently must be the
+#'   same through the projection period (unlike eg fertility and mortality,
+#'   which have individual values for each age group and sex for each year).
+#'   Only the total net migration proportion can change over time, not its age
+#'   make-up.
+#' @author Peter Ellis, expanding on a less-featured example by Farid Flici
+#'   https://farid-flici.github.io/tuto.html
 pop_proj <- function(start_pop_m, 
                      start_pop_f, 
                      start_year, 
@@ -191,7 +202,7 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
   # should be 35 rows ie fertilities for ages 15 to 49
   stopifnot(nrow(this_fert) == 35)
   # should be 81 columns, 1 column for each year from 2020 to 2100
-  stopifnot(ncol(this_fert) == 81)
+  stopifnot(ncol(this_fert) == length(the_years))
   
   
   # Mortality is in numbers not a ratio so we need to join to the population data to turn it into a ratio
@@ -289,7 +300,7 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
 
 #------------comparisons------------
 
-the_country <- "Australia"
+the_country <- "Vanuatu"
 my_proj <- repeat_un_proj(the_country)$un_proj
 
 
@@ -311,7 +322,7 @@ p1 <- comp_data |>
   scale_y_continuous(label = comma) +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population", x = "", colour = "")
+       y = "Population (thousands)", x = "", colour = "")
 
 svg_png(p1, "../img/0262-vanuatu-pop")
 # svg_png(p1, "../img/0262-Australia-pop")
@@ -328,7 +339,7 @@ p2 <- indicators |>
   geom_line() +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population", x = "", colour = "")
+       y = "Births (thousands)", x = "", colour = "")
 
 svg_png(p2, "../img/0262-vanuatu-births")
 # svg_png(p2, "../img/0262-australia-births")
@@ -344,7 +355,7 @@ p3 <- indicators |>
   geom_line() +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population", x = "", colour = "")
+       y = "Deaths (thousands)", x = "", colour = "")
 
 svg_png(p3, "../img/0262-vanuatu-deaths")
 #svg_png(p3, "../img/0262-australia-deaths")
@@ -359,17 +370,25 @@ svg_png(p3, "../img/0262-vanuatu-deaths")
 
 # ok for Vanuatu so there's an assumption of net zero migration it seems, for the forecast period
 # but that's not the case for other countries:
-p4 <- indicators |>
-  filter(Location == the_country) |>
-  ggplot(aes(x = Time, y = CNMR)) +
-  geom_line() +
-  geom_vline(xintercept = 2022, lty = 2) +
-  geom_hline(yintercept = 0, lty = 2) +
-  labs(title = the_country,
-       subtitle = "Net migration per thousand people")
 
-svg_png(p4, "../img/0262-vanuatu-mig")
-# svg_png(p4, "../img/0262-australia-mig")
+plot_mig <- function(the_country){
+  p <- indicators |>
+    filter(Location == the_country) |>
+    ggplot(aes(x = Time, y = CNMR)) +
+    geom_vline(xintercept = 2022, lty = 2, colour = "steelblue") +
+    geom_hline(yintercept = 0, lty = 2, colour = "steelblue") +
+    geom_line() +
+    labs(title = the_country,
+         subtitle = "Net migration rate per thousand people",
+         y = "", x = "",
+         caption = "Source: UN World Population Prospects 2022")
+  
+  return(p)
+}
+
+p <- plot_mig("Vanuatu") + plot_mig("Fiji") + plot_mig("Australia") + plot_mig("India") +
+  plot_layout(ncol = 2)
+svg_png(p, "../img/0262-migration")
 
 #-----------------changing one or two factors while keeping the rest the same--------------
 
@@ -381,17 +400,21 @@ svg_png(p4, "../img/0262-vanuatu-mig")
 revision_country <- "Vanuatu"
 van_orig <- repeat_un_proj(revision_country)
 
+# rough adjustment of starting population in 2020 to make totals match the Census totals.
+# In principle could of course use the actual numbers by single age category.
 revised_pop_m <- van_orig$un_pop_m * 151597 / sum(van_orig$un_pop_m)
 revised_pop_f <- van_orig$un_pop_f * 148422 / sum(van_orig$un_pop_f)
 
+# calculate the crude birth rate in the current projection
 un_cbr_2020 <- (van_orig$un_proj$PopM[1, 2]  + van_orig$un_proj$PopF[1, 2]) / 
   sum(van_orig$un_proj$PopM[, 2], van_orig$un_proj$PopF[, 2]) * 1000
 
+# make a rough adjustment of future fertility rates assuming they are "out" by the
+# same proportion that crude birth rate was out in 2020
 adj_ratio <- 28.2 / un_cbr_2020
-
 revised_fert <- van_orig$un_fert * adj_ratio
 
-
+# Refit the projection with the above rough adjustments:
 revised_proj <- pop_proj(
   start_pop_m = revised_pop_m,
   start_pop_f = revised_pop_f,
@@ -420,28 +443,31 @@ p5 <- comp_data |>
   geom_line() +
   labs(title = revision_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population", x = "", colour = "")
+       y = "Population (thousands)", x = "", colour = "")
 
 svg_png(p5, "../img/0262-vanuatu-revised")
 
 d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],   
                   van_orig$un_proj$PopM[, 31],  van_orig$un_proj$PopF[, 31]),
        sex = rep(c("Male", "Female", "Male", "Female"), each = 121),
-       model = rep(c("Revised projections with 2020 census made in 2024", "UN projections made in 2022"), each = 242),
+       model = rep(c("Revised projections with 2020 census, made in 2024", "UN projections, made in 2022"), each = 242),
        age = rep(0:120, 4)) |>
-  mutate(agef = fct_reorder(as.character(age), age)) |>
+  mutate(agef = fct_reorder(as.character(age), age),
+         model = fct_rev(model)) |>
   filter(age < 100)
 
 p6 <- d |>
   filter(sex == "Female") |>
   ggplot(aes(x = value, y = agef)) +
   facet_wrap(~model) +
-  geom_col(fill = "brown") +
-  geom_col(data = filter(d, sex == "Male"), aes(x = -value), fill = "orange") +
+  geom_col(fill = "brown", colour = NA) +
+  geom_col(data = filter(d, sex == "Male"), aes(x = -value), fill = "orange", colour = NA) +
   geom_vline(xintercept = 0, colour = "white") +
   labs(x = "Number of people", y = "",
        title = "Comparison of UN original and revised population projections",
        subtitle = "Population age distribution in 2050") +
-  scale_x_continuous(breaks = c(-4000, 0, 4000), labels = c(4000, 0, 4000))
+  scale_x_continuous(breaks = c(-4000, -2000, 0, 2000, 4000), labels = c("4,000", "Male", 0, "Female", "4,000")) +
+  theme(panel.grid = element_blank()) +
+  scale_y_discrete(breaks = 1:20 * 5)
 
-svg_png(p6, "../img/0262-vanuatu-pyramid", h = 8)       
+svg_png(p6, "../img/0262-vanuatu-pyramid", h = 6)       
