@@ -313,10 +313,10 @@ p1 <- comp_data |>
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Population", x = "", colour = "")
 
-svg_png(p1, "../img/0254-vanuatu-pop")
-# svg_png(p1, "../img/0254-Australia-pop")
-# svg_png(p1, "../img/0254-China-pop")
-# svg_png(p1, "../img/0254-India-pop")
+svg_png(p1, "../img/0262-vanuatu-pop")
+# svg_png(p1, "../img/0262-Australia-pop")
+# svg_png(p1, "../img/0262-China-pop")
+# svg_png(p1, "../img/0262-India-pop")
 
 # births
 p2 <- indicators |>
@@ -330,8 +330,8 @@ p2 <- indicators |>
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Population", x = "", colour = "")
 
-svg_png(p2, "../img/0254-vanuatu-births")
-# svg_png(p2, "../img/0254-australia-births")
+svg_png(p2, "../img/0262-vanuatu-births")
+# svg_png(p2, "../img/0262-australia-births")
 
 
 # deaths
@@ -346,8 +346,8 @@ p3 <- indicators |>
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Population", x = "", colour = "")
 
-svg_png(p3, "../img/0254-vanuatu-deaths")
-#svg_png(p3, "../img/0254-australia-deaths")
+svg_png(p3, "../img/0262-vanuatu-deaths")
+#svg_png(p3, "../img/0262-australia-deaths")
 
 
 # some very small differences in Vanuatu which probably come down to something about 1 Jan v 1 July for one or more
@@ -368,8 +368,8 @@ p4 <- indicators |>
   labs(title = the_country,
        subtitle = "Net migration per thousand people")
 
-svg_png(p4, "../img/0254-vanuatu-mig")
-# svg_png(p4, "../img/0254-australia-mig")
+svg_png(p4, "../img/0262-vanuatu-mig")
+# svg_png(p4, "../img/0262-australia-mig")
 
 #-----------------changing one or two factors while keeping the rest the same--------------
 
@@ -422,7 +422,7 @@ p5 <- comp_data |>
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Population", x = "", colour = "")
 
-svg_png(p5, "../img/0254-vanuatu-revised")
+svg_png(p5, "../img/0262-vanuatu-revised")
 
 d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],   
                   van_orig$un_proj$PopM[, 31],  van_orig$un_proj$PopF[, 31]),
@@ -444,4 +444,4 @@ p6 <- d |>
        subtitle = "Population age distribution in 2050") +
   scale_x_continuous(breaks = c(-4000, 0, 4000), labels = c(4000, 0, 4000))
 
-svg_png(p6, "../img/0254-vanuatu-pyramid", h = 8)       
+svg_png(p6, "../img/0262-vanuatu-pyramid", h = 8)       
