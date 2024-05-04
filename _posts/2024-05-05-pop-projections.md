@@ -1,0 +1,164 @@
+---
+layout: post
+title: The 'V20' group of vulnerable countries and the MVI 
+date: 2024-05-05
+tag: 
+   - Demography
+   - WorkRelated
+   - Pacific
+description: I compare the GDP per capita and scores on the UN Multidimensional Vulnerability Index (MVI) of the 68 economies in the 'V20' group with other countries that aren't part of the V20.
+image: /img/0257-discrepancies.svg
+socialimage: http://freerangestats.info/img/0257-discrepancies.png
+category: R
+---
+
+Just a brief blog post that is basically an addendum to [the one I wrote a few weeks ago](/blog/2023/09/30/mvi) on the United Nations Multidimensional Vulnerability Index. I found myself wondering about the [Vulnerable Twenty (V20) Group of Ministers of Finance of the Climate Vulnerable Forum](https://www.v-20.org/about), which is now (despite the '20' in its name) a collection of 68 economies. 
+
+How vulnerable do these 68 economies look on the proposed MVI? I imagine they and others will be interested. After all, while 'vulnerable to climate change' (for the V20) is not the same as 'vulnerable to anything' (for the MVI), they are both using the same word. Given how prominently and frequently 'climate change' and 'vulnerability' are connected in this context, I suspect some stakeholders would be expecting the two approaches to have a similar set of vulnerable countries
+
+It turns out that the V20 economies are (according to the MVI) only slightly more 'vulnerable' than the average of the 142 countries that have an MVI score. On the other hand, they are materially poorer. 
+
+Consider this table of median values:
+
+<table class="table" style="margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">    </th>
+   <th style="text-align:right;"> Structural vulnerability </th>
+   <th style="text-align:right;"> Lack of structural resilience </th>
+   <th style="text-align:right;"> Multidimensional vulnerability </th>
+   <th style="text-align:right;"> GDP per capita, PPP </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Member of V20 </td>
+   <td style="text-align:right;"> 49.2 </td>
+   <td style="text-align:right;"> 57.1 </td>
+   <td style="text-align:right;"> 54.4 </td>
+   <td style="text-align:right;"> $5,500 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Not a member of V20 </td>
+   <td style="text-align:right;"> 48.4 </td>
+   <td style="text-align:right;"> 55.0 </td>
+   <td style="text-align:right;"> 52.4 </td>
+   <td style="text-align:right;"> $13,700 </td>
+  </tr>
+</tbody>
+</table>
+
+In fact, many countries in the V20 have below-average MVI scores; and there are also countries that aren't in the V20 but have notably above-average MVI scores. Consider this chart:
+
+<object type="image/svg+xml" data='/img/0257-discrepancies.svg' width='100%'><img src='/img/0257-discrepancies.png' width='100%'></object>
+
+The blue labelled countries are non-members of the V20 with an MVI of above 65. The red labelled countries are members of the V20 with an MVI below 50 (by construction, 50 is the average MVI score, so below 50 means below average). The GDP per capita, in purchasing power parity (PPP) terms in 2017 international dollars, is just for contextual information; it isn't used for determining which countries are labelled or not.
+
+So clearly the countries that have self-identified as 'vulnerable' to climate change are not the same as the set you would choose based on the new Multidimensional Vulnerability Index with its broader concept of vulnerability. I'm not going to say which is right and which wrong, or whether both are right in their own way; just pointing out the fact.
+
+That's really all for today.
+
+Here's the R code that does this analysis. You can't just copy it and run it in a fresh R session however, contrary to my usual practice; you need to have run the code for the last post's analysis first, or be running this in a clone of my whole [blog source repository](https://github.com/ellisp/blog-source).
+
+{% highlight R lineanchors %}
+# This is a comparison of membership of the V20 with the MVI and GDP per capita
+
+#------------Data prep-----------
+library(WDI)
+library(kableExtra)
+library(clipr)
+
+# run the script from the previous blog, to load in the MVI data in particular,
+# and to load in all the standard R packages (tidyverse in particular)
+source("0255-mvi-pacific.R")
+
+# get the world Banks' GDP data
+
+# 	"GDP per capita, PPP (constant 2017 international $)":
+gdp_ppp_pc <- WDI(indicator = "NY.GDP.PCAP.PP.KD", start = 2000) |>
+  drop_na() |>
+  group_by(iso3c) |>
+  # just get the latest year for each country:
+  arrange(desc(year)) |>
+  slice(1) |>
+  ungroup() |>
+  select(iso3c,
+          gdp_year = year,
+         gdp_pc = NY.GDP.PCAP.PP.KD)
+
+# List of members of the V20 taken from
+# https://www.v-20.org/v20-ministerial-dialogue-xi-communique#_ftnref5
+v20 <- c("Afghanistan", "Bangladesh", "Barbados", "Benin", "Bhutan", "Burkina Faso",
+  "Cambodia", "Chad", "Colombia", "Comoros", "Costa Rica", "Côte D'Ivoire", 
+  "Democratic Republic of the Congo", "Dominica", "Dominican Republic",
+  "Eswatini", "Ethiopia", "Fiji", "Gambia", "Ghana", "Grenada", "Guatemala",
+  "Guinea", "Guyana", "Haiti", "Honduras", "Jordan", "Kenya", "Kiribati",
+  "Kyrgyzstan", "Lebanon", "Liberia", "Madagascar", "Malawi", "Maldives",
+  "Marshall Islands", "Mongolia", "Morocco", "Mozambique", "Namibia", "Nepal",
+  "Nicaragua", "Niger", "Pakistan", "Palau", "Palestine**", "Papua New Guinea",
+  "Paraguay", "Philippines", "Rwanda", "Saint Lucia", "Samoa", "Senegal",
+  "Sierra Leone", "South Sudan", "Sri Lanka", "Sudan", "United Republic of Tanzania",
+  "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Tuvalu",
+  "Uganda", "Vanuatu", "Viet Nam", "Yemen")
+# A few hand edits were made so country names match those in the MVI (eg
+# D'Ivoire rather than d'Ivoire, etc)
+
+# any non-matches? Yes, Palestine:
+v20[!v20 %in% mvi$Country]
+# Palestine not in the mvi.
+
+# Mark which countries are in the V20, and join to the GDP data:
+mvi2 <- mvi |>
+  mutate(type = ifelse(Country %in% v20, "Member of V20", "Not a member of V20")) |>
+  left_join(gdp_ppp_pc, by = c("ISO" = "iso3c"))
+
+# note there are seven countries with no GDP PPP per capita values:
+filter(mvi2, is.na(gdp_pc))
+
+#===============comparisons============
+
+
+#---------Table------------
+# Average values by v20 membership or not:
+mvi2 |>
+  group_by(type) |>
+  summarise(`Structural vulnerability` = median(svi),
+            `Lack of structural resilience` = median(lsri),
+            `Multidimensional vulnerability` = median(`MVI - Score`),
+            `GDP per capita, PPP` = dollar(median(gdp_pc, na.rm = TRUE), accuracy = 100)) |>
+  rename(`  ` = type) |>
+  kable(digits = 1, format.args = list(big.mark = ","), align = c("l", "r", "r", "r", "r")) |>
+  kable_styling() |>
+  write_clip()
+
+# V20 members are very slightly more vulnerable, and notably poorer,
+# than non-members
+
+
+#-------------Plot-------------------
+pal <- c("Member of V20" = "darkred","Not a member of V20" = "darkblue")
+
+p3 <- mvi2 |>
+  ggplot(aes(x = gdp_pc, y = `MVI - Score`, colour = type)) +
+  geom_point() +
+  geom_text_repel(data = filter(mvi2, (`MVI - Score` < 50 & type == "Member of V20")|
+                                  (`MVI - Score` > 60 & type != "Member of V20")),
+                  aes(label = Country), size = 2.8, seed = 123) +
+  annotate("label", x = 800, y = 37, colour = pal[1], fontface = "italic",
+           label.size = 0, fill = "grey90", hjust = 0,
+           label = "Member of V20 but lower than average vulnerability according to MVI") +
+  annotate("label", x = 800, y = 73, colour = pal[2], fontface = "italic",
+           label.size = 0, fill = "grey90", hjust = 0,
+           label = "Not a member of V20 but high vulnerability according to MVI") +
+  scale_x_log10(label = dollar) +
+  scale_colour_manual(values = pal) +
+  labs(x = "GDP per capita, PPP, 2017 prices",
+       y = "Multidimensional Vulnerability Index",
+       colour = "",
+       title = "Membership of the 'V20' group of vulnerable coutries", 
+       subtitle = "Compared to scores on the UN's Multidimensional Vulnerability Index (MVI)",
+       caption = "Source: UN https://www.un.org/ohrlls/mvi (MVI), World Bank World Development Indicators (GDP), analysis by freerangestats.info
+Palestine is a member of V20 but does not have a MVI. Seven countries have an MVI but are missing GDP data.")
+
+print(p3)
+{% endhighlight %}

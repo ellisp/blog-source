@@ -5,7 +5,7 @@ library(tidyverse)
 library(glue)
 library(scales)
 
-dir.create("data-pop-proj-2022")
+dir.create("data-pop-proj-2022", showWarnings = FALSE)
 
 #------------------download and import data for all countries from existing projections----------------
 list.files("data-pop-proj-2022")
@@ -73,16 +73,20 @@ rm(mort_past, mort_future, pop_past, pop_future)
 #' @param sex_ratio_birth number of boys born for every girl born, vector with
 #'   length of years to be projected.
 pop_proj <- function(start_pop_m, 
-                            start_pop_f, 
-                            start_year, 
-                            end_year, 
-                            fertility, 
-                            mort_m,
-                            mort_f,
-                            sex_ratio_birth = rep(1.045, end_year - start_year + 1),
-                            net_migration = rep(0, end_year - start_year + 1)){
+                     start_pop_f, 
+                     start_year, 
+                     end_year, 
+                     fertility, 
+                     mort_m,
+                     mort_f,
+                     sex_ratio_birth = rep(1.045, end_year - start_year + 1),
+                     net_migration = rep(0, end_year - start_year + 1),
+                     female_share_migration = rep(0.5, end_year - start_year + 1),
+                     migration_age_weights = dnorm(0:120, mean = 28, sd = 11)
+                     ){
   
   stopifnot(nrow(fertility) == 35)
+  stopifnot(length(migration_age_weights) == 121)
   
   ncols <- end_year - start_year + 1
   
@@ -95,8 +99,12 @@ pop_proj <- function(start_pop_m,
   stopifnot(length(start_pop_f) < 120)
   stopifnot(length(net_migration) == ncols)
   stopifnot(length(sex_ratio_birth) == ncols)
+  stopifnot(length(female_share_migration) == ncols)
+  stopifnot(min(female_share_migration) >= 0)
+  stopifnot(max(female_share_migration) <= 1)
   
   stopifnot(nrow(mort_m) == nrow(mort_f))
+  
   # fill in with high probability of death for ages beyond where we have mortality data
   if(nrow(mort_m) < 121){
     extra_deaths_m <- matrix(max(mort_m), nrow = 121 - nrow(mort_m), ncol = ncol(mort_m))
@@ -128,7 +136,17 @@ pop_proj <- function(start_pop_m,
     
     deaths[i-1] <- sum(PopM[, i-1]) - sum(PopM[, i]) + sum(PopF[, i-1]) - sum(PopF[, i])
     
-    # Age zero. Fertility rate by the number of women in the middle of the previous year.
+    
+    # migration. 
+    total_migrants <- (sum(PopM[,i]) + sum(PopF[,i])) * net_migration[i]
+    migf = total_migrants * female_share_migration[i] * migration_age_weights / sum(migration_age_weights)
+    migm = total_migrants * (1 - female_share_migration[i]) * migration_age_weights / sum(migration_age_weights)
+    
+    PopM[, i] <- PopM[, i] + migm
+    PopF[, i] <- PopF[, i] + migf
+    
+    
+    # Age zero ie births. Fertility rate by the number of women in the middle of the previous year.
     # Note that PopF rows 16:50 equates to women age 15:49
     reproducing_women <- (PopF[16:50, i-1] + PopF[16:50, i]) / 2
     
@@ -138,12 +156,7 @@ pop_proj <- function(start_pop_m,
     PopM[1, i] <-  reproducing_women %*% fertility[, i-1] * prop_boys
     
     PopF[1, i] <- reproducing_women %*% fertility[, i-1] * prop_girls 
-    
-    # migration. This assumes that net migrants have the same age and sex profile as
-    # the overall population, which seems unlikely, but not obvious where to
-    # get the age profile of net migrants from the published data.
-    PopM[, i] <- PopM[, i] * (net_migration[i] + 1)
-    PopF[, i] <- PopF[, i] * (net_migration[i] + 1)
+
   }
   
   # Return a list of the two matrices
@@ -276,7 +289,7 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
 
 #------------comparisons------------
 
-the_country <- "Vanuatu"
+the_country <- "Australia"
 my_proj <- repeat_un_proj(the_country)$un_proj
 
 
@@ -288,7 +301,7 @@ comp_data <- indicators |>
   mutate(`Reproduction` = as.numeric(apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)) / 1000) 
 
 # First year should be an exact match:
-stopifnot(comp_data[1, ]$UN == comp_data[1, ]$Reproduction)
+stopifnot(comp_data[1, ]$`UN original` == comp_data[1, ]$Reproduction)
 
 
 p1 <- comp_data |>
@@ -302,6 +315,8 @@ p1 <- comp_data |>
 
 svg_png(p1, "../img/0254-vanuatu-pop")
 # svg_png(p1, "../img/0254-Australia-pop")
+# svg_png(p1, "../img/0254-China-pop")
+# svg_png(p1, "../img/0254-India-pop")
 
 # births
 p2 <- indicators |>
@@ -316,6 +331,7 @@ p2 <- indicators |>
        y = "Population", x = "", colour = "")
 
 svg_png(p2, "../img/0254-vanuatu-births")
+# svg_png(p2, "../img/0254-australia-births")
 
 
 # deaths
@@ -331,14 +347,13 @@ p3 <- indicators |>
        y = "Population", x = "", colour = "")
 
 svg_png(p3, "../img/0254-vanuatu-deaths")
+#svg_png(p3, "../img/0254-australia-deaths")
 
 
 # some very small differences in Vanuatu which probably come down to something about 1 Jan v 1 July for one or more
 # of the rates I'm calculating
 
-# Australia is quite significantly out, too few births. Maybe because the migration
-# I am assuming to be same profile as population, whereas UN may have a model
-# of more reproductive age people migrating in
+# Australia is quite significantly out, too few births. 
 
 #-----------------------thinking about migration----------------
 
