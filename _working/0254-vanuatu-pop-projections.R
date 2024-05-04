@@ -262,14 +262,21 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
                   sex_ratio_birth = this_srb
     
   )
-  return(list(un_proj = this_proj)
+  return(list(un_proj = this_proj,
+         un_pop_m = this_pop_m,
+         un_pop_f = this_pop_f,
+         un_fert = this_fert,
+         un_mort_m = this_mort_m,
+         un_mort_f = this_mort_f,
+         un_cnmr = this_cnmr,
+         un_srb = this_srb))
 }
 
 
 #------------comparisons------------
 
 the_country <- "Vanuatu"
-my_proj <- repeat_un_proj(the_country)
+my_proj <- repeat_un_proj(the_country)$un_proj
 
 projected_pop <- apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)
 
