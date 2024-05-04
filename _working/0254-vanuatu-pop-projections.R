@@ -275,7 +275,7 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
 
 #------------comparisons------------
 
-the_country <- "Vanuatu"
+the_country <- "Australia"
 my_proj <- repeat_un_proj(the_country)$un_proj
 
 projected_pop <- apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)
@@ -342,3 +342,77 @@ indicators |>
   geom_hline(yintercept = 0, lty = 2) +
   labs(title = the_country,
        subtitle = "Net migration per thousand people")
+
+
+#-----------------changing one or two factors while keeping the rest the same--------------
+
+# Say we had the 2020 Vanuatu census so we knew the real population then, and wanted
+# to redo the population projections with everything staying as they were before
+
+
+# file:///C:/Users/Peter/Downloads/Vanuatu_2020_Census_Analytical_report_Vol_2.pdf
+revision_country <- "Vanuatu"
+van_orig <- repeat_un_proj(revision_country)
+
+names(van_orig)
+revised_pop_m <- van_orig$un_pop_m * 151597 / sum(van_orig$un_pop_m)
+revised_pop_f <- van_orig$un_pop_f * 148422 / sum(van_orig$un_pop_f)
+
+un_cbr_2020 <- (van_orig$un_proj$PopM[1, 2]  + van_orig$un_proj$PopF[1, 2]) / 
+  sum(van_orig$un_proj$PopM[, 2], van_orig$un_proj$PopF[, 2]) * 1000
+
+adj_ratio <- 28.2 / un_cbr_2020
+
+revised_fert <- van_orig$un_fert * adj_ratio
+
+
+revised_proj <- pop_proj(
+  start_pop_m = revised_pop_m,
+  start_pop_f = revised_pop_f,
+  start_year = 2020,
+  end_year = 2100,
+  fertility = revised_fert,
+  mort_m = van_orig$un_mort_m,
+  mort_f = van_orig$un_mort_f,
+  sex_ratio_birth = van_orig$un_srb,
+  net_migration = van_orig$un_cnmr)
+
+
+projected_pop <- apply(revised_proj$PopM, 2, sum) + apply(revised_proj$PopF, 2, sum)
+
+# total population
+comp_data <- indicators |>
+  filter(Location == revision_country & Variant == "Medium" & Time %in% 2020:2100) |>
+  select(Time, `2022 UN projections` = TPopulation1Jan) |>
+  mutate(`Revised with 2020 census` = as.numeric(projected_pop / 1000) )
+
+
+comp_data |>
+  filter(Time <= 2050) |>
+  gather(variable, value, -Time) |>
+  ggplot(aes(x = Time, y = value, colour = variable)) +
+  geom_line() +
+  labs(title = revision_country,
+       subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
+       y = "Population")
+
+d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],   
+                  van_orig$un_proj$PopM[, 31],  van_orig$un_proj$PopF[, 31]),
+       sex = rep(c("Male", "Female", "Male", "Female"), each = 121),
+       model = rep(c("Revised projections with 2020 census made in 2024", "UN projections made in 2022"), each = 242),
+       age = rep(0:120, 4)) |>
+  mutate(agef = fct_reorder(as.character(age), age)) |>
+  filter(age < 100)
+
+d |>
+  filter(sex == "Female") |>
+  ggplot(aes(x = value, y = agef)) +
+  facet_wrap(~model) +
+  geom_col(fill = "brown") +
+  geom_col(data = filter(d, sex == "Male"), aes(x = -value), fill = "darkgreen") +
+  geom_vline(xintercept = 0, colour = "white") +
+  labs(x = "Number of people", y = "",
+       title = "Comparison of UN original and revised population projections",
+       subtitle = "Population age distribution in 2050") +
+  scale_x_continuous(breaks = c(-4000, 0, 4000), labels = c(4000, 0, 4000))
+       
