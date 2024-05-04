@@ -405,7 +405,7 @@ p5 <- comp_data |>
   geom_line() +
   labs(title = revision_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population")
+       y = "Population", x = "", colour = "")
 
 svg_png(p5, "../img/0254-vanuatu-revised")
 
