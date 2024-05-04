@@ -3,6 +3,7 @@
 
 library(tidyverse)
 library(glue)
+library(scales)
 
 dir.create("data-pop-proj-2022")
 
@@ -109,7 +110,7 @@ pop_proj <- function(start_pop_m,
   # each row of the matrix is an age group, each column is a year
   PopM <- matrix(0, nrow=121, ncol = ncols)
   PopF <- matrix(0, nrow=121, ncol = ncols)
-  deaths <- rep(0, ncols)
+  deaths <- rep(NA, ncols)
   
   rownames(PopF) <- rownames(PopM) <- c(0:120)                # ages
   colnames(PopF) <- colnames(PopM) <- c(start_year:end_year)  # years
@@ -275,31 +276,34 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
 
 #------------comparisons------------
 
-the_country <- "Australia"
+the_country <- "Vanuatu"
 my_proj <- repeat_un_proj(the_country)$un_proj
 
-projected_pop <- apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)
+
 
 # total population
 comp_data <- indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
-  select(Time, UN = TPopulation1Jan) |>
-  mutate(New = as.numeric(projected_pop / 1000) )
+  select(Time, `UN original` = TPopulation1Jan) |>
+  mutate(`Reproduction` = as.numeric(apply(my_proj$PopM, 2, sum) + apply(my_proj$PopF, 2, sum)) / 1000) 
 
 # First year should be an exact match:
-stopifnot(comp_data[1, ]$UN == comp_data[1, ]$New)
+stopifnot(comp_data[1, ]$UN == comp_data[1, ]$Reproduction)
 
 
-comp_data |>
+p1 <- comp_data |>
   gather(variable, value, -Time) |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
   geom_line() +
+  scale_y_continuous(label = comma) +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population")
+       y = "Population", x = "", colour = "")
+
+svg_png(p1, "../img/0254-vanuatu-pop")
 
 # births
-indicators |>
+p2 <- indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
   select(Time, UN = Births) |>
   mutate(New = as.numeric(my_proj$PopM[1,] + my_proj$PopF[1, ]) / 1000) |>
@@ -334,7 +338,7 @@ indicators |>
 
 # ok for Vanuatu so there's an assumption of net zero migration it seems, for the forecast period
 # but that's not the case for other countries:
-indicators |>
+p3 <- indicators |>
   filter(Location == the_country) |>
   ggplot(aes(x = Time, y = CNMR)) +
   geom_line() +
@@ -409,7 +413,7 @@ d |>
   ggplot(aes(x = value, y = agef)) +
   facet_wrap(~model) +
   geom_col(fill = "brown") +
-  geom_col(data = filter(d, sex == "Male"), aes(x = -value), fill = "darkgreen") +
+  geom_col(data = filter(d, sex == "Male"), aes(x = -value), fill = "orange") +
   geom_vline(xintercept = 0, colour = "white") +
   labs(x = "Number of people", y = "",
        title = "Comparison of UN original and revised population projections",
