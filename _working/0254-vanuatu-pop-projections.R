@@ -301,31 +301,37 @@ p1 <- comp_data |>
        y = "Population", x = "", colour = "")
 
 svg_png(p1, "../img/0254-vanuatu-pop")
+# svg_png(p1, "../img/0254-Australia-pop")
 
 # births
 p2 <- indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
-  select(Time, UN = Births) |>
-  mutate(New = as.numeric(my_proj$PopM[1,] + my_proj$PopF[1, ]) / 1000) |>
+  select(Time, `UN original` = Births) |>
+  mutate(Reproduction = as.numeric(my_proj$PopM[1,] + my_proj$PopF[1, ]) / 1000) |>
   gather(variable, value , -Time)  |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
   geom_line() +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Number of births")
+       y = "Population", x = "", colour = "")
+
+svg_png(p2, "../img/0254-vanuatu-births")
 
 
 # deaths
-indicators |>
+p3 <- indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
-  select(Time, UN = Deaths) |>
-  mutate(New = as.numeric(my_proj$deaths) / 1000) |>
+  select(Time, `UN original` = Deaths) |>
+  mutate(Reproduction = as.numeric(my_proj$deaths) / 1000) |>
   gather(variable, value , -Time)  |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
   geom_line() +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Number of deaths")
+       y = "Population", x = "", colour = "")
+
+svg_png(p3, "../img/0254-vanuatu-deaths")
+
 
 # some very small differences in Vanuatu which probably come down to something about 1 Jan v 1 July for one or more
 # of the rates I'm calculating
@@ -338,7 +344,7 @@ indicators |>
 
 # ok for Vanuatu so there's an assumption of net zero migration it seems, for the forecast period
 # but that's not the case for other countries:
-p3 <- indicators |>
+p4 <- indicators |>
   filter(Location == the_country) |>
   ggplot(aes(x = Time, y = CNMR)) +
   geom_line() +
@@ -347,6 +353,8 @@ p3 <- indicators |>
   labs(title = the_country,
        subtitle = "Net migration per thousand people")
 
+svg_png(p4, "../img/0254-vanuatu-mig")
+# svg_png(p4, "../img/0254-australia-mig")
 
 #-----------------changing one or two factors while keeping the rest the same--------------
 
@@ -358,7 +366,6 @@ p3 <- indicators |>
 revision_country <- "Vanuatu"
 van_orig <- repeat_un_proj(revision_country)
 
-names(van_orig)
 revised_pop_m <- van_orig$un_pop_m * 151597 / sum(van_orig$un_pop_m)
 revised_pop_f <- van_orig$un_pop_f * 148422 / sum(van_orig$un_pop_f)
 
@@ -391,7 +398,7 @@ comp_data <- indicators |>
   mutate(`Revised with 2020 census` = as.numeric(projected_pop / 1000) )
 
 
-comp_data |>
+p5 <- comp_data |>
   filter(Time <= 2050) |>
   gather(variable, value, -Time) |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
@@ -399,6 +406,8 @@ comp_data |>
   labs(title = revision_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Population")
+
+svg_png(p5, "../img/0254-vanuatu-revised")
 
 d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],   
                   van_orig$un_proj$PopM[, 31],  van_orig$un_proj$PopF[, 31]),
@@ -408,7 +417,7 @@ d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],
   mutate(agef = fct_reorder(as.character(age), age)) |>
   filter(age < 100)
 
-d |>
+p6 <- d |>
   filter(sex == "Female") |>
   ggplot(aes(x = value, y = agef)) +
   facet_wrap(~model) +
@@ -419,4 +428,5 @@ d |>
        title = "Comparison of UN original and revised population projections",
        subtitle = "Population age distribution in 2050") +
   scale_x_continuous(breaks = c(-4000, 0, 4000), labels = c(4000, 0, 4000))
-       
+
+svg_png(p6, "../img/0254-vanuatu-pyramid", h = 8)       
