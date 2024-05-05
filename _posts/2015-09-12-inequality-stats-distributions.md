@@ -10,7 +10,7 @@ tag:
    - NZIS2011
 description: I explore the sampling distributions of estimates of Gini coefficients from a sample, using the New Zealand Income Survey 2011.  At the actual sample size of nearly 30,000, sampling error is negligible, and as low as a sample size of 1,000 a 95% confidence interval is (0.48, 0.55), precise enough for most purposes and certainly good enough given the non-sampling vagaries of the underlying data.  I discuss why individual and weekly income data - which is all I have to hand - returns a higher measure of inequality than does annual household income, the more usual and internationally-comparable (and completely valid) measure.
 image: /img/0008-lorenz.svg
-socialimage: http://ellisp.github.io/img/0008-lorenz.png
+socialimage: http://freerangestats.info/img/0008-lorenz.png
 category: R
 ---
 

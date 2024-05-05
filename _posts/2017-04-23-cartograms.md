@@ -9,7 +9,7 @@ tag:
    - R
 description: Choropleth maps are useful ways of using fill colour to show densities, proportions and growth rates by political or economic boundaries, but can be visually problematic when large geographic areas represent few people, or small areas (ie cities) represent many.  One solution is a cartogram, and I have a go at using them to present New Zealand census data in this post and accompanying shiny app.
 image: /img/0094-reg-cart-3.svg
-socialimage: http://ellisp.github.io/img/0094-reg-cart-3.png
+socialimage: http://freerangestats.info/img/0094-reg-cart-3.png
 category: R
 ---
 

@@ -8,7 +8,7 @@ tag:
    - R
 description: I look at the interaction between deprivation, being Māori, and family violence - combining data from the New Zealand census, the New Zealand index of deprivation, and the Family Violence Death Review Committee.
 image: /img/0103-interaction.svg
-socialimage: http://ellisp.github.io/img/0103-interaction.png
+socialimage: http://freerangestats.info/img/0103-interaction.png
 category: R
 ---
 

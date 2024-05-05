@@ -8,7 +8,7 @@ tag:
    - Timeseries
 description: ggseas 0.5.1 is available on CRAN.  
 image: /img/0060-seas-rents.svg
-socialimage: http://ellisp.github.io/img/0060-seas-rents.png
+socialimage: http://freerangestats.info/img/0060-seas-rents.png
 category: R
 ---
 

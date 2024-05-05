@@ -10,7 +10,7 @@ tag:
    - R
 description: Introduces a new web-app to help navigate and explore the World Bank's World Development Indicators; and a one-off comparison of the inequality measures available in that collection (just 5 of the 3,500 series available).
 image: /img/0022-shiny-screenshot1.png
-socialimage: http://ellisp.github.io/img/0022-shiny-screenshot1.png
+socialimage: http://freerangestats.info/img/0022-shiny-screenshot1.png
 category: R
 ---
 ## World Development Indicators

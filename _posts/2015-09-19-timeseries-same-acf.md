@@ -7,7 +7,7 @@ tag:
    - R
 description: Time series can have identical or similar autocorrelation functions but differ in important ways that may be material to your question of interest.
 image: /img/0010-ts-acf-1.svg
-socialimage: http://ellisp.github.io/img/0010-ts-acf-1.png
+socialimage: http://freerangestats.info/img/0010-ts-acf-1.png
 category: R
 ---
 ## Comparing two timeseries-generating blackboxes

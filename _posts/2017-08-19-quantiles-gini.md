@@ -7,7 +7,7 @@ tag:
    - R
 description: Calculating the Gini coefficient for inequality directly of mean income by decile produces a slightly biased downwards estimate.  I correct for this and demonstrate on the World Panel Income Distribution data.
 image: /img/0107-ginis-from-deciles.svg
-socialimage: http://ellisp.github.io/img/0107-ginis-from-deciles.png
+socialimage: http://freerangestats.info/img/0107-ginis-from-deciles.png
 category: R
 ---
 

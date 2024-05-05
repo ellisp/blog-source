@@ -7,7 +7,7 @@ tag:
    - R
 description:  I explore the demographic characteristics of who voted (and who didn't), out of people on the electoral roll, in the 2014 New Zealand general election.  I use multiple imputation and a generalized linear model with a quasibinomial response.  The people who vote tend to have characteristics associated with doing ok out of society (owning a home, having a partner, university qualifications, etc).
 image: /img/0104-model-results.svg
-socialimage: http://ellisp.github.io/img/0104-model-results.png
+socialimage: http://freerangestats.info/img/0104-model-results.png
 category: R
 ---
 

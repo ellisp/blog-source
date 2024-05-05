@@ -10,7 +10,7 @@ tag:
    
 description: Creating an animation to show why you can't ignore the time series element of data even when it's been created by a simple linear model
 image: /img/0017-original.svg
-socialimage: http://ellisp.github.io/img/0017-original.png
+socialimage: http://freerangestats.info/img/0017-original.png
 category: R
 ---
 ## What do auto-correlated residuals do to your linear model?

@@ -9,7 +9,7 @@ tag:
 description: The success rate (proportion of times the true value is covered by the interval) of 95% confidence intervals from the bootstrap when estimating population standard deviation can be very poor for complex mixed distributions, such as real world weekly income from a modest sample size (<20,000).
 
 image: /img/0042-sd-ci-coverage.svg
-socialimage: http://ellisp.github.io/img/0042-sd-ci-coverage.png
+socialimage: http://freerangestats.info/img/0042-sd-ci-coverage.png
 category: R
 ---
 

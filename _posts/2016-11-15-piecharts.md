@@ -7,7 +7,7 @@ tag:
    - NewZealand
 description: I polish up a dramatic pie chart from stuff.co.nz on earthquake energy released in New Zealand over the last few years.
 image: /img/0067-pie.svg
-socialimage: http://ellisp.github.io/img/0067-pie.png
+socialimage: http://freerangestats.info/img/0067-pie.png
 category: R
 ---
 

@@ -8,7 +8,7 @@ tag:
    - Timeseries
 description: Air pollution in Indian cities is unambiguously seasonal, and also might have a Diwali impact.
 image: /img/0073-decomp.svg
-socialimage: http://ellisp.github.io/img/0073-decomp.png
+socialimage: http://freerangestats.info/img/0073-decomp.png
 category: R
 ---
 

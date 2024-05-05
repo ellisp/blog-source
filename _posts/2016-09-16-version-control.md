@@ -9,7 +9,7 @@ tag:
    - WorkRelated
 description: Using version control software is a defining sign of a professional approach to serious data analysis
 image: /img/0055-ggplot2-commits.png
-socialimage: http://ellisp.github.io/img/0055-ggplot2-commits.png
+socialimage: http://freerangestats.info/img/0055-ggplot2-commits.png
 category: R
 ---
 

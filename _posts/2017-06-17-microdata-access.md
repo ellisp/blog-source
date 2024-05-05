@@ -8,7 +8,7 @@ tag:
    - WorkRelated
 description: Excited that New Zealand's Government Statistician is promoting reproducibility and open access to code, tabular outputs and research products from research with confidentialised microdata.
 image: /img/data-in-idi-oct-16.png
-socialimage: http://ellisp.github.io/img/data-in-idi-oct-16.png
+socialimage: http://freerangestats.info/img/data-in-idi-oct-16.png
 category: R
 ---
 

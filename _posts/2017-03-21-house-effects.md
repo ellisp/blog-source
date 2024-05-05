@@ -9,7 +9,7 @@ tag:
    - R
 description: I use generalized additive models to explore "house effects" (ie statistical bias) in polling firms' estimates of vote in previous New Zealand elections.
 image: /img/0084-house1.svg
-socialimage: http://ellisp.github.io/img/0084-house1.png
+socialimage: http://freerangestats.info/img/0084-house1.png
 category: R
 ---
 

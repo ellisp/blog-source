@@ -8,7 +8,7 @@ tag:
    - R
 description: A generalized additive model is a better way than a simple linear model for
 image: /img/0044-d3.svg
-socialimage: http://ellisp.github.io/img/0044-d3.png
+socialimage: http://freerangestats.info/img/0044-d3.png
 category: R
 ---
 

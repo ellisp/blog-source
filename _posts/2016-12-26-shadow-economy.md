@@ -9,7 +9,7 @@ tag:
    - Timeseries
 description: The shadow economy as a percentage of GDP in wealthier countries is in decline; and had a spike in 2009 with the economic crisis.  More research is needed to adequately understand it.  Along the way I experiment with extracting data frames from PDF tables; and show it's always worthwhile looking at the same data in different ways, which can be as simple as freeing up the vertical axes of graphics.
 image: /img/0075-shadow-line.svg
-socialimage: http://ellisp.github.io/img/0075-shadow-line.png
+socialimage: http://freerangestats.info/img/0075-shadow-line.png
 category: R
 ---
 

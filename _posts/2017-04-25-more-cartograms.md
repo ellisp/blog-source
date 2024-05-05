@@ -9,7 +9,7 @@ tag:
    - R
 description: Shapefiles for cartogram by New Zealand Territorial Authority (ie District or City), with area proportional to population in 2013, have been added to the nzcensus package on GitHub.
 image: /img/0094-ta1.svg
-socialimage: http://ellisp.github.io/img/0094-ta1.png
+socialimage: http://freerangestats.info/img/0094-ta1.png
 category: R
 ---
 Just a short note to say that I've finished creating an experimental map of New Zealand by the 66 Territorial Authorities (districts and cities), with area expanded or shrunk to be proportional to population at the 2013 census.  This is in addition to the 16 Regional Council divisions I blogged about a couple of days ago.  It's available in the [`nzcensus` R package](https://github.com/ellisp/nzelect).

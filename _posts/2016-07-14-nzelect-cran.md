@@ -10,7 +10,7 @@ tag:
    - OpenData
 description: The nzelect R package is now available on CRAN; so far it has aggregate results by voting place for the New Zealand 2014 general election.
 image: /img/0049-map.svg
-socialimage: http://ellisp.github.io/img/0049-map.png
+socialimage: http://freerangestats.info/img/0049-map.png
 category: R
 ---
 

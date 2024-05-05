@@ -10,7 +10,7 @@ tag:
    - R
 description: I introduce a new web app that allows nons-specialists to explore voting behaviour in the New Zealand Election Study, and reflect on what I've done so far with that data.
 image: /img/0108-screenshot-crosstabs-nzes.png
-socialimage: http://ellisp.github.io/img/0108-screenshot-crosstabs-nzes.png
+socialimage: http://freerangestats.info/img/0108-screenshot-crosstabs-nzes.png
 category: R
 ---
 

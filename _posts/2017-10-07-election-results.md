@@ -8,7 +8,7 @@ tag:
    - R
 description: New Zealand's election results have been released and were within the range of my probabilistic predictions.  The pollsters did a good job.
 image: /img/0111-histograms.svg
-socialimage: http://ellisp.github.io/img/0111-histograms.png
+socialimage: http://freerangestats.info/img/0111-histograms.png
 category: R
 ---
 

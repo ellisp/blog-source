@@ -16,7 +16,7 @@ This page is updated periodically as more data become available.
 
 - All material changes are described in [this changelog](/elections/changelog.html).  
 - Source code for the analysis, including all committed changes, is [available in the nz-election-forecast repository on GitHub](https://github.com/ellisp/nz-election-forecast/)
-- Source code for the write up, including all committed changes, is [available in my blog repository on GitHub](https://github.com/ellisp/ellisp.github.io/tree/source/elections)
+- Source code for the write up, including all committed changes, is [available in my blog repository on GitHub](https://github.com/ellisp/blog-source/tree/master/elections)
 - An alternative approach using state space modelling is available as [Model B](/elections/state-space.html).
 
 The scenarios outlined in the graphic are defined as:

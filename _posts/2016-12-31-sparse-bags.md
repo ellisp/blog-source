@@ -7,7 +7,7 @@ tag:
    - Text
 description: I explore different sparse matrix formats in R and moving data from R to H2O.  Along the way I use k-means clustering and topic modelling to explore textual data from the Daily Kos blog on the 2004 US Presidential election.
 image: /img/0076-topics-8.svg
-socialimage: http://ellisp.github.io/img/0076-topics.png
+socialimage: http://freerangestats.info/img/0076-topics.png
 category: R
 ---
 

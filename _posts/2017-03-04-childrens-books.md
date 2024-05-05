@@ -8,7 +8,7 @@ tag:
    - R
 description: Statistical methods like hierarchical clustering and principal components analysis can help understand and visualise literary concepts but don't replace reading the books and engaging with them in traditional critical ways!
 image: /img/0083-dendro1.svg
-socialimage: http://ellisp.github.io/img/0083-dendro1.png
+socialimage: http://freerangestats.info/img/0083-dendro1.png
 category: R
 ---
 At the [OZCOTS (Australian Conference on Teaching Statistics) in late 2016](http://iase-web.org/documents/anzcots/OZCOTS_2016_Proceedings.pdf) George Cobb gave a great talk entitled "Ask not what data science can do for the Humanities. Ask rather, what the Humanities can do for data science."

@@ -8,7 +8,7 @@ tag:
    - R
 description: Linked micromaps are an ok way of presenting data and are probably the right tool in some circumstances; but they're not as cool as I thought they might be.
 image: /img/0095-eg3.png
-socialimage: http://ellisp.github.io/img/0095-eg3.png
+socialimage: http://freerangestats.info/img/0095-eg3.png
 category: R
 ---
 

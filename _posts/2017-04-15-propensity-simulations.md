@@ -7,7 +7,7 @@ tag:
    - R
 description: It's much more important to get a well-specified model than worry about propensity score matching versus weighting, or either versus single stage regression, or increasing sample size.  A regression that includes all "true" 100 explanatory variables with only 500 observations performs better in estimating a treatment effect than any of those methods when only 90 of the 100 variables are observed, even with 100,000 observations.
 image: /img/0091-squared-error.svg
-socialimage: http://ellisp.github.io/img/0091-squared-error.png
+socialimage: http://freerangestats.info/img/0091-squared-error.png
 category: R
 ---
 

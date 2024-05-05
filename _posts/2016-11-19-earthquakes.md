@@ -8,7 +8,7 @@ tag:
    - NewZealand
 description: I look more into this business of energy from earthquakes.
 image: /img/0068-quakes-p3.png
-socialimage: http://ellisp.github.io/img/0068-p3.png
+socialimage: http://freerangestats.info/img/0068-p3.png
 category: R
 ---
 

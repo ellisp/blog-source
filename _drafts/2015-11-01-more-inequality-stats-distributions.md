@@ -10,7 +10,7 @@ tag:
    - NZIS2011
 description: I look at the sampling distributions of a range of .
 image: /img/0008-lorenz.svg
-socialimage: http://ellisp.github.io/img/0008-lorenz.png
+socialimage: http://freerangestats.info/img/0008-lorenz.png
 category: R
 ---
 

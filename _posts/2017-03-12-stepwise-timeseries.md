@@ -8,7 +8,7 @@ tag:
    - R
 description: Adding lots of lagged explanatory variables to a time series model without enough data points is a trap, and stepwise-selection doesn't help.  The lasso or other regularization might be a promising alternative.
 image: /img/0087-results.svg
-socialimage: http://ellisp.github.io/img/0087-results.png
+socialimage: http://freerangestats.info/img/0087-results.png
 category: R
 ---
 

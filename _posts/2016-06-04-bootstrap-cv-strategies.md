@@ -9,7 +9,7 @@ tag:
    - R
 description: I compare 'simple' bootstrap, 'enhanced' (optimism-correcting) bootstrap, and repeated k-fold cross-validation as methods for estimating fit of three example modelling strategies.
 image: /img/0043-boot-results.svg
-socialimage: http://ellisp.github.io/img/0043-boot-results.png
+socialimage: http://freerangestats.info/img/0043-boot-results.png
 category: R
 ---
 

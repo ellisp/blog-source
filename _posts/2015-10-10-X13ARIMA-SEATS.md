@@ -9,7 +9,7 @@ tag:
    - R
 description: I show how to seasonally adjust published electronic card transactions spend in New Zealand using the US Census Bureau's excellent X-13ARIMA-SEATS software, the Spanish SEATS algorithm and Christoph Sax's seasonal R package; and how to build a new "stat" for ggplot2 to make it easy to do seasonal adjustment on the fly for a graphic of a time series split by various grouping dimensions.
 image: /img/0014-faceted.svg
-socialimage: http://ellisp.github.io/img/0014-faceted.png
+socialimage: http://freerangestats.info/img/0014-faceted.png
 category: R
 ---
 

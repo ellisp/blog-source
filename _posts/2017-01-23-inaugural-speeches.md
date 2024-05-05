@@ -8,7 +8,7 @@ tag:
    - R
 description: I do some basic textual analysis and visualization with US Presidential inauguration speeches.
 image: /img/0080-overtime.svg
-socialimage: http://ellisp.github.io/img/0080-overtime.png
+socialimage: http://freerangestats.info/img/0080-overtime.png
 category: R
 ---
 

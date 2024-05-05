@@ -12,7 +12,7 @@ tag:
    - R
 description: I explore half a million rows of disaggregated crash data for New Zealand, and along the way illustrate geo-spatial projections, maps, forecasting with ensembles of methods, a state space model for change over time, and a generalized linear model for understanding interactions in a three-way cross tab.
 image: /img/0113-model-results.svg
-socialimage: http://ellisp.github.io/img/0113-model-results.png
+socialimage: http://freerangestats.info/img/0113-model-results.png
 category: R
 ---
 

@@ -11,7 +11,7 @@ tag:
 description: I use animations to show some of the properties of least trimmed squares compared to a Huber M estimator as alternative robust regression estimation methods for a simple linear models.
 
 image: /img/0041-rtm-lqs.gif
-socialimage: http://ellisp.github.io/img/0041-rtm-lqs.gif
+socialimage: http://freerangestats.info/img/0041-rtm-lqs.gif
 category: R
 ---
 

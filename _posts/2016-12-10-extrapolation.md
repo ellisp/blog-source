@@ -7,7 +7,7 @@ tag:
    - MachineLearning
 description: Tree-based predictive analytics methods like random forests and extreme gradient boosting may perform poorly with data that is out of the range of the original training data.
 image: /img/0071-four-methods.svg
-socialimage: http://ellisp.github.io/img/0071-four-methods.png
+socialimage: http://freerangestats.info/img/0071-four-methods.png
 category: R
 ---
 

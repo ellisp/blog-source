@@ -14,7 +14,7 @@ tag:
    - R
 description: I use Random Forests to create estimated income distributions for small (sometimes non-existent) subsets of the New Zealand population, using the 2011 New Zealand Income Survey.  The estimated distributions are showcased in an interactive web app.
 image: /img/0026-rf.gif
-socialimage: http://ellisp.github.io/img/0026-rf.gif
+socialimage: http://freerangestats.info/img/0026-rf.gif
 category: R
 ---
 <style>

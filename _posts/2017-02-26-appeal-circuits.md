@@ -7,7 +7,7 @@ tag:
    - R
 description: It's important to use the correct denominator when considering performance.  While a high percentage (more than 50%) of decisions from the US appeal circuit courts that get all the way to the Supreme Court are overturned, this is only a tiny proportion of total appeals decided by the lower courts.
 image: /img/0081-total-ratios.svg
-socialimage: http://ellisp.github.io/img/0081-total-ratios.png
+socialimage: http://freerangestats.info/img/0081-total-ratios.png
 category: R
 ---
 
