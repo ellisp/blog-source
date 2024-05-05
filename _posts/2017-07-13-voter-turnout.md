@@ -15,7 +15,7 @@ category: R
 
 This [thread on Twitter](https://twitter.com/ellis2013nz/status/884653816368422912) prompted some questions for me about who actually turns up to vote in New Zealand's elections.  With limited time, I can't answer many of the important questions raised in that thread and the article it refers to critically.  However, I can use the [New Zealand Election Study](http://www.nzes.org/) to look into the specific question raised about the demographics of people on the electoral roll who fail to vote, and in particular if income is a significant factor.  
 
-To do this I adapted code from an [earlier post](http://ellisp.github.io/blog/2017/05/06/nz-first) where I modelled party vote based on individual socio-economic characteristics.  For the main analysis, I used "Voted" as the response variable in a regression model with about 20 possible explanatory variables; this lets us see the impact of each variable while simultaneously controlling for the others.  Based on thinking that I was interested in behaviour rather than reasons, I wrapped up into one category those who claimed they "chose not to vote" and those who just "didn't manage to vote".
+To do this I adapted code from an [earlier post](/blog/2017/05/06/nz-first) where I modelled party vote based on individual socio-economic characteristics.  For the main analysis, I used "Voted" as the response variable in a regression model with about 20 possible explanatory variables; this lets us see the impact of each variable while simultaneously controlling for the others.  Based on thinking that I was interested in behaviour rather than reasons, I wrapped up into one category those who claimed they "chose not to vote" and those who just "didn't manage to vote".
 
 The NZES sample is drawn from the electoral roll, which means the important question of who gets enrolled in the first place can't be analysed from it.
 
@@ -87,7 +87,7 @@ There's lots to say here but to do it justice would require engaging much more w
 
 ## Method
 
-Around a third of the 2,835 rows of data are missing at least one of the variables I wanted to include in my regression, so I needed to think carefully about my modelling strategy.  Choosing a simpler variant of the different methods I tried in my [earlier post on party vote](http://ellisp.github.io/blog/2017/05/06/nz-first), I used:
+Around a third of the 2,835 rows of data are missing at least one of the variables I wanted to include in my regression, so I needed to think carefully about my modelling strategy.  Choosing a simpler variant of the different methods I tried in my [earlier post on party vote](/blog/2017/05/06/nz-first), I used:
 
 - the survey weights provided by the NZES organizers
 - multiple imputations by chained equations (with the R `mice` package), imputing five alternative values for each missing value so we can fit five regressions and pool the results

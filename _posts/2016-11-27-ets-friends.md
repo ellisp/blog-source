@@ -35,7 +35,7 @@ Because Hyndman's `forecast` package is open source, we can inspect the [source 
 
 One way of looking at this is that `ets` uses exponential smoothing for all three of error, trend and seasonal; `stlm` for just error and trend; and `thetaf` for just error.  `stlm` and `thetaf` bring in other methods for dealing with the seasonal and trend elements.
 
-Here are those three methods in action against one of the example monthly data sets from the [2010 Tourism Forecasting Competition](http://ellisp.github.io/blog/2016/10/19/Tcomp).
+Here are those three methods in action against one of the example monthly data sets from the [2010 Tourism Forecasting Competition](/blog/2016/10/19/Tcomp).
 
 ![eg1](/img/0070-eg1.svg)
 

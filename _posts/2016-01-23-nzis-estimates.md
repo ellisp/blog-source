@@ -45,7 +45,7 @@ The job's a tricky one because the survey data available doesn't go to anywhere 
 
 I also wanted to emphasise the *distribution* of income, not just a single measure like mean or median - something I think that we statisticians should do much more than we do, with all sorts of variables.  And in particular I wanted to find a good way of dealing with the significant number of people in many categories (particularly but not only "no occupation") who have zero income; and also the people who have negative income in any given week.
 
-My data source is the New Zealand Income Survey 2011 simulated record file published by Statistics New Zealand.  An [earlier post](/blog/2015/08/15/importing-nzis-surf.html) by me describes how I accessed this, normalised it and put it into a database.  I've also written several posts about dealing with the tricky distribution of individual incomes, listed [here](http://ellisp.github.io/blog/index_by_tag.html) under the "NZIS2011" heading.
+My data source is the New Zealand Income Survey 2011 simulated record file published by Statistics New Zealand.  An [earlier post](/blog/2015/08/15/importing-nzis-surf.html) by me describes how I accessed this, normalised it and put it into a database.  I've also written several posts about dealing with the tricky distribution of individual incomes, listed [here](/blog/index_by_tag.html) under the "NZIS2011" heading.
 
 This is a longer post than usual, with a digression into the use of Random Forests (tm) to predict continuous variables, an attempt at producing a more polished plot of a regression tree than usually available, and some reflections on strengths and weakness of several different approaches to estimating distributions.
 

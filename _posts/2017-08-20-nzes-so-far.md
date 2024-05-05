@@ -68,7 +68,7 @@ This was an interesting experiment in looking at what one survey can tell us abo
 
 <iframe width="700" height="500" src="/img/0098-sankey.html" frameborder="0" scrolling="no"></iframe>
 
-### [5. Modelling voter turnout](http://ellisp.github.io/blog/2017/07/13/voter-turnout)
+### [5. Modelling voter turnout](/blog/2017/07/13/voter-turnout)
 
 I adapted my approach of modelling party vote to the perhaps even more important question of who turns out to vote at all.
 

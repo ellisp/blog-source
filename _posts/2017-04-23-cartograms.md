@@ -17,7 +17,7 @@ I've been trying to catch up with mapping functionality in R and its extended ec
 
 Cartograms are particularly useful as a variant on choropleth maps (regions' fill colour specified based on a numeric variable) for socio-economic comparison.  Straight choropleth maps can give a misleading comparison between large sparsely populated areas and small densely populated areas (ie cities).  This is a problem for statistical maps of New Zealand, for example, with the Auckland City and Regional Council making up a quarter of the country's population but much less of its area.
 
-In this post, I use illustrative data from the 2013 New Zealand Census by Statistics New Zealand.  Last year I took their "meshblock" census data set and re-shaped it into the [`nzcensus` R package](http://ellisp.github.io/blog/2016/08/04/nzcensus-gam-elastic-lm); only available from GitHub (as it's too large for CRAN).  In the process of preparing today's blog post I made some small additions to the variables in that package - numbers of dwellings, households and individuals, and cartogram outlines of New Zealand regions (and I hope to follow up with other spatial categories.)
+In this post, I use illustrative data from the 2013 New Zealand Census by Statistics New Zealand.  Last year I took their "meshblock" census data set and re-shaped it into the [`nzcensus` R package](/blog/2016/08/04/nzcensus-gam-elastic-lm); only available from GitHub (as it's too large for CRAN).  In the process of preparing today's blog post I made some small additions to the variables in that package - numbers of dwellings, households and individuals, and cartogram outlines of New Zealand regions (and I hope to follow up with other spatial categories.)
 
 ## Rectangles
 

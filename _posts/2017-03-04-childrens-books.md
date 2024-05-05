@@ -35,7 +35,7 @@ To create a dataset for this, I constructed a set of thematic elements in which 
 
 I classified a bunch of my favourite children's books (defined loosely and inarticulately) against whether they included each element.  This rating process felt a bit unreliable, not least because generally I was operating on relatively distant memory.  The choice of books was necessarily arbitrary and is basically those I enjoyed at a particular age (too old for *The Very Hungry Caterpillar*, too young for *War and Peace*), or in a few cases discovered recently and think I would have enjoyed if I'd known about them.  They very much reflect my particular history and background culture, which is clearly to be expected.
 
-You can see the full set of 23 thematic elements, 46 books, and the 1/0 assessments in this [Excel workbook](http://ellisp.github.io/data/childrens-books.xlsx).
+You can see the full set of 23 thematic elements, 46 books, and the 1/0 assessments in this [Excel workbook](/data/childrens-books.xlsx).
 
 The whole process, particularly the choice of thematic elements to highlight, is clearly arbitrary and subjective, but in a sense that is the whole point. In this exercise, I'm seeking to define and articulate a bunch of things of interest *to me* about books that *I find interesting*, with the intent of applying statistical exploratory techniques and seeing if they identify patterns that *ring true to me*.  In doing this I'm hoping to get a visualisation of the patterns as I see them, and learn something about data exploration while I'm at it.  It's not about recovering some objective structure but about articulating my own subjective views.
 

@@ -24,7 +24,7 @@ I found myself having to solve a few minor problems to get my R Markdown at work
 
 To illustrate this, I set up a GitHub repository of [source code for a hypothetical project](https://github.com/ellisp/rmarkdown-corporate-eg) involving some data management, analysis and report writing.  Feel free to clone and re-use it (attribution would be nice).  Here's a screenshot of the top of my hypothetical report:
 
-[<img src='/img/0109-rmarkdown-screenshot.png' width='100%'>](http://ellisp.github.io/presentations/rmarkdown-styled-demo.html) 
+[<img src='/img/0109-rmarkdown-screenshot.png' width='100%'>](/presentations/rmarkdown-styled-demo.html) 
 
 Clicking on the image will get you the whole report including some plots of New Zealand's regional tourism, which I used as readily-available data.
 
@@ -275,7 +275,7 @@ That means I don't need to specify the colours and fonts for individual charts i
 
 Enjoy:
 
-- [built R Markdown -> HTML report](http://ellisp.github.io/presentations/rmarkdown-styled-demo.html) with correct fonts, colours (headings and graphs), logo and draft watermark
+- [built R Markdown -> HTML report](/presentations/rmarkdown-styled-demo.html) with correct fonts, colours (headings and graphs), logo and draft watermark
 - [repository of source code](https://github.com/ellisp/rmarkdown-corporate-eg)
 
 

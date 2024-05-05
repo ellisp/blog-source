@@ -29,9 +29,9 @@ Negotiations will take a few days more on the shape of the government, but the m
 
 ## Comparison to my forecasts
 
-The summary of all my [historical forecasts](http://ellisp.github.io/elections/changelog.html) is available for posterity.  When I started doing forecasts for the election back in April 2017, I estimated around a 20% chance of this outcome.  This was a bit against the common expectation at that point - most pundits and people I spoke to seemed to think the National-led coalition was headed for a fourth election win.  The highest chance I ever gave that possibility was in July 2017 when I gave it just less than 50%; from that point onwards the chances of the National coalition plummeted amidst a wave of positive sentiment to the Labour party under their new leader.  
+The summary of all my [historical forecasts](/elections/changelog.html) is available for posterity.  When I started doing forecasts for the election back in April 2017, I estimated around a 20% chance of this outcome.  This was a bit against the common expectation at that point - most pundits and people I spoke to seemed to think the National-led coalition was headed for a fourth election win.  The highest chance I ever gave that possibility was in July 2017 when I gave it just less than 50%; from that point onwards the chances of the National coalition plummeted amidst a wave of positive sentiment to the Labour party under their new leader.  
 
-By the eve of the election there was little doubt of the result, barring a major polling error.  Labour and Greens never had a realistic chance of government by themselves, and the most plausible outcome by far was a coalition of either National or Labour/Green with New Zealand First.  My [final forecasts](http://ellisp.github.io/elections/combined.html) gave this outcome a 95% chance.
+By the eve of the election there was little doubt of the result, barring a major polling error.  Labour and Greens never had a realistic chance of government by themselves, and the most plausible outcome by far was a coalition of either National or Labour/Green with New Zealand First.  My [final forecasts](/elections/combined.html) gave this outcome a 95% chance.
 
 Here's the end results in numbers of seats compared to my final probabilistic forecasts:
 

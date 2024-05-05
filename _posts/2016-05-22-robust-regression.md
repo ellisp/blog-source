@@ -105,7 +105,7 @@ library(scales)
 library(directlabels)
 
 #================download and transform data==============
-# See http://ellisp.github.io/blog/2015/08/15/importing-nzis-surf/ for
+# See http://freerangestats.info/blog/2015/08/15/importing-nzis-surf/ for
 # instructions on setting up the database
 
 sql <- "SELECT hours, income FROM vw_mainheader"
