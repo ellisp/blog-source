@@ -2,6 +2,8 @@ library(tidyverse)
 library(readxl)
 library(janitor)
 
+#source("0257-mvi-again.R")
+
 download.file("https://www.un.org/development/desa/dpad/wp-content/uploads/sites/45/LDC_data.xlsx",
               destfile = "LDC_data.xlsx", mode = "wb")
 
@@ -85,7 +87,7 @@ tests <- tibble(possible_slopes = seq(from = 0.5, to = 2, length.out = 1000)) |>
 b <- tests[1, ]$possible_slopes
 a <- center[2] - b * center[1]
 
-d |>
+p <- d |>
   ggplot(aes(x = evi, y = new_mvi, colour = is_pict)) +
   geom_abline(intercept = a, slope = b) +
   geom_vline(xintercept = median(d$evi, na.rm = TRUE), colour = "grey80") +
@@ -93,8 +95,8 @@ d |>
   geom_point() +
   geom_text_repel(data = filter(d, is_pict), aes(label = country), alpha = 0.5) +
   scale_colour_manual(values = c("grey", "blue")) +
-  theme(panel.grid = element_blank()) +
-  labs(x = "Existing Economic and environmental vulnerability index",
+  theme(panel.grid = element_blank(), legend.position = "none") +
+  labs(x = "Existing UNCTAD Economic and environmental vulnerability index",
        y  = "New proposed multidimensional vulnerability index")
 
-names(ldc)
+svg_png(p, "../img/0258-unctad-v-mvi", w = 10, h = 7)

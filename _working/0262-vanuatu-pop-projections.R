@@ -6,8 +6,6 @@ library(patchwork)
 dir.create("data-pop-proj-2022", showWarnings = FALSE)
 
 #------------------download and import data for all countries from existing projections----------------
-list.files("data-pop-proj-2022")
-
 files <- c("WPP2022_Fertility_by_Age1.zip",
            "WPP2022_DeathsBySingleAgeSex_Medium_1950-2021.zip",
            "WPP2022_DeathsBySingleAgeSex_Medium_2022-2100.zip",
@@ -363,8 +361,6 @@ svg_png(p3, "../img/0262-vanuatu-deaths")
 
 # some very small differences in Vanuatu which probably come down to something about 1 Jan v 1 July for one or more
 # of the rates I'm calculating
-
-# Australia is quite significantly out, too few births. 
 
 #-----------------------thinking about migration----------------
 
