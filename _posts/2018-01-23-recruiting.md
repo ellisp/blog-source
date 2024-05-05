@@ -8,7 +8,7 @@ tag:
    - R
 description: Reflections on recruiting data scientists for the public sector, which could maybe be used as practical guidance for someone.
 image: /img/kitchener.jpg
-socialimage: http://freerangestats.info/img/kitchener.jpg
+socialimage: https:/freerangestats.info/img/kitchener.jpg
 category: R
 ---
 

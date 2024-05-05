@@ -8,7 +8,7 @@ tag:
    - R
 description: I've put up a page with my current Australian federal election forecasts for the House of Representatives, which I'll keep up to date until the election comes.
 image: /img/ozpolls/seat-sims.svg
-socialimage: http://freerangestats.info/img/ozpolls/seat-sims.png
+socialimage: https:/freerangestats.info/img/ozpolls/seat-sims.png
 category: R
 ---
 

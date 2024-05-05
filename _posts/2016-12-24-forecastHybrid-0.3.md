@@ -8,7 +8,7 @@ tag:
    - Timeseries
 description: forecastHybrid 0.3.0 for ensemble time series forecasting is now on CRAN. Two new features are prediction intervals for the nnetar (neural network) component of the combination; and theta method models.
 image: /img/0074-six-forecasts.svg
-socialimage: http://freerangestats.info/img/0074-six-forecasts.png
+socialimage: https:/freerangestats.info/img/0074-six-forecasts.png
 category: R
 ---
 

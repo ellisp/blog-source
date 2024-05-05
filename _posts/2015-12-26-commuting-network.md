@@ -10,7 +10,7 @@ tag:
    - R
 description: Commuting patterns between districts and cities in New Zealand are used to illustrate static (for printing) and interactive (for the web) network charts with R and D3.
 image: /img/0025-commuting.svg
-socialimage: http://freerangestats.info/img/0025-commuting.png
+socialimage: https:/freerangestats.info/img/0025-commuting.png
 category: R
 ---
 ## Commuting between districts and cities in New Zealand

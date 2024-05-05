@@ -8,7 +8,7 @@ tag:
    - Forecasting
 description: I check out exponential smoothing state space models for univariate time series as a general family of forecasting models, and in particular the `ets`, `stlm` and `thetaf` functions from Hyndman's forecast R package.  For monthly and quarterly seasonal data, `thetaf` seems to be slightly outperformed by its more flexible and general cousins.
 image: /img/0070-mean.svg
-socialimage: http://freerangestats.info/img/0070-mean.png
+socialimage: https:/freerangestats.info/img/0070-mean.png
 category: R
 ---
 

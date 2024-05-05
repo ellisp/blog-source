@@ -9,7 +9,7 @@ tag:
    - Simulations
 description: When working with complex survey data where the weights are related to a continuous variable of interest, using a weighted rather than unweighted percentile rank will lead to different results towards the middle of the distribution; but the two measures will be highly correlated with eachother. Also, R reportedly calculates weighted percentile ranks much much faster than Stata.
 image: /img/0250-scatter2.svg
-socialimage: http://freerangestats.info/img/0250-scatter2.png
+socialimage: https:/freerangestats.info/img/0250-scatter2.png
 category: R
 ---
 

@@ -10,7 +10,7 @@ tag:
    - R
 description: I tidy up Australian polling data back to 2007 and produce a statistical model of two-party-preferred vote for the coming election.
 image: /img/0145-model.svg
-socialimage: http://freerangestats.info/img/0145-model.png
+socialimage: https:/freerangestats.info/img/0145-model.png
 category: R
 ---
 

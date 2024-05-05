@@ -10,7 +10,7 @@ tag:
    - R
 description: Cross-sectional country-level data will show a relationship between income inequality and life expectancy even if inequality itself has no direct impact on life exectancy; so long as there is changing marginal impact of individual income on individual life space (as of course there is). 
 image: /img/0136-inequality-life.gif
-socialimage: http://freerangestats.info/img/0136-inequality-life.gif
+socialimage: https:/freerangestats.info/img/0136-inequality-life.gif
 category: R
 ---
 

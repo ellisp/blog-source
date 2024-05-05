@@ -10,7 +10,7 @@ tag:
    - R
 description: Fitting a mixed-effects model with auto-correlated residuals to longitudinal country-level data, showing how changing importance of exports is positively related to economic growth.
 image: /img/0023-p6.svg
-socialimage: http://freerangestats.info/img/0023-p3.png
+socialimage: https:/freerangestats.info/img/0023-p3.png
 category: R
 ---
 ## Exports and economic growth

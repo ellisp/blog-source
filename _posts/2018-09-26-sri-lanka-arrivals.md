@@ -8,7 +8,7 @@ tag:
    - R
 description: Sri Lanka has a rapidly growing tourism industry, two international tourism seasons, and seasonality patterns in arrivals that vary according to country of origin.
 image: /img/0134-seasonality.svg
-socialimage: http://freerangestats.info/img/0134-seasonality.png
+socialimage: https:/freerangestats.info/img/0134-seasonality.png
 category: R
 ---
 

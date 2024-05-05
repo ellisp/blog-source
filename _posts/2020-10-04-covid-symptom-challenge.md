@@ -7,7 +7,7 @@ tag:
    - Surveys
 description: Two huge surveys of Facebook users seem to provide valuable new information on how the world is responding to Covid-19, but I am very unsure about whether they have potential to enable earlier detection of outbreaks.
 image: /img/0195-states-masks.svg
-socialimage: http://freerangestats.info/img/0195-states-masks.png
+socialimage: https:/freerangestats.info/img/0195-states-masks.png
 category: R
 ---
 

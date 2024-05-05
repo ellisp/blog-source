@@ -6,7 +6,7 @@ tag:
    - R
 description: XXX
 image: /img/0044-control-trial.png
-socialimage: http://freerangestats.info/img/0044-control-trial.png
+socialimage: https:/freerangestats.info/img/0044-control-trial.png
 category: R
 ---
 

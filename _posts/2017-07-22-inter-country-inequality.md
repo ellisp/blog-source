@@ -10,7 +10,7 @@ tag:
    - R
 description: I play around with population-weighted income inequality of countries with data from the World Development Indicators, re-creating (with some amendments) some graphics from Branko Milanovic's recent book "Global Inequality".
 image: /img/0105-scatter.svg
-socialimage: http://freerangestats.info/img/0105-scatter.png
+socialimage: https:/freerangestats.info/img/0105-scatter.png
 category: R
 ---
 

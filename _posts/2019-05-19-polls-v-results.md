@@ -9,7 +9,7 @@ tag:
    - R
 description: The polls did worse than usual in predicting the Australian federal election, but the pundits were far worse than the polls.
 image: /img/0154-polls.svg
-socialimage: http://freerangestats.info/img/0154-polls.png
+socialimage: https:/freerangestats.info/img/0154-polls.png
 category: R
 ---
 

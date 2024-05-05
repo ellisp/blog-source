@@ -8,7 +8,7 @@ tag:
    - R
 description: Compared to the older style propensity matching to create a pseudo control sample, it may be better to weight the full data by inverse propensity score because it doesn't discard data.  Performing a regression (rather than simple cross tabs) after the weighting or matching is a good idea to handle inevitable imperfections.  The whole family of methods doesn't necessarily deliver big gains over more straightforward single stage regressions.  And if you have omitted material variables you're in trouble whatever you do.
 image: /img/0090-job-treatment.svg
-socialimage: http://freerangestats.info/img/0090-job-treatment.png
+socialimage: https:/freerangestats.info/img/0090-job-treatment.png
 category: R
 ---
 

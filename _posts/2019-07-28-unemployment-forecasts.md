@@ -9,7 +9,7 @@ tag:
    - R
 description: Forecasting unemployment is hard, with lots of complex bi-directional causality. Also, while AIC is asymptotically equivalent to cross-validation, it's probably better to check. It turns out that interest rates or stock prices don't have any useful information for nowcasting unemployment.
 image: /img/0155-dag.svg
-socialimage: http://freerangestats.info/img/0155-dag.png
+socialimage: https:/freerangestats.info/img/0155-dag.png
 category: R
 ---
 

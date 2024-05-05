@@ -8,7 +8,7 @@ tag:
    - R
 description: A pragmatic way of generating prediction intervals from a generalized linear model with a quasi-likelihood response, if you're prepared to make an additional assumption about the distribution of the response.
 image: /img/0177-quasi-glm.svg
-socialimage: http://freerangestats.info/img/0177-quasi-glm.png
+socialimage: https:/freerangestats.info/img/0177-quasi-glm.png
 category: R
 ---
 

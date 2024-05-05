@@ -8,7 +8,7 @@ tag:
    - Tools
 description: I had a brief look around New Zealand government agency websites and found 15 high quality web apps written in the Shiny platform.
 image: /img/0122-treasury-insights-small.gif
-socialimage: http://freerangestats.info/img/0122-treasury-insights-small.gif
+socialimage: https:/freerangestats.info/img/0122-treasury-insights-small.gif
 category: R
 ---
 <style>

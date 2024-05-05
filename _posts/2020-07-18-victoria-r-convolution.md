@@ -9,7 +9,7 @@ tag:
    - Stan
 description: There is a fast growing body of knowledge and tools to help estimate effective reproduction number of an epidemic in real time; I have a go at applying the latest EpiNow2 R package to data for Covid-19 cases in Victoria, Australia.
 image: /img/0189-combined-2.svg
-socialimage: http://freerangestats.info/img/0189-combined-2.png
+socialimage: https:/freerangestats.info/img/0189-combined-2.png
 category: R
 ---
 
@@ -94,7 +94,7 @@ d <- gd_orig %>%
   mutate(smoothed_confirm = fitted(loess(confirm ~ numeric_date, data = ., span = 0.1)))
 
 
-the_caption <- "Data gathered by The Guardian; analysis by http://freerangestats.info"  
+the_caption <- "Data gathered by The Guardian; analysis by https:/freerangestats.info"  
 
 # Positivity plot:
 d %>%

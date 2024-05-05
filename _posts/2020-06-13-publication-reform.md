@@ -6,7 +6,7 @@ tag:
    - Metascience
 description: Science isn't broken, but journals are. A joint solution is emerging for disparate problems of access, quality control and replicability in scientific publishing.
 image: /img/0186-loupy-ellis-tweets.png
-socialimage: http://freerangestats.info/img/0186-loupy-ellis-tweets.png
+socialimage: https:/freerangestats.info/img/0186-loupy-ellis-tweets.png
 category: Other
 ---
 

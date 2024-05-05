@@ -9,7 +9,7 @@ tag:
    - R
 description: I try to show that cost-benefit analysis is easy to perform in R, and that R lets you build in uncertainty in a much clearer way than is generally done; and to demystify the internal rate of return.
 image: /img/0161-cumulative.svg
-socialimage: http://freerangestats.info/img/0161-cumulative.png
+socialimage: https:/freerangestats.info/img/0161-cumulative.png
 category: R
 ---
 

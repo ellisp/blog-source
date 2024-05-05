@@ -7,7 +7,7 @@ tag:
    - R
 description: A few months back, I set up a server on Amazon Web Services with a data sciencey toolkit on it. Amongst other things, this means I can collect data around the clock when necessary, as well as host my little RRobot twitter bot, without having a physical machine humming in my living room. There are lots of fiddly things to sort out to make such a setup actually fit for purpose.  
 image: /img/0125-hashtags.png
-socialimage: http://freerangestats.info/img/0125-hashtags.png
+socialimage: https:/freerangestats.info/img/0125-hashtags.png
 category: R
 ---
 
@@ -312,7 +312,7 @@ OK, that wasn't so bad was it (or was it...).  I now have my server running (I s
 
 <a href = 'http://twitter-monitor.freerangestats.info/'><img src='/img/0125-tweets.png' width='100%'></a>
 
-For a while, I've been mildly exercised by the problem of sampling from Twitter.  See for example [this earlier post](http://freerangestats.info/blog/2018/02/24/following-followers) where I was reduced to using a snowballing network method to find users, and searching for tweets with the letter "e" in them to get a sample of tweets.  Both of these methods have obvious problems if you want to do inference about how people as a whole are using Twitter.
+For a while, I've been mildly exercised by the problem of sampling from Twitter.  See for example [this earlier post](https:/freerangestats.info/blog/2018/02/24/following-followers) where I was reduced to using a snowballing network method to find users, and searching for tweets with the letter "e" in them to get a sample of tweets.  Both of these methods have obvious problems if you want to do inference about how people as a whole are using Twitter.
 
 On the other hand, Twitter make available several sets of public Tweets that are fully representative:
 

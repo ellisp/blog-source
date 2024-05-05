@@ -8,7 +8,7 @@ tag:
    - R
 description: I've set up a twitter bot who (infrequently) retweets popular tweets about rstats with praise, repeats assorted R wisdom, and babbles about R.
 image: /img/0027-cloud.png
-socialimage: http://freerangestats.info/img/0027-cloud.png
+socialimage: https:/freerangestats.info/img/0027-cloud.png
 category: R
 ---
 ## Twitter bots

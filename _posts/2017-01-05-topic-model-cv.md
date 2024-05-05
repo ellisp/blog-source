@@ -9,7 +9,7 @@ tag:
    - ModellingStrategy
 description: Cross-validation of the "perplexity" from a topic model, to help determine a good number of topics.
 image: /img/0077-cv.svg
-socialimage: http://freerangestats.info/img/0077-cv.png
+socialimage: https:/freerangestats.info/img/0077-cv.png
 category: R
 ---
 <center><img src = "/img/0077-AssociatedPress.gif" width = "400"></center>

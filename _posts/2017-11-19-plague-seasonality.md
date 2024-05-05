@@ -9,7 +9,7 @@ tag:
    - R
 description: Playing around with polishing graphics, including an animation, of the seasonality of plague deaths in medieval Europe, early modern Europe, and nineteenth century India and China.
 image: /img/0114-plague-deaths.gif
-socialimage: http://freerangestats.info/img/0114-proportions.png
+socialimage: https:/freerangestats.info/img/0114-proportions.png
 category: R
 ---
 

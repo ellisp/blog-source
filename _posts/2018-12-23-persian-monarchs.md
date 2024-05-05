@@ -8,7 +8,7 @@ tag:
    - R
 description: Persian Monarchs described by P. G. Wodehouse in one of his funniest novels is an extremely simple fictional card game, but the gambling makes it a game of skill, and we can even construct plausible different strategies for winning. A good strategy involving card-counting beats a non-counting alternative by about 4% and random wagering by 36%.
 image: /img/0135-density.svg
-socialimage: http://freerangestats.info/img/0135-density.png
+socialimage: https:/freerangestats.info/img/0135-density.png
 category: R
 ---
 

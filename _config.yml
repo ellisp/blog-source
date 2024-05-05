@@ -9,7 +9,7 @@ description: I write about applications of data and analytical techniques like s
 comments: true
 plugins:
   - jekyll-sitemap
-url: http://freerangestats.info 
+url: https://freerangestats.info 
 author: Peter Ellis
 fbauthor: https://www.facebook.com/peterstats
 exclude:

@@ -7,7 +7,7 @@ tag:
    - DataVisualization
 description: I have a go at synthesising data to re-create a controversial and much-criticised chart that used ordinary least squares to fit a line relating university subjects' costs per student to the number of students in each subject. 
 image: /img/0187-ols.svg
-socialimage: http://freerangestats.info/img/0187-ols.png
+socialimage: https:/freerangestats.info/img/0187-ols.png
 category: R
 ---
 

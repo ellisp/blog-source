@@ -9,7 +9,7 @@ tag:
    - Crime
 description: A negative binomial model isn't adequate for modelling the number of people killed per firearm incident in the USA; the real data has more events of one death, and also more extreme values, than the model.  But estimating the model was an interesting exercise in fitting a single negative binomial model to two truncated subsets of data.
 image: /img/0119-results.svg
-socialimage: http://freerangestats.info/img/0119-results.png
+socialimage: https:/freerangestats.info/img/0119-results.png
 category: R
 ---
 
@@ -139,7 +139,7 @@ Here's the code to download the data and draw those charts.
 # download the data
 try(unlink("gun-violence", recursive = TRUE))
 dir.create("gun-violence")
-download.file("http://freerangestats.info/data/gva.zip",              
+download.file("https:/freerangestats.info/data/gva.zip",              
               destfile = "gun-violence/gva.zip", mode = "wb")
 unzip("gun-violence/gva.zip", exdir = "gun-violence")
 

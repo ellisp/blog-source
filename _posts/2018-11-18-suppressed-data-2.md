@@ -10,7 +10,7 @@ tag:
    - R
 description: A more systematic comparison of different ways of dealing with cells in a cross tab that have been supressed for confidentiality. For the particular model tested here, the best thing to do is the simple method of replacing all suppressed cells with 5; this works even better than using the original unsuppressed data which is very unstable when many cell counts are near zero.
 image: /img/0139-boxplot.svg
-socialimage: http://freerangestats.info/img/0139-boxplot.png
+socialimage: https:/freerangestats.info/img/0139-boxplot.png
 category: R
 ---
 

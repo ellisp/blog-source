@@ -8,7 +8,7 @@ tag:
    - R
 description: I play around with the sampling distribution of Gini coefficients calculated with weighted data; and verify that the Gini calculation method in a recent Stats NZ working paper is the one in the acid R package.
 image: /img/0106-sample-distributions.svg
-socialimage: http://freerangestats.info/img/0106-sample-distributions.png
+socialimage: https:/freerangestats.info/img/0106-sample-distributions.png
 category: R
 ---
 

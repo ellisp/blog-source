@@ -9,7 +9,7 @@ tag:
    - R
 description: Eric Persson's new WHO package makes it easy for R users to access data from the World Health Organization
 image: /img/0029-scatter.png
-socialimage: http://freerangestats.info/img/0029-scatter.png
+socialimage: https:/freerangestats.info/img/0029-scatter.png
 category: R
 ---
 

@@ -7,7 +7,7 @@ tag:
    - Shiny
 description: Shiny can be an effective platform to quickly build data-intensive web applications that otherwise would not be commercially viable. The rationale for using Shiny at the right time is convenience, cost, and statistical and graphics power.
 image: /img/RMIT-case-study-graphic-700x285.png
-socialimage: http://freerangestats.info/img/RMIT-case-study-graphic-700x285.png
+socialimage: https:/freerangestats.info/img/RMIT-case-study-graphic-700x285.png
 category: R
 ---
 

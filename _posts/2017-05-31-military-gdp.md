@@ -10,7 +10,7 @@ tag:
    - R
 description: For choropleth maps showing the whole world, we don't need to stick to static maps with Mercator projections.  I like rotating globes, and interactive slippery maps with tooltips.
 image: /img/0099-military-gdp.gif
-socialimage: http://freerangestats.info/img/0099-military-gdp.gif
+socialimage: https:/freerangestats.info/img/0099-military-gdp.gif
 category: R
 ---
 

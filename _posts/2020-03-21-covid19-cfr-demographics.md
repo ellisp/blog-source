@@ -7,7 +7,7 @@ tag:
    - R
 description: I have a go at quantifying how important different demographic profiles will be for country average case fatality rates for COVID-19.
 image: /img/0172-country-rates-adj.svg
-socialimage: http://freerangestats.info/img/0172-country-rates-adj.png
+socialimage: https:/freerangestats.info/img/0172-country-rates-adj.png
 category: R
 ---
 

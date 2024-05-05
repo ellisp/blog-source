@@ -9,7 +9,7 @@ tag:
    - R
 description: I have a brief look at the relationship between reported business confidence in New Zealand and what actually happens down the track with economic growth.  Confidence can help (a bit) explain future growth; but current and past growth isn't helpful in explaining confidence.
 image: /img/0127-csp-pm.svg
-socialimage: http://freerangestats.info/img/0127-csp-pm.png
+socialimage: https:/freerangestats.info/img/0127-csp-pm.png
 category: R
 ---
 

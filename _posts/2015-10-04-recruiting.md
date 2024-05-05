@@ -7,7 +7,7 @@ tag:
    - R
 description: In my day job I'm running a recruitment process for two Principal Analysts, a Senior Analyst and an Analyst.  This is a great opportunity to get into one of the most interesting analytics teams in New Zealand. Applications close 14 October 2015.
 image: /img/0013-data-types-1.png
-socialimage: http://freerangestats.info/img/0013-data-types-1.png
+socialimage: https:/freerangestats.info/img/0013-data-types-1.png
 category: R
 ---
 ## The jobs

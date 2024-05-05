@@ -9,7 +9,7 @@ tag:
    - NZIS2011
 description: I follow up my ggplot2 version of John and Draper's modulus transformation from my last post. The default for creating new transformations using the {scales} package places the breaks for gridlines and labels in the scale at regular intervals on the original untransformed scale; I explore how to adjust for this. 
 image: /img/0007_density_plots_breaks.svg
-socialimage: http://freerangestats.info/img/0007_density_plots_breaks.png
+socialimage: https:/freerangestats.info/img/0007_density_plots_breaks.png
 category: R
 ---
 

@@ -9,7 +9,7 @@ tag:
    - R
 description: I look into whether the regional fuel tax in Auckland has led to changes in fuel prices in other regions of New Zealand. 
 image: /img/0129-auck-minus-rest.svg
-socialimage: http://freerangestats.info/img/0129-auck-minus-rest.png
+socialimage: https:/freerangestats.info/img/0129-auck-minus-rest.png
 category: R
 ---
 

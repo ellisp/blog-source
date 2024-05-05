@@ -8,7 +8,7 @@ tag:
    - R
 description: I demonstrate the power of the transformation functionality in the scales R package by re-creating an eccentric Fox News chart.
 image: /img/0176-weird2.svg
-socialimage: http://freerangestats.info/img/0176-weird2.png
+socialimage: https:/freerangestats.info/img/0176-weird2.png
 category: R
 ---
 

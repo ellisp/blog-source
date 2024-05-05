@@ -9,7 +9,7 @@ tag:
    - Stan
 description: I look at some unusual data where the median was higher than the mode, and show how to model it in Stan as a mixture of two negative binomial distributions.
 image: /img/0192-distributions.svg
-socialimage: http://freerangestats.info/img/0192-distributions.png
+socialimage: https:/freerangestats.info/img/0192-distributions.png
 category: R
 ---
 

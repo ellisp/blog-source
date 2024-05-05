@@ -7,7 +7,7 @@ tag:
    - Tools
 description: A model that is 'improved' (in terms of making standard assumptions more plausible) by using a logarithm transform of the response will not necessarily be improved for estimating population totals.
 image: /img/0204-model-comparison-density.svg
-socialimage: http://freerangestats.info/img/0204-model-comparison-density.png
+socialimage: https:/freerangestats.info/img/0204-model-comparison-density.png
 category: R
 ---
 

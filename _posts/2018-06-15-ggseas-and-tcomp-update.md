@@ -10,7 +10,7 @@ tag:
    - R
 description: Minor updates available on CRAN for the ggseas (seasonal adjustment on the fly) and Tcomp (tourism forecasting competition data) R packages
 image: /img/0124-stat_seas.svg
-socialimage: http://freerangestats.info/img/0124-stat_seas.png
+socialimage: https:/freerangestats.info/img/0124-stat_seas.png
 category: R
 ---
 

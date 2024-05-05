@@ -7,7 +7,7 @@ tag:
    - Stan
 description: Two ways of fitting a model to truncated data.
 image: /img/0120-truncated-poisson.svg
-socialimage: http://freerangestats.info/img/0120-truncated-poisson.png
+socialimage: https:/freerangestats.info/img/0120-truncated-poisson.png
 category: R
 ---
 

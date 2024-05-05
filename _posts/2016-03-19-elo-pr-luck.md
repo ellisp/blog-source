@@ -7,7 +7,7 @@ tag:
    - R
 description: I explore the relationship between decision quality and winning in backgammon, using data from XG-Gammon analysis of matches on FIBS and grid.gammon
 image: /img/0032-luck-v-net-skill.svg
-socialimage: http://freerangestats.info/img/0032-luck-v-net-skill.png
+socialimage: https:/freerangestats.info/img/0032-luck-v-net-skill.png
 category: R
 ---
 

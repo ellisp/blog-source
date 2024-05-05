@@ -7,7 +7,7 @@ tag:
    - Tools
 description: Surgisphere, a tiny startup that claims to be providing large real world data for scientific health studies, is probably fabricating data at scale.
 image: /img/0185-surgisphere-linkedin.png
-socialimage: http://freerangestats.info/img/0185-surgisphere-linkedin.png
+socialimage: https:/freerangestats.info/img/0185-surgisphere-linkedin.png
 category: 
 ---
 

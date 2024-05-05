@@ -8,7 +8,7 @@ tag:
    - Simulations
 description: I do some simulations to reproduce a great figure by Wysocki et al; and show different data where the causal relationship between x and y is in the presence of a third variable that is either a confounder, collider or mediator.
 image: /img/0247-results-with-dags.svg
-socialimage: http://freerangestats.info/img/0247-results-with-dags.png
+socialimage: https:/freerangestats.info/img/0247-results-with-dags.png
 category: R
 ---
 
@@ -193,7 +193,7 @@ p <- res |>
   scale_colour_manual(values = c("yellow", "lightgreen", "black"), guide = tg) +
   labs(colour = "", linetype = "",
        y = expression("Coefficient "~beta),
-       caption = "Reproducing (inexactly) a figure by Wysocki, Lawson and Rhemtulla in \n'Statistical Control Requires Causal Justification'. http://freerangestats.info") +
+       caption = "Reproducing (inexactly) a figure by Wysocki, Lawson and Rhemtulla in \n'Statistical Control Requires Causal Justification'. https:/freerangestats.info") +
   theme_light(base_family = the_font) + 
   theme(plot.caption = element_text(colour = "grey50"),
         strip.text = element_text(size = rel(1), face = "bold"),

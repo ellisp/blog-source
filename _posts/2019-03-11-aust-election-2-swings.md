@@ -9,7 +9,7 @@ tag:
    - R
 description: I explore the data on two-party-preferred voting swings in Australian federal elections and tentatively introduce the ozfedelect R package.
 image: /img/0146-2pp-swing-2016.png
-socialimage: http://freerangestats.info/img/0146-2pp-swing-2016.png
+socialimage: https:/freerangestats.info/img/0146-2pp-swing-2016.png
 category: R
 ---
 
@@ -239,7 +239,7 @@ confint(mod1)[-1, ] %>%
   scale_x_continuous("Impact of change in one standard deviation in census variable on swing",
                      label = percent) +
   labs(y = "", 
-       caption = "Source: ABS Census data, AES election results, analysis by http://freerangestats.info") +
+       caption = "Source: ABS Census data, AES election results, analysis by https:/freerangestats.info") +
   ggtitle("Division-level variables related to a swing to the Liberal-National Coalition",
           "Comparing the 2016 results to 2013 by electoral division (or 'seat').
           Conclusions about individual characteristics relating to vote should be drawn only with great caution.")

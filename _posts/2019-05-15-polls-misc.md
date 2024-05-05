@@ -9,7 +9,7 @@ tag:
    - R
 description: A few small explorations of idiosyncracies with polls, a couple of days before the Australian federal election.
 image: /img/0153-herding.svg
-socialimage: http://freerangestats.info/img/0153-herding.png
+socialimage: https:/freerangestats.info/img/0153-herding.png
 category: R
 ---
 

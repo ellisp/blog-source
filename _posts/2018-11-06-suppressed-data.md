@@ -11,7 +11,7 @@ tag:
    - R
 description: I experiment with some different ways of handling counts in tables that have been suppressed for confidentiality, and come up in favour of multiple imputation. The mice R package helpfully lets you define your own imputation algorithm.
 image: /img/0138-corresp.gif
-socialimage: http://freerangestats.info/img/0138-corresp.gif
+socialimage: https:/freerangestats.info/img/0138-corresp.gif
 category: R
 ---
 

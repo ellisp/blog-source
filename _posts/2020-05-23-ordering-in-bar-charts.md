@@ -8,7 +8,7 @@ tag:
    - Tools
 description: It turns out to be quite easy in R to reorder your bars within each clump, to produce a bad bar chart like the unfortunate example from Georgia doing the rounds.
 image: /img/0184-bad-bar.svg
-socialimage: http://freerangestats.info/img/0184-bad-bar.png
+socialimage: https:/freerangestats.info/img/0184-bad-bar.png
 category: R
 ---
 
@@ -99,7 +99,7 @@ theme_set(  theme_minimal() +
                     legend.position = "top")
 )
 
-the_caption <- "Source: analysis by http://freerangestats.info with county-level COVID-19 case data from New York Times"
+the_caption <- "Source: analysis by https:/freerangestats.info with county-level COVID-19 case data from New York Times"
 title <- "Top 5 Counties in Georgia with the Greatest Number of Confirmed COVID-19 Cases"
 st <- str_wrap("Note that this chart is to illustrate poor visual design choices and does not include 
 the most current data. It uses different data from the original 

@@ -8,7 +8,7 @@ tag:
    - Pacific
 description: Drawing an annotated choropleth map of Pacific Island countries and territories.
 image: /img/0241-map1.png
-socialimage: http://freerangestats.info/img/0241-map1.png
+socialimage: https:/freerangestats.info/img/0241-map1.png
 category: R
 ---
 
@@ -277,7 +277,7 @@ pac |>
        x = "",
        y = "",
        fill = "People per 1,000\nsquare km of EEZ",
-       caption = "Source: http://freerangestats.info with data from the Pacific Data Hub")
+       caption = "Source: https:/freerangestats.info with data from the Pacific Data Hub")
 {% endhighlight %}
 
 <object type="image/svg+xml" data='/img/0241-map1.svg' width='100%'><img src='/img/0241-map1.png' width='100%'></object>

@@ -10,7 +10,7 @@ tag:
    - R
 description: I adjust my state-space model of New Zealand voting behaviour to allow for the house effect of one of the pollsters to change from the time they started including an on-line sample, and get some interesting results.
 image: /img/0111-reid-methodology-change-impact.svg
-socialimage: http://freerangestats.info/img/0111-reid-methodology-change-impact.png
+socialimage: https:/freerangestats.info/img/0111-reid-methodology-change-impact.png
 category: R
 ---
 

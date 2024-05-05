@@ -7,7 +7,7 @@ tag:
    - R
 description: SQL Server and R work fine together for analysing 200 GB of the New York City taxi data. There's a lot of effort needed to prepare for analysis even relatively-tidy data. Also, you can't analyse big data without aggregating and summarising it somehow.
 image: /img/0162-nyc-taxi-schema.png
-socialimage: http://freerangestats.info/img/0162-nyc-taxi-schema.png
+socialimage: https:/freerangestats.info/img/0162-nyc-taxi-schema.png
 category: R
 ---
 
@@ -195,7 +195,7 @@ theme_white_map <- function(base_size = 12, font_family = main_font){
 
 
 
-the_caption <- "Analysis by http://freerangestats.info with data from NYC Taxi & Limousine Commission"
+the_caption <- "Analysis by https:/freerangestats.info with data from NYC Taxi & Limousine Commission"
 
 #-----------------------passenger count frequencies------
 sql <- "

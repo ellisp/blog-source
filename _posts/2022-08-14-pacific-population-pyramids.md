@@ -9,7 +9,7 @@ tag:
    - Pacific
 description: I show how to access data from the Pacific Data Hub to draw population pyramids of Pacific Island countries and territories.
 image: /img/0240-pop-pyramids-wide.png
-socialimage: http://freerangestats.info/img/0240-pop-pyramids-wide.png
+socialimage: https:/freerangestats.info/img/0240-pop-pyramids-wide.png
 category: R
 ---
 

@@ -8,7 +8,7 @@ tag:
    - R
 description: I show how modelling the distribution of an underlying continuous variable that has been clouded by binning is much better way of understanding the data than crude methods dealing directly with the binned counts.
 image: /img/0157-densities.svg
-socialimage: http://freerangestats.info/img/0157-densities.png
+socialimage: https:/freerangestats.info/img/0157-densities.png
 category: R
 ---
 

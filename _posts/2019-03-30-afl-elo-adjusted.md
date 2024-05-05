@@ -8,7 +8,7 @@ tag:
    - R
 description: I improve my AFL predictions by adjusting Elo ratings for home team advantage (varying by home team) and with a more data-driven approach to parameters for the actual ratings.
 image: /img/0148-best-preds.svg
-socialimage: http://freerangestats.info/img/0148-best-preds.png
+socialimage: https:/freerangestats.info/img/0148-best-preds.png
 category: R
 ---
 

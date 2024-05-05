@@ -8,7 +8,7 @@ tag:
    - R
 description: My New Zealand Election Forecasts web page is up; and I have some reflections on election day randomness, and on quality control.
 image: /img/0085-gam-vote-predictions.svg
-socialimage: http://freerangestats.info/img/0085-gam-vote-predictions.png
+socialimage: https:/freerangestats.info/img/0085-gam-vote-predictions.png
 category: R
 ---
 

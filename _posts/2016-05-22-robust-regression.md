@@ -11,7 +11,7 @@ tag:
 description: I use animations to show some of the properties of least trimmed squares compared to a Huber M estimator as alternative robust regression estimation methods for a simple linear models.
 
 image: /img/0041-rtm-lqs.gif
-socialimage: http://freerangestats.info/img/0041-rtm-lqs.gif
+socialimage: https:/freerangestats.info/img/0041-rtm-lqs.gif
 category: R
 ---
 
@@ -105,7 +105,7 @@ library(scales)
 library(directlabels)
 
 #================download and transform data==============
-# See http://freerangestats.info/blog/2015/08/15/importing-nzis-surf/ for
+# See https:/freerangestats.info/blog/2015/08/15/importing-nzis-surf/ for
 # instructions on setting up the database
 
 sql <- "SELECT hours, income FROM vw_mainheader"

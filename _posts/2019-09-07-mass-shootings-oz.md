@@ -12,7 +12,7 @@ tag:
    - R
 description: I annotate and explain an example use of Poisson process modelling to test an important hypothesis about the frequency of mass shootings in Australia over time.
 image: /img/0158-events.svg
-socialimage: http://freerangestats.info/img/0158-events.png
+socialimage: https:/freerangestats.info/img/0158-events.png
 category: R
 ---
 

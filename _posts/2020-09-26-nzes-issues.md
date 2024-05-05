@@ -11,7 +11,7 @@ tag:
    - Distributions
 description: I try out biterm topic modelling on a free text question in the 2017 New Zealand Election Study about the most important issue in the election.
 image: /img/0193-pv-issues.svg
-socialimage: http://freerangestats.info/img/0193-pv-issues.png
+socialimage: https:/freerangestats.info/img/0193-pv-issues.png
 category: R
 ---
 
@@ -175,7 +175,7 @@ library(glue)
 library(nzelect)
 
 nzes <- read_spss("NZES2017SPSS/NZES2017Release14-07-19.sav")
-the_caption <- "Data from the New Zealand Election Study, analysed at http://freerangestats.info"
+the_caption <- "Data from the New Zealand Election Study, analysed at https:/freerangestats.info"
 
 # Table of most important topics:
 nzes %>%

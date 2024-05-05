@@ -7,7 +7,7 @@ tag:
    - Tools
 description: I make a SQLite database of daily observations of Australian security prices, volumes and short positions.
 image: /img/0199-er-diagram.png
-socialimage: http://freerangestats.info/img/0199-er-diagram.png
+socialimage: https:/freerangestats.info/img/0199-er-diagram.png
 category: R
 ---
 
@@ -606,7 +606,7 @@ d %>%
        y = "Growth in price\nfrom average in 2020 to average in 2021",
        title = "High volume and growth securities in the ASX, 2021",
        subtitle = "Labelled securities are those with volume of trades > $100m or growth >200%",
-       caption = "Source: Yahoo Finance via http://freerangestats.info. This is not financial advice.")
+       caption = "Source: Yahoo Finance via https:/freerangestats.info. This is not financial advice.")
 {% endhighlight %}
 
 La voila. Coming soon in a future blog post - exploring short positions of securities on the ASX.

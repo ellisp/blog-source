@@ -8,7 +8,7 @@ tag:
    - R
 description: I look at several different ways of accounting for the information given us by high positive testing rates for COVID-19 and look at the impact on estimates of effective reproduction number at a point in time.
 image: /img/0178-smoothed-test-rates.svg
-socialimage: http://freerangestats.info/img/0178-smoothed-test-rates.svg
+socialimage: https:/freerangestats.info/img/0178-smoothed-test-rates.svg
 category: R
 ---
 ## Test positivity rates and disease incidence

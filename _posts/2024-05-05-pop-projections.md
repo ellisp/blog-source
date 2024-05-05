@@ -8,7 +8,7 @@ tag:
    - Pacific
 description: I have a mostly successful go at cohort component population projections to replicate the UN's totals from their published parts, with an idea to making small changes to observations or assumptions that can build on the official projections.
 image: /img/0262-vanuatu-pyramid.svg
-socialimage: http://freerangestats.info/img/0262-vanuatu-pyramid.png
+socialimage: https:/freerangestats.info/img/0262-vanuatu-pyramid.png
 category: R
 ---
 

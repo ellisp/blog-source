@@ -9,7 +9,7 @@ tag:
    - R
 description: I ponder the limitations of animation, and how much work is needed to turn a fun animation into a great story.
 image: /img/0151-all-years-one-frame.svg
-socialimage: http://freerangestats.info/img/0151-all-years-one-frame.png
+socialimage: https:/freerangestats.info/img/0151-all-years-one-frame.png
 category: R
 ---
 

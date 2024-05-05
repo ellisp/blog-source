@@ -7,7 +7,7 @@ tag:
    - R
 description: I play around with simulating some dice games.
 image: /img/0137-game2-results.svg
-socialimage: http://freerangestats.info/img/0137-game2-results.png
+socialimage: https:/freerangestats.info/img/0137-game2-results.png
 category: R
 ---
 
@@ -15,7 +15,7 @@ A necessary but not sufficient condition for a game being one of skill rather th
 
 However, any game of pure chance can be converted to one of skill simply by adding a wager, or similar tool that sets up decisions for players such as the doubling cube in backgammon (backgammon of course is not a game of pure chance even just in the checker play, but it's the doubling cube that brings in most of the skill). This is one of the reasons why so much effort over the centuries has gone into understand the probabilities of elementary card and dice games; leveraging the probabilities into a gamble turn a game of low or zero skill into something much more interesting.
 
-*Note - if you're reading this on R Bloggers, the graphics aren't showing up for a reason I need time to troubleshoot. Read the original on [Free Range Statistics](http://freerangestats.info/blog/2018/10/27/dice-games) to get the graphics and formulae.*
+*Note - if you're reading this on R Bloggers, the graphics aren't showing up for a reason I need time to troubleshoot. Read the original on [Free Range Statistics](https:/freerangestats.info/blog/2018/10/27/dice-games) to get the graphics and formulae.*
 
 ## A simple game
 

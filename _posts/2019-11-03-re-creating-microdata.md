@@ -12,7 +12,7 @@ tag:
    - R
 description: I play around with creating my own synthetic unit record file of survey microdata to match published marginal totals. I conclude that making synthetic data for development or education purposes can be useful, but the effort to try to exactly match marginal totals from this sort of survey is unlikely to be useful for either bona fide researchers or ill-intentioned data snoopers.
 image: /img/0159-barchart.svg
-socialimage: http://freerangestats.info/img/0159-barchart.svg
+socialimage: https:/freerangestats.info/img/0159-barchart.svg
 category: R
 ---
 

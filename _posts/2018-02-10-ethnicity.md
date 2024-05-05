@@ -8,7 +8,7 @@ tag:
    - WorkRelated
 description: An interactive network graph is a great way to understand a statistical classification standard.
 image: /img/0117-ethnicity-screenshot.png
-socialimage: http://freerangestats.info/img/0117-ethnicity-screenshot.png
+socialimage: https:/freerangestats.info/img/0117-ethnicity-screenshot.png
 category: R
 ---
 

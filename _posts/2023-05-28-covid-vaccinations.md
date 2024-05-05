@@ -9,7 +9,7 @@ tag:
    - Pacific
 description: I compare vaccination rates in the Pacific to GDP per capita and find the evidence isn't strong enough to say that there is a relationship between the two.
 image: /img/0246-vaccination-v-gdp.svg
-socialimage: http://freerangestats.info/img/0246-vaccination-v-gdp.png
+socialimage: https:/freerangestats.info/img/0246-vaccination-v-gdp.png
 category: R
 ---
 

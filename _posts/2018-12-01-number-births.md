@@ -7,7 +7,7 @@ tag:
    - R
 description: It turns out that about 10 billion people were born in total in the twentieth century.
 image: /img/0141-cumulative-births.svg
-socialimage: http://freerangestats.info/img/0141-cumulative-births.png
+socialimage: https:/freerangestats.info/img/0141-cumulative-births.png
 category: R
 ---
 
@@ -253,7 +253,7 @@ Finally, the answer to the question, which turns out to be about 9.75 billion:
 
 The Gapminder data doesn't have values for every year, but it's straightforward to interpolate them and get the estimated number of births. That was the final bit of calculating to do.  
 
-I saved the [birth numbers from 1800 onwards as a CSV](http://freerangestats.info/data/cumulative-births-1800-onwards.csv) in case anyone is interested in them.
+I saved the [birth numbers from 1800 onwards as a CSV](https:/freerangestats.info/data/cumulative-births-1800-onwards.csv) in case anyone is interested in them.
 
 Here's the code for the final step:
 

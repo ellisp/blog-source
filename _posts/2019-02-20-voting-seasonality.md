@@ -9,7 +9,7 @@ tag:
    - R
 description: I update the nzelect R package with the latest New Zealand polling data, and use a generalized additive model to look for a seasonal impact on support for the current government.
 image: /img/0144-pro-pm.svg
-socialimage: http://freerangestats.info/img/0144-pro-pm.png
+socialimage: https:/freerangestats.info/img/0144-pro-pm.png
 category: R
 ---
 

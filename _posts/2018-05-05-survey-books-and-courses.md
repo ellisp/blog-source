@@ -9,7 +9,7 @@ tag:
    - Tools
 description: Books, online courses and tools on surveys I've recently visited and liked.  
 image: /img/total-survey-error.png
-socialimage: http://freerangestats.info/img/total-survey-error.png
+socialimage: https:/freerangestats.info/img/total-survey-error.png
 category: R
 ---
 

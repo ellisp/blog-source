@@ -8,7 +8,7 @@ tag:
    - R
 description: I load wave 6 of the World Values Survey into a database so it's possible to analyse more questions and countries at once, and find some interesting variations in what people agree with in different parts of the world.
 image: /img/0143-heatmap.svg
-socialimage: http://freerangestats.info/img/0143-heatmap.png
+socialimage: https:/freerangestats.info/img/0143-heatmap.png
 category: R
 ---
 
@@ -389,7 +389,7 @@ d2 %>%
         axis.text.y = element_text(size = 7)) +
   labs(x = "The countries that 'agree' with more statements are on the right.",
        y = "The statements most agreed with (when asked) are at the top.\n",
-       caption = "Source: http://www.worldvaluessurvey.org/WVSDocumentationWV6.jsp, WV6_Data_R_v20180912. Analysis by http://freerangestats.info") +
+       caption = "Source: http://www.worldvaluessurvey.org/WVSDocumentationWV6.jsp, WV6_Data_R_v20180912. Analysis by https:/freerangestats.info") +
   # draw the countries along the top as a sort of repeat of the x axis:
   geom_text(data = distinct(d2, country_code), aes(label = country_code), 
             y = yup + 1, angle = 45, hjust = 0, size = 2.7) +

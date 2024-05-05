@@ -9,7 +9,7 @@ tag:
    - Tools
 description: I show a workaround to make it (relatively) easy to work with weighted survey data in Power BI, and ruminate on how this compares to other approaches of working with weighted data.
 image: /img/0121-powerbi.png
-socialimage: http://freerangestats.info/img/0121-powerbi.png
+socialimage: https:/freerangestats.info/img/0121-powerbi.png
 category: R
 ---
 

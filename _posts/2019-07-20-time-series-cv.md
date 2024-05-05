@@ -9,7 +9,7 @@ tag:
    - R
 description: I use time series forecast cross-validation to explore simulated data and sort out the real and the fake effects between variables.
 image: /img/0156-ts.svg
-socialimage: http://freerangestats.info/img/0156-ts.png
+socialimage: https:/freerangestats.info/img/0156-ts.png
 category: R
 ---
 

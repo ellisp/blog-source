@@ -10,7 +10,7 @@ tag:
    - R
 description: A demo of a favourite combination of multiple imputation, bootstrap and elastic net regularization.  I look at what are good leading indicators, with reliable data available, of New Zealand's economic growth.  The results turn out to be last quarter's economic growth; food prices; visitor arrivals; car registrations; business confidence; and electronic card transactions.  
 image: /img/0128-ridge-boot-results.svg
-socialimage: http://freerangestats.info/img/0128-ridge-boot-results.png
+socialimage: https:/freerangestats.info/img/0128-ridge-boot-results.png
 category: R
 ---
  The debate about business confidence as a possible leading indicator of economic growth reminded me of a question that has long been on my back-burner - what data make the best leading indicators (say, a quarter of a year ahead) of economic growth?  There are a number of indicators that get a lot of attention in the media and from economic pundits of course, but I wanted to take a data-driven approach and see what actual evidence there is for the various candidate variables.  
@@ -307,7 +307,7 @@ of change in one standard deviation in the explanatory variable",
        y = "",
        caption = "95% confidence intervals based on bootstrapped elastic net regularized regression, with
 electronic card transactions imputed differently for each bootstrap resample.
-Analysis by http://freerangestats.info") +
+Analysis by https:/freerangestats.info") +
   ggtitle("Previous quarter's economic growth (+ve) and food prices (-ve)
 most useful as leading indicators of this quarter's New Zealand economic growth",
           str_wrap("Variables considered are official statistics available from Stats NZ every month, within a month; plus the OECD business confidence measure (which is based on NZIER's Quarterly Survey of Business Opinion); and the trade weighted index for currency published by RBNZ.  Data goes back to 1987.", 80))

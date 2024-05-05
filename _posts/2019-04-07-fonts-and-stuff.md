@@ -8,7 +8,7 @@ tag:
    - R
 description: svglite is a great way for producing good graphics for the web but there's a small hack needed if you want to use web fonts with it.
 image: /img/0150-svglite-with-fonts.svg
-socialimage: http://freerangestats.info/img/ozpolls/0150-svglite-with-fonts.png
+socialimage: https:/freerangestats.info/img/ozpolls/0150-svglite-with-fonts.png
 category: R
 ---
 

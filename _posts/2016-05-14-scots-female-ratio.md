@@ -8,7 +8,7 @@ tag:
 description: The breaks= argument in scales in the ggplot2 universe makes it simple to do minimalist Tufte-inspired scales where the text and tick marks show the actual data values rather than just regular intervals.
 
 image: /img/0040-females.svg
-socialimage: http://freerangestats.info/img/0040-females.png
+socialimage: https:/freerangestats.info/img/0040-females.png
 category: R
 ---
 ## Minimalist axes text and tick marks

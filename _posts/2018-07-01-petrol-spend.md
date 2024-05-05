@@ -8,7 +8,7 @@ tag:
    - R
 description: I explore the relationship between household income and expenditure on gasoline and motor oil in the USA Bureau of Labor Statistics' Consumer Expenditure Survey.
 image: /img/0124-scatter-1.svg
-socialimage: http://freerangestats.info/img/0124-scatter-1.png
+socialimage: https:/freerangestats.info/img/0124-scatter-1.png
 category: R
 ---
 

@@ -10,7 +10,7 @@ tag:
    - R
 description: I outline how I structure analytical project folder systems and some hints for matching R Markdown documents to a corporate style guide including adding logos, watermarks, and of course colours and fonts.
 image: /img/0109-rmarkdown-screenshot.png
-socialimage: http://freerangestats.info/img/0109-rmarkdown-screenshot.png
+socialimage: https:/freerangestats.info/img/0109-rmarkdown-screenshot.png
 category: R
 ---
 

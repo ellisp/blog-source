@@ -8,7 +8,7 @@ tag:
    - R
 description: A small random sample will give better results than a much larger non-random sample, under certain conditions; but more importantly, it is reliable and controls for risk.
 image: /img/0160-million.svg
-socialimage: http://freerangestats.info/img/0160-million.svg
+socialimage: https:/freerangestats.info/img/0160-million.svg
 category: R
 ---
 
@@ -192,7 +192,7 @@ rbind(tmp1, tmp2, tmp3, tmp4)  %>%
        title = "Comparison of 'big data' and random sampling methods",
        subtitle = "Estimating a proportion from an urn of 10,000 red and white balls.
 Which method works best depends on the degree of serial correlation between balls.",
-       caption = "http://freerangestats.info")
+       caption = "https:/freerangestats.info")
 
 #----------------------Large urns------------------
 tmp5 <- overall_results(1000, 1e6, 0.3, 0.9)
@@ -214,7 +214,7 @@ rbind(tmp5, tmp6, tmp7, tmp8)  %>%
        title = "Comparison of 'big data' and random sampling methods",
        subtitle = "Estimating a proportion from an urn of 10,000 red and white balls.
 Which method works best depends on the degree of serial correlation between balls.",
-       caption = "http://freerangestats.info")
+       caption = "https:/freerangestats.info")
 {% endhighlight %}
 
 One final point - what if we look at the absolute value of the discrepency between each methods estimate of the proportion and its true value. We see basically the same picture.
@@ -237,7 +237,7 @@ rbind(tmp5, tmp6, tmp7, tmp8)  %>%
        title = "Comparison of 'big data' and random sampling methods, urn with 1,000,000",
        subtitle = "Estimating a proportion from an urn of 10,000 red and white balls.
 Which method works best depends on the degree of serial correlation between balls.",
-       caption = "http://freerangestats.info")
+       caption = "https:/freerangestats.info")
 {% endhighlight %}
 	   
 

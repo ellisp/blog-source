@@ -6,7 +6,7 @@ tag:
    - R
 description: Excellent statistical graphics usually reveal multivariate interactions and comparisons, and combine high data density with a minimum of ink that doesn't directly represent data.
 image: /img/0044-control-trial.png
-socialimage: http://freerangestats.info/img/0044-control-trial.png
+socialimage: https:/freerangestats.info/img/0044-control-trial.png
 category: R
 ---
 

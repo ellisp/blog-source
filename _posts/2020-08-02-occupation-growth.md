@@ -7,7 +7,7 @@ tag:
    - Visualisation
 description: Exploration of change in occupations in the Australian health industry, and economy more broadly, from 1986 to the present.
 image: /img/0190-line.svg
-socialimage: http://freerangestats.info/img/0190-line.png
+socialimage: https:/freerangestats.info/img/0190-line.png
 category: R
 ---
 
@@ -178,7 +178,7 @@ d <- eq09 %>%
 occ_palette <- brewer.pal(length(unique(d$occupation)), "Set1")
 names(occ_palette) <- unique(d$occupation)
 
-the_caption <- "Source: ABS Labour Force Survey EQ08 and EQ09, analysis by http://freerangestats.info"
+the_caption <- "Source: ABS Labour Force Survey EQ08 and EQ09, analysis by https:/freerangestats.info"
 
 #------------Line chart------------
 # This is equivalent to an index - showing cumulative growth

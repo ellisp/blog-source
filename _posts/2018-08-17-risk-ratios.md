@@ -7,7 +7,7 @@ tag:
    - R
 description: Explanation and demonstration with simulated data of the difference between relative risk ratios and odds ratios, and how to extract them from a generalized linear model.
 image: /img/0131-data.svg
-socialimage: http://freerangestats.info/img/0131-data.png
+socialimage: https:/freerangestats.info/img/0131-data.png
 category: R
 ---
 

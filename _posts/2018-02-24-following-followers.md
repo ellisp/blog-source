@@ -6,7 +6,7 @@ tag:
    - R
 description: I investigate a question about the Twitter network, and find that generally (until reaching a level of fame few of us aspire to), having more followers oneself is associated with following people who have less followers, not more.
 image: /img/0118-main-scatter.svg
-socialimage: http://freerangestats.info/img/0118-main-scatter.svg
+socialimage: https:/freerangestats.info/img/0118-main-scatter.svg
 category: R
 ---
 

@@ -8,7 +8,7 @@ tag:
    - R
 description: I have a play with counting how often particular digits turn up in numbers, starting with page numbers of a book based on a training exercise, and moving on to the so-called Benford's law or first-digit law.
 image: /img/0140-benford-real.svg
-socialimage: http://freerangestats.info/img/0140-benford-real.png
+socialimage: https:/freerangestats.info/img/0140-benford-real.png
 category: R
 ---
 ## Counting digits appearing in page numbers

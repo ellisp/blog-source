@@ -9,7 +9,7 @@ tag:
    - R
 description: Simple but effective graphics showing relative country standings with regard to deaths from assault, and trends over time.  Most countries in this group are seeing a decline in deaths from assault, from peaks in the 1970s, '80s or '90s.  Data are downloaded from OECD.Stat via their API and SDMX and this post shows how to do this, and also demos screen scraping with {rvest} - not that it needs any demo-ing, it's so user-friendly.
 image: /img/0020-assault-average.svg
-socialimage: http://freerangestats.info/img/0020-assault-average.png
+socialimage: https:/freerangestats.info/img/0020-assault-average.png
 category: R
 ---
 ## Deaths from assault

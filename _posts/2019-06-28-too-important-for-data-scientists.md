@@ -8,7 +8,7 @@ tag:
    - R
 description: Data is good, data skills are better and a data skills plan is best.
 image: /img/data-skills-main.jpg
-socialimage: http://freerangestats.info/img/data-skills-main.jpg
+socialimage: https:/freerangestats.info/img/data-skills-main.jpg
 category: R
 ---
 

@@ -8,7 +8,7 @@ tag:
    - Timeseries
 description: After some experimenting with how to show stock price and volume at the same time, I conclude unsuprisingly that the charts commonly used in finance are pretty much fit for purpose, but alternative presentations have their place too.
 image: /img/0200-ohlc.svg
-socialimage: http://freerangestats.info/img/0200-ohlc.png
+socialimage: https:/freerangestats.info/img/0200-ohlc.png
 category: R
 ---
 

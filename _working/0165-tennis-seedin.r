@@ -30,7 +30,7 @@ steffis_opponents <- c(2:5, 10, 20, 50, 128)
 
 y <- elo_prediction(women128[steffis_opponents, ]$elo, women128[1, ]$elo)
 
-the_caption <- "Source: http://freerangestats.info analysis based on 1990 WTA ratings in Stephanie Kovalchik's {deuce} R package."
+the_caption <- "Source: https:/freerangestats.info analysis based on 1990 WTA ratings in Stephanie Kovalchik's {deuce} R package."
 
 p1 <- cbind(women128[steffis_opponents, ], y, rank = steffis_opponents) %>%
   mutate(lab = paste0(player_name, " (", rank, ")")) %>%

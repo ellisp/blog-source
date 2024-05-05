@@ -8,7 +8,7 @@ tag:
    - Visualisation
 description: An observational study claiming to be an RCT might have something to say but there are far too many discretionary researcher choices taken to believe its findings. But I use this as a chance to play with statistical inference after estimating a regression via lasso.
 image: /img/0191-gdp-adjusted.svg
-socialimage: http://freerangestats.info/img/0191-gdp-adjusted.png
+socialimage: https:/freerangestats.info/img/0191-gdp-adjusted.png
 category: R
 ---
 

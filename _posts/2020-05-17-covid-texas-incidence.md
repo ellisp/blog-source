@@ -7,7 +7,7 @@ tag:
    - R
 description: Even when you adjust for test-positivity rates, the number of new COVID-19 cases per day in Texas is going up, although not as rapidly as the unadjusted numbers imply.
 image: /img/0183-texas.svg
-socialimage: http://freerangestats.info/img/0183-texas.png
+socialimage: https:/freerangestats.info/img/0183-texas.png
 category: R
 ---
 
@@ -98,7 +98,7 @@ the_theme <- theme(axis.text.y = element_blank(),
 the_labs <- labs(x = "", 
                  colour = "", 
                  y = "New daily confirmed cases",
-                 caption = "Source: data from covidtracking.com, positivity adjustment by http://freerangestats.info")
+                 caption = "Source: data from covidtracking.com, positivity adjustment by https:/freerangestats.info")
                  
 #------------------------Plots---------------------
 

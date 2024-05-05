@@ -7,7 +7,7 @@ tag:
    - R
 description: Life expectancy is calculated directly from death rates. And mathematically speaking, changes in infant mortality have a much greater impact on life expectancy than do changes in death rates in any other year.
 image: /img/0123-0.svg
-socialimage: http://freerangestats.info/img/0123-0.png
+socialimage: https:/freerangestats.info/img/0123-0.png
 category: R
 ---
 

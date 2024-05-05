@@ -8,7 +8,7 @@ tag:
    - R
 description: I have a go at quantifying how much giving a special draw to the top 32 seeds in a tennis tournament impacts on who makes it to the finals and who wins, based on simulations of a hypothetical matchup of the 128 top women players in 1990.
 image: /img/0165-tennis-seeding.svg
-socialimage: http://freerangestats.info/img/0165-tennis-seeding.png
+socialimage: https:/freerangestats.info/img/0165-tennis-seeding.png
 category: R
 ---
 
@@ -88,7 +88,7 @@ steffis_opponents <- c(2:5, 10, 20, 50, 128)
 
 y <- elo_prediction(women128[steffis_opponents, ]$elo, women128[1, ]$elo)
 
-the_caption <- "Source: http://freerangestats.info analysis based on 1990 WTA ratings in Stephanie Kovalchik's {deuce} R package."
+the_caption <- "Source: https:/freerangestats.info analysis based on 1990 WTA ratings in Stephanie Kovalchik's {deuce} R package."
 
 cbind(women128[steffis_opponents, ], y, rank = steffis_opponents) %>%
   mutate(lab = paste0(player_name, " (", rank, ")")) %>%

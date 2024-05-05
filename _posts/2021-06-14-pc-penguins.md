@@ -7,7 +7,7 @@ tag:
    - Tools
 description: Beware that the direction of a principal component can vary depending on the sequence of the original data.
 image: /img/0202-pc-comparison.png
-socialimage: http://freerangestats.info/img/0202-pc-comparison.png
+socialimage: https:/freerangestats.info/img/0202-pc-comparison.png
 category: R
 ---
 

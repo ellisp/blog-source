@@ -8,7 +8,7 @@ tag:
    - R
 description: Simulating a population with changing total fertility rate, life expectancy, infant mortality, and other parameters
 image: /img/0122-rates.svg
-socialimage: http://freerangestats.info/img/0122-rates.png
+socialimage: https:/freerangestats.info/img/0122-rates.png
 category: R
 ---
 

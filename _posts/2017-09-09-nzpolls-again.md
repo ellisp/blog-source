@@ -9,7 +9,7 @@ tag:
    - R
 description: New Zealand electoral polls going back 15 years
 image: /img/0110-polls.svg
-socialimage: http://freerangestats.info/img/0110-polls.png
+socialimage: https:/freerangestats.info/img/0110-polls.png
 category: R
 ---
 

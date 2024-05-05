@@ -6,7 +6,7 @@ tag:
    - DataVisualization
 description: Sometimes a Twitter storm of chart-shaming is unfair, mean, and frankly misguided. I reproduce and defend a chart originally produced by FiveThirtyEight to illustrate changes over time in how nominations for US Supreme Court Justices have been voted on in the Senate.
 image: /img/0230-gam-alone-with-withdrawn.svg
-socialimage: http://freerangestats.info/img/0230-gam-alone-with-withdrawn.png
+socialimage: https:/freerangestats.info/img/0230-gam-alone-with-withdrawn.png
 category: R
 ---
 

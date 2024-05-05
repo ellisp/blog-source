@@ -7,7 +7,7 @@ tag:
    - R
 description: I built a Shiny app to help people see what happens to a statistical quality control p-chart when the sample size, period of time, target defect rate and true defect rate get played around with.
 image: /img/0033_control_charts.png
-socialimage: http://freerangestats.info/img/0033_control_charts.png
+socialimage: https:/freerangestats.info/img/0033_control_charts.png
 category: R
 ---
 

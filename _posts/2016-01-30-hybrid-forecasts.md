@@ -8,7 +8,7 @@ tag:
    - R
 description: Hybrid forecasts - averages of single-model forecasts - are commonly used to produce point estimates that are better than any of the contributing forecast models.  I show how prediction intervals can be constructed for a hybrid forecast that have more accurate coverage than most commonly used prediction intervals (ie 80% of actual observations do indeed turn out to be within the 80% confidence interval), tested on the 3,003 M3 forecasting competition datasets.
 image: /img/0028-USAccDeaths.svg
-socialimage: http://freerangestats.info/img/0028-USAccDeaths.png
+socialimage: https:/freerangestats.info/img/0028-USAccDeaths.png
 category: R
 ---
 ## Forecast Combination

@@ -9,7 +9,7 @@ tag:
    - R
 description: I test some forecasting models on nearly 3,000 seasonal timeseries to see if it's better to seasonally adjust first or to incorporate the seasonality into the model used for forecasting.  Turns out it is marginally better to seasonally adjust beforehand when using an ARIMA model and it doesn't matter with exponential smoothing state space models.  Automated use of Box-Cox transformations also makes forecasts with these test series slightly worse.  The average effects were very small, and dwarfed by different performance on different domains and frequency of data.
 image: /img/0079-lmer-results.svg
-socialimage: http://freerangestats.info/img/0079-lmer-results.png
+socialimage: https:/freerangestats.info/img/0079-lmer-results.png
 category: R
 ---
 

@@ -10,7 +10,7 @@ tag:
    - Pacific
 description: I demonstrate the function I use to make it simpler to draw choropleth maps based on Pacific Island countries' and territories' exclusive economic zones.
 image: /img/0249-hdi-map.svg
-socialimage: http://freerangestats.info/img/0249-hdi-map.png
+socialimage: https:/freerangestats.info/img/0249-hdi-map.png
 category: R
 ---
 

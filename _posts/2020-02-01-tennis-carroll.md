@@ -9,7 +9,7 @@ tag:
    - R
 description: I put to the test a method of running a tennis tournament suggested by Lewis Carroll. It performs ok in allocating prizes fairly, although it takes about twice as many matches as a standard modern single-elimination. When there is realistic randomness in results it doesn't perform as well as Carroll argued it would on the unrealistic basis of deterministic match outcomes.
 image: /img/0163-tea-party.png
-socialimage: http://freerangestats.info/img/0163-tea-party.png
+socialimage: https:/freerangestats.info/img/0163-tea-party.png
 category: R
 ---
 
@@ -525,7 +525,7 @@ top1 %>%
        colour= "",
        subtitle = "Chance of the top one, two or three players ending in correct place in the tournament",
        title = "Performance of Lewis Carroll's tennis tournament rules",
-       caption = "Analysis by http://freerangestats.info of simulated tournaments of the top 128 women players in 1990, with probabilistic match outcomes")
+       caption = "Analysis by https:/freerangestats.info of simulated tournaments of the top 128 women players in 1990, with probabilistic match outcomes")
 
 
 #-------------check that deterministic approach always works for top 3------------
