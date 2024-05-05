@@ -1,7 +1,9 @@
 library(WDI)
-WDIsearch("gdp per capita") |> View()
-WDIsearch("gni per capita") |> View()
-WDIsearch("poverty") |> View()
+library(tidyverse)
+
+# WDIsearch("gdp per capita") |> View()
+# WDIsearch("gni per capita") |> View()
+# WDIsearch("poverty") |> View()
 
 # GDP per capita, constant 2015 USD
 gdppc <- WDI(country = "KIR", indicator = "NY.GDP.PCAP.KD") |>
@@ -12,7 +14,7 @@ gdppc  |>
   geom_line()
 
 
-# GBI per capita, constant 2015 USD
+# GNI per capita, constant 2015 USD
 gnipc <- WDI(country = "KIR", indicator = "NY.GNP.PCAP.KD") |>
   as_tibble()
 
@@ -37,7 +39,7 @@ p <- gdppc |>
        subtitle = "Fisheries license features in national income but not as domestic production") +
   scale_y_continuous(label = dollar, limits = c(0, 3500))
 
-svg_png(p, "../img/kiribati-gni-and-gdp", w = 8, h = 6)
+svg_png(p, "../img/0248-kiribati-gni-and-gdp", w = 8, h = 6)
 
 
 # Poverty head count ratio estimates total doesn't work, no data
