@@ -1,3 +1,40 @@
+---
+layout: post
+title: Design effects for stratified sub-populations
+date: 2024-06-17
+tag: 
+   - Surveys
+   - WorkRelated
+   - Tools
+description: I look at the two different sorts of design effects that Stata will report for estimates from sub-populations of a complex survey, which vary depending on whether or not the hypothetical simple random sample we are comparing the complex survey to has the same sub-population sample sizes as the actual sample.
+image: /img/0262-vanuatu-pyramid.svg
+socialimage: https:/freerangestats.info/img/0262-vanuatu-pyramid.png
+category: R
+---
+
+I set out to see if it was possible to reproduce the UN's [2022 Revision of World Population Prospects](https://population.un.org/wpp/) for a given country by cohort component projection from the fertility, mortality and immigration rates and population starting point published as part of their projection. The motivation is to make small changes to some of those parameters - for example by substituting in a recent census result for the population and a given year - and "re-run" the projections to see the impact of changes, or to get a more up-to-date version with data that wasn't available to the UN at the time of their projection.
+
+It turns out this wasn't too hard (one morning's work for the modelling, then a few hours of write-up), particularly in cases where migration is small in the projection period. I was able to reproduce almost exactly population, birth and death totals to 2100 for Vanuatu, and demonstrate the impact of updating the 2020 year for their recent census population totals and fertility rates, and getting a slightly lower projection as a result.
+
+Here's my reproduction of Vanuatu's population projection from 2020 to 2100, using just the 2020 population totals and the forecast fertility, mortality and migration rates. As you can see it's basically identical to the UN totals:
+
+<object type="image/svg+xml" data='/img/0262-vanuatu-pop.svg' width='100%'><img src='/img/0262-vanuatu-pop.png' width='100%'></object>
+
+And here's the same method tweaked for the actual 2020 census total and with a rough adjustment made to fertility rates based on what was observed at the 2020 census:
+
+<object type="image/svg+xml" data='/img/0262-vanuatu-revised.svg' width='100%'><img src='/img/0262-vanuatu-revised.png' width='100%'></object>
+
+Of course, this method delivers a full set of projections by age and sex, and we could construct life tables or any indicators we want from it. Here are population pyramids comparing the published UN projections for 2050 with my revised set. Not visually stunning in its comparison, but enough to prove that it's possible:
+
+<object type="image/svg+xml" data='/img/0262-vanuatu-pyramid.svg' width='100%'><img src='/img/0262-vanuatu-pyramid.png' width='100%'></object>
+
+## Reproducing UN projections
+
+So here's how I went about that. 
+
+First, downloading all the data. The UN recommend bulk downloads of their CSV files. For my purposes I first need the fertility, mortality and population by sex and one year age groups. Of the population original data I am only going to use the 2020 year, and then project it forward myself based on fertility, mortality and migration; but I want the full set for comparison purposes. For migration, I couldn't see in my hasty look at the UN site a dataset of migration projections by age and sex, so I just use the much simpler net migration rate (per thousand people) per year in the projection period. Here's code to download all this UN data:
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(glue)
 library(scales)
@@ -6,6 +43,8 @@ library(patchwork)
 dir.create("data-pop-proj-2022", showWarnings = FALSE)
 
 #------------------download and import data for all countries from existing projections----------------
+list.files("data-pop-proj-2022")
+
 files <- c("WPP2022_Fertility_by_Age1.zip",
            "WPP2022_DeathsBySingleAgeSex_Medium_1950-2021.zip",
            "WPP2022_DeathsBySingleAgeSex_Medium_2022-2100.zip",
@@ -44,6 +83,15 @@ pop_all <- rbind(pop_past, pop_future)
 # clean up
 rm(mort_past, mort_future, pop_past, pop_future)
 
+{% endhighlight %}
+
+Next, I wrote my own cohort component population projection function. I wanted to do this from scratch rather than using an existing demography package to make sure I understood what was happening (I'm not a demographer) and could make tweaks as necessary to match the UN approach. I used [this tutorial](https://farid-flici.github.io/tuto.html) by Farid Flici as my starting point; abstracted his code into a function for easy use with multiple countries, and added a net migration component. 
+
+Because migrants' ages tend to be dissimilar from the country they are migrating too - they are more likely to be in the prime of their working / family life I believe - I needed a way to set the ages of migrants. In the function below I defaulted to a normal distribution of ages, mean 28 and standard deviation 11, which worked well to get similar results to the UN in a few countries I tried. This was the hardest and most discretionary part of the exercise.
+
+My observation is that demographers seem to think in terms of matrices of numbers rather than database-oriented tidy data, and I have kept that matrix approach in this function.
+
+{% highlight R lineanchors %}
 #----------------------projections for one country-------------------
 
 # adapting the implementation of the method for cohort component projection at 
@@ -175,9 +223,11 @@ pop_proj <- function(start_pop_m,
     deaths = deaths
   ))
 }
+{% endhighlight %}
 
+Next, I wrote a function to extract the necessary fertility, mortality, migration rates and 2020 starting population from the UN data, feed it into my `pop_proj()` function and return the result. Unlike `pop_proj()`, which is to some degree fully portable, this function is very much specific to this particular project and is really just a convenience function for grabbing the data and turning it into the right units and shapes (vectors and matrices) needed for `pop_proj()`.
 
-
+{% highlight R lineanchors %}
 repeat_un_proj <- function(the_country, the_years = 2020:2100){
   
   if(!the_country %in% unique(indicators$Location)){
@@ -294,14 +344,15 @@ repeat_un_proj <- function(the_country, the_years = 2020:2100){
          un_cnmr = this_cnmr,
          un_srb = this_srb))
 }
+{% endhighlight %}
 
+Note that this function returns, in addition to the results of the population projection, the various inputs in their correct units and shape. This will be useful later when we want to modify some of those inputs.
 
-#------------comparisons------------
+Now that we've got these functions, using them to do projections from 2020 and compare those projections to the published numbers is pretty straight forward. Here's the code to do that for Vanuatu, which produces the first chart at the top of this blog post:
 
+{% highlight R lineanchors %}
 the_country <- "Vanuatu"
 my_proj <- repeat_un_proj(the_country)$un_proj
-
-
 
 # total population
 comp_data <- indicators |>
@@ -313,22 +364,24 @@ comp_data <- indicators |>
 stopifnot(comp_data[1, ]$`UN original` == comp_data[1, ]$Reproduction)
 
 
-p1 <- comp_data |>
+comp_data |>
   gather(variable, value, -Time) |>
   ggplot(aes(x = Time, y = value, colour = variable)) +
   geom_line() +
   scale_y_continuous(label = comma) +
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population (thousands)", x = "", colour = "")
+       y = "Population", x = "", colour = "")
+{% endhighlight %}
 
-svg_png(p1, "../img/0262-vanuatu-pop")
-# svg_png(p1, "../img/0262-Australia-pop")
-# svg_png(p1, "../img/0262-China-pop")
-# svg_png(p1, "../img/0262-India-pop")
+<object type="image/svg+xml" data='/img/0262-vanuatu-pop.svg' width='100%'><img src='/img/0262-vanuatu-pop.png' width='100%'></object>
 
+As we can see the results are pretty much identical. Let's look at my projected births and deaths based on fertility and mortality rates, and compare them to the published projected numbers
+
+
+{% highlight R lineanchors %}
 # births
-p2 <- indicators |>
+indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
   select(Time, `UN original` = Births) |>
   mutate(Reproduction = as.numeric(my_proj$PopM[1,] + my_proj$PopF[1, ]) / 1000) |>
@@ -339,12 +392,8 @@ p2 <- indicators |>
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Births (thousands)", x = "", colour = "")
 
-svg_png(p2, "../img/0262-vanuatu-births")
-# svg_png(p2, "../img/0262-australia-births")
-
-
 # deaths
-p3 <- indicators |>
+indicators |>
   filter(Location == the_country & Variant == "Medium" & Time %in% 2020:2100) |>
   select(Time, `UN original` = Deaths) |>
   mutate(Reproduction = as.numeric(my_proj$deaths) / 1000) |>
@@ -354,19 +403,16 @@ p3 <- indicators |>
   labs(title = the_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
        y = "Deaths (thousands)", x = "", colour = "")
+{% endhighlight %}
 
-svg_png(p3, "../img/0262-vanuatu-deaths")
-#svg_png(p3, "../img/0262-australia-deaths")
+<object type="image/svg+xml" data='/img/0262-vanuatu-births.svg' width='100%'><img src='/img/0262-vanuatu-births.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0262-vanuatu-deaths.svg' width='100%'><img src='/img/0262-vanuatu-deaths.png' width='100%'></object>
 
+I'm pretty happy with those. There's definitely some discrepancies and a lag in the births which I suspect come down to how one treats populations of mothers - numbers on 1 January v 1 July, that sort of thing. But in the scheme of things these are very small.
 
-# some very small differences in Vanuatu which probably come down to something about 1 Jan v 1 July for one or more
-# of the rates I'm calculating
+Now, Vanuatu is relatively easy because the UN assumed net zero migration in the projection period. We can see this by comparing the net migration rates in their Indicators dataset for a few countries, with this code:
 
-#-----------------------thinking about migration----------------
-
-# ok for Vanuatu so there's an assumption of net zero migration it seems, for the forecast period
-# but that's not the case for other countries:
-
+{% highlight R lineanchors %}
 plot_mig <- function(the_country){
   p <- indicators |>
     filter(Location == the_country) |>
@@ -382,10 +428,30 @@ plot_mig <- function(the_country){
   return(p)
 }
 
-p <- plot_mig("Vanuatu") + plot_mig("Fiji") + plot_mig("Australia") + plot_mig("India") +
+plot_mig("Vanuatu") + plot_mig("Fiji") + 
+  plot_mig("Australia") + plot_mig("India") +
   plot_layout(ncol = 2)
-svg_png(p, "../img/0262-migration")
+{% endhighlight %}
 
+<object type="image/svg+xml" data='/img/0262-migration.svg' width='100%'><img src='/img/0262-migration.png' width='100%'></object>
+
+For countries that have good data on it, migration is a big deal in the projections; but forecasting is hard, particularly of the future.
+
+My first few goes at reproducing the projections for Australia and India tended to be badly out because I had added in net migration evenly across the whole age distribution. My eventual solution, making net migration bell curved with an average age of 28, is a bit of a hack with the parameters chosen to make Australia's projections come out right. Definitely a better method would be to have actual age-specific net migration forecasts. Whether such things are possible will very much depend on the country; it's probably possible for Australia, but not for most of the countries I work with.
+
+Here's the final result comparing UN projections with mine for a few interesting countries:
+
+<object type="image/svg+xml" data='/img/0262-Australia-pop.svg' width='100%'><img src='/img/0262-Australia-pop.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0262-China-pop.svg' width='100%'><img src='/img/0262-China-pop.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0262-India-pop.svg' width='100%'><img src='/img/0262-India-pop.png' width='100%'></object>
+
+## Adjusting the starting point
+
+Now, the whole point of this exercise was to see if we can plausibly adjust the starting point - say the population totals in 2020, or the forecast fertility rates - and say we are building on the UN's projections to get our own.  Here's my rough demo of how we might do that, again using the case of Vanuatu. Vanuatu's 2020 census wasn't available at the time of the UN's 2022 population projections, so the actual population and fertility numbers for 2020 differ somewhat (of course) from what was projected. 
+
+For the below, I am relying on [the analytical report of the Vanuatu census](https://sdd.spc.int/digital_library/vanuatu-2020-national-population-and-housing-census-analytical-report-volume-2). On a quick glance I didn't see a table of the actual total population by single year age and sex, so I just adjusted the UN's projected totals by a factor to make them add up to the correct 2020 total males and females. Of course if we were doing this for real we'd get the real numbers straight from the census; I actually can do this easily enough at work but obviously for this blog wanted to use only easily accessible public data.
+
+{% highlight R lineanchors %}
 #-----------------changing one or two factors while keeping the rest the same--------------
 
 # Say we had the 2020 Vanuatu census so we knew the real population then, and wanted
@@ -425,7 +491,7 @@ revised_proj <- pop_proj(
 
 projected_pop <- apply(revised_proj$PopM, 2, sum) + apply(revised_proj$PopF, 2, sum)
 
-# total population
+#-----------------Compare total population----------------
 comp_data <- indicators |>
   filter(Location == revision_country & Variant == "Medium" & Time %in% 2020:2100) |>
   select(Time, `2022 UN projections` = TPopulation1Jan) |>
@@ -439,10 +505,9 @@ p5 <- comp_data |>
   geom_line() +
   labs(title = revision_country,
        subtitle = "Attempt to re-create the UN population projections from population in 2020, fertility and mortality rates",
-       y = "Population (thousands)", x = "", colour = "")
+       y = "Population", x = "", colour = "")
 
-svg_png(p5, "../img/0262-vanuatu-revised")
-
+#--------------Compare population pyramids-------------------------
 d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],   
                   van_orig$un_proj$PopM[, 31],  van_orig$un_proj$PopF[, 31]),
        sex = rep(c("Male", "Female", "Male", "Female"), each = 121),
@@ -452,7 +517,7 @@ d <- tibble(value = c( revised_proj$PopM[, 31], revised_proj$PopF[, 31],
          model = fct_rev(model)) |>
   filter(age < 100)
 
-p6 <- d |>
+d |>
   filter(sex == "Female") |>
   ggplot(aes(x = value, y = agef)) +
   facet_wrap(~model) +
@@ -465,5 +530,14 @@ p6 <- d |>
   scale_x_continuous(breaks = c(-4000, -2000, 0, 2000, 4000), labels = c("4,000", "Male", 0, "Female", "4,000")) +
   theme(panel.grid = element_blank()) +
   scale_y_discrete(breaks = 1:20 * 5)
+{% endhighlight %}
 
-svg_png(p6, "../img/0262-vanuatu-pyramid", h = 6)       
+And that's what gets us these results:
+
+<object type="image/svg+xml" data='/img/0262-vanuatu-revised.svg' width='100%'><img src='/img/0262-vanuatu-revised.png' width='100%'></object>
+
+<object type="image/svg+xml" data='/img/0262-vanuatu-pyramid.svg' width='100%'><img src='/img/0262-vanuatu-pyramid.png' width='100%'></object>
+
+I'm hoping this might be actually useful for pragmatic updates of the UN population projections when more current data is available, without having to revise everything from scratch.
+
+OK, that's all for today.
