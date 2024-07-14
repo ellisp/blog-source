@@ -99,7 +99,7 @@ ar <- function(x){
 hs_col <- "blue"
 us_col <- "brown"
 
-ggplot(eez)  +
+m <- ggplot(eez)  +
   geom_sf(data = pockets_rect1, fill = hs_col) +
   geom_sf(data = pockets_rect2, fill = hs_col) +
   geom_sf(data = ind_eez, fill = "grey60", colour = "white") +
@@ -114,4 +114,7 @@ ggplot(eez)  +
   labs(x = "", y = "",
        title = "Some boundaries for the 'Blue Pacific Continent'? PICTs and neighbouring EEZ and high sea pockets",
        subtitle = glue("Area of EEZs in millions of square km: PICTs = {ar(eez)}, US islands = {ar(usa_eez)}, high sea pockets = {ar(pockets)}. Total area of 'Blue Pacific Continent', if around 35, is just under a quarter of the total Pacific.
-All UN members' EEZ in the world is about 140; all EEZ + land area is about 275; total Pacific Ocean is 165; total Earth is around 510."))
+All UN members' EEZ in the world is about 140; all EEZ + land area is about 275; total Pacific Ocean is 165; total Earth is around 510.")) +
+  coord_sf(ylim = c(-35, 22))
+
+svg_png(m, "../img/0270-high-seas-map", w = 14, h = 7)
