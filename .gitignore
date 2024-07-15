@@ -90,3 +90,15 @@ _working/data/*
 
 *.json
 *.json.gz
+
+# various spatial data files
+*.sbn
+*.cpg
+*.dbf
+*.prj
+*.sbx
+*.shp
+*.xml
+*.geojson
+*.tif
+*.gdb
