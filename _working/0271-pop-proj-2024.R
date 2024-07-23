@@ -63,7 +63,8 @@ stopifnot(nrow(picts) == 21)
 stopifnot(all(picts$location %in% agegrp$location))
 
 old_grps <- c("65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-99", "100+") 
-stopifnot(all(old_grps %in% unique(agegrp$age_grp)))
+yng_grps <- c("0-4", "5-9", "10-14")
+stopifnot(all(c(old_grps, yng_grps) %in% unique(agegrp$age_grp)))
 
 cagr <- function(x1, x2, year){
   y <- (x2 / x1) ^ (1 / year) - 1
@@ -75,10 +76,13 @@ cagr(100, 110, 5)
 pict_sum <- agegrp |>
   inner_join(picts, by = "location") |>
   left_join(gdp, by = c("iso2_code" = "geo_pict")) |>
-  mutate(old = age_grp %in% old_grps) |>
+  mutate(old = age_grp %in% old_grps,
+         young = age_grp %in% yng_grps) |>
   group_by(location, time, subregion, gdp_per_capita_2023) |>
   summarise(pop = sum(pop_total),
-            prop_old = sum(pop_total[old]) / pop) |>
+            pop_old = sum(pop_total[old]),
+            pop_young = sum(pop_total[young]),
+            prop_old =  pop_old / pop) |>
   ungroup() |>
   group_by(location) |>
   arrange(time) |>
@@ -90,7 +94,7 @@ pict_sum <- agegrp |>
   filter(time %in% 1950:2050)
   # filter(time %in% seq(from = 1950, to = 2050, by = 5))
 
-library(RColorBrewer)
+#----------------------compare aging to GDP-----------
 
 p <- pict_sum |>
   ggplot(aes(x = time, y = prop_old, colour = gdp_per_capita_2023, group = location)) +
@@ -125,7 +129,48 @@ p <- pict_sum |>
 svg_png(p, file = "../img/0271-aging-linechart", w = 10, h = 6)
                   
                   
-p +
+p2 <- p +
   facet_wrap(~subregion, ncol = 2) +
   theme(legend.position = c(0.8, 0.2),
         legend.direction = "horizontal")
+
+
+svg_png(p2, file = "../img/0271-aging-linechart-facet", w = 12.5, h = 7)
+
+
+#------------------aging in numbers-----------------
+sr_pal <- c("palegreen", brewer_pal(palette = "Accent")(4)[c(1,3,2)])
+
+
+p3 <- pict_sum |>
+  mutate(location2 = case_when(
+    location == "Papua New Guinea" ~ location, 
+    subregion == "Melanesia" ~ "Melanesia other than PNG",
+    TRUE ~ subregion
+    )) |>
+  mutate(pop_working_age = pop - pop_old - pop_young) |>
+  select(location, location2, subregion, time, pop_old, pop_young, pop_working_age) |>
+  gather(variable, value, -location, -time, -subregion, -location2) |>
+  mutate(variable = case_when(
+    variable == "pop_old" ~ "65 and older",
+    variable == "pop_young" ~ "Younger than 15",
+    variable == "pop_working_age" ~ "15-64"
+  )) |>
+  mutate(location2 = fct_relevel(location2, c("Papua New Guinea",
+                                              "Melanesia other than PNG"))) |>
+  mutate(variable = fct_relevel(variable, "Younger than 15")) |>
+  group_by(time, location2, variable) |>
+  summarise(value = sum(value)) |>
+  ggplot(aes(x = time, fill = location2, y = value)) +
+  facet_wrap(~variable, ncol = 3) +
+  annotate("rect", xmin = 2023.5, xmax = 2050.5, ymin = 0, ymax = Inf, fill = "grey", alpha = 0.5) +
+  geom_area() +
+  scale_fill_manual(values = sr_pal) +
+  scale_y_continuous(label = comma_format(scale = 1/1000, suffix = "m")) +
+  labs(fill = "",
+       x = "", y = "People (millions)",
+       title = "Rapidly growing working age population in Melanesia",
+       #subtitle = "Excluding PNG",
+       caption = "Source: UN World Population Prospects 2024")
+
+svg_png(p3, file = "../img/0271-aging-barchart", w = 10, h = 5)
