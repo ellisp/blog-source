@@ -93,7 +93,7 @@ pict_sum <- agegrp |>
 library(RColorBrewer)
 
 p <- pict_sum |>
-  ggplot(aes(x = time, y = prop_old, colour = coming_growth, group = location)) +
+  ggplot(aes(x = time, y = prop_old, colour = gdp_per_capita_2023, group = location)) +
   annotate("rect", xmin = 2023.5, xmax = 2050.5, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.5) +
   geom_line() +
  # geom_vline(xintercept = 2050, colour = "black") +
@@ -103,7 +103,8 @@ p <- pict_sum |>
                   aes(label = location), hjust = 0, nudge_x = 3, seed = 123,
                   min.segment.length = 5, family = "Calibri",
                   alpha = 1, force = 0.001, force_pull = 1) +
-  scale_colour_viridis_c(option = "D", label = percent) +
+  scale_colour_viridis_c(option = "D", trans = log10_trans(), 
+                         label = dollar_format(scale = 1, largest_with_cents = 100)) +
 #  scale_color_gradientn(colours = brewer.pal(7, "RdYlBu")[7:1], label = percent) +
   scale_y_continuous(label = percent) +
   scale_x_continuous(breaks = seq(from = 1950, to = 2050, by = 25), limits = c(1950, 2070)) +
@@ -116,12 +117,15 @@ p <- pict_sum |>
   #       legend.title = element_text(colour = "white")) +
   theme(legend.position = c(0.2, 0.6)) +
   labs(x = "", y = "Proportion of population that is 65 or older",
-       colour = "Population growth rate\n2024-2050",
+       colour = "GDP per capita in 2023 (USD)",
        size= " Population",
        title = "Aging populations in the Pacific",
-       caption = "Source: UN World Population Prospects 2024")
+       caption = "Source: UN World Population Prospects 2024 (population); SPC Pocket Summary (GDP)")
 
 svg_png(p, file = "../img/0271-aging-linechart", w = 10, h = 6)
                   
                   
-
+p +
+  facet_wrap(~subregion, ncol = 2) +
+  theme(legend.position = c(0.8, 0.2),
+        legend.direction = "horizontal")
