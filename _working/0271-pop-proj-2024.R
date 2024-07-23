@@ -3,6 +3,13 @@ library(scales)
 library(readxl)
 library(janitor)
 library(ggrepel)
+library(rsdmx)
+
+
+gdp <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POCKET,3.0/A..GDPCPCUSD?startPeriod=2023&endPeriod=2023&dimensionAtObservation=AllDimensions") |>
+  as_tibble() |>
+  clean_names() |>
+  select(geo_pict, gdp_per_capita_2023 = obs_value)
 
 options(timeout=600)
 df1 <- "pp24_agegrp.csv"
@@ -67,8 +74,9 @@ cagr(100, 110, 5)
 
 pict_sum <- agegrp |>
   inner_join(picts, by = "location") |>
+  left_join(gdp, by = c("iso2_code" = "geo_pict")) |>
   mutate(old = age_grp %in% old_grps) |>
-  group_by(location, time, subregion) |>
+  group_by(location, time, subregion, gdp_per_capita_2023) |>
   summarise(pop = sum(pop_total),
             prop_old = sum(pop_total[old]) / pop) |>
   ungroup() |>
