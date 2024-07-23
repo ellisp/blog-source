@@ -94,7 +94,7 @@ p <- pict_sum |>
   geom_text_repel(data = filter(pict_sum, time == 2050), direction = "y",
                   aes(label = location), hjust = 0, nudge_x = 3, seed = 123,
                   min.segment.length = 5, family = "Calibri",
-                  alpha = 1, ) +
+                  alpha = 1, force = 0.001, force_pull = 1) +
   scale_colour_viridis_c(option = "D", label = percent) +
 #  scale_color_gradientn(colours = brewer.pal(7, "RdYlBu")[7:1], label = percent) +
   scale_y_continuous(label = percent) +
