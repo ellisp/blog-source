@@ -86,7 +86,7 @@ library(RColorBrewer)
 
 p <- pict_sum |>
   ggplot(aes(x = time, y = prop_old, colour = coming_growth, group = location)) +
-  annotate("rect", xmin = 2023, xmax = 2050, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.5) +
+  annotate("rect", xmin = 2023.5, xmax = 2050.5, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.5) +
   geom_line() +
  # geom_vline(xintercept = 2050, colour = "black") +
   geom_point(data = filter(pict_sum, time %in% c(1950, 2024, 2050)), 
