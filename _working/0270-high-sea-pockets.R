@@ -17,10 +17,31 @@ ind_eez <- st_read("ind-eez.json")  |>
 
 
 tl_eez <- st_read("east-timor-eez.json")   |>
-  #st_simplify(dTolerance = 10) >
   st_make_valid()
 # ggplot(tl_eez) + geom_sf()
 
+# download from https://www.marineregions.org/gazetteer.php?p=details&id=8322
+phil_eez <- st_read("phil-eez.json")   |>
+  st_make_valid()
+# ggplot(phil_eez) + geom_sf()
+
+# download from https://marineregions.org/gazetteer.php?p=details&id=8455
+nz_eez <- st_read("nz-eez.json")   |>
+  st_make_valid() |>
+  st_shift_longitude()
+# ggplot(nz_eez) + geom_sf()
+
+# download from https://www.marineregions.org/gazetteer.php?p=details&id=8483
+mal_eez <- st_read("malaysia-eez.json")   |>
+  st_make_valid() |>
+  st_shift_longitude()
+# ggplot(mal_eez) + geom_sf()
+
+# download from https://marineregions.org/gazetteer.php/gazetteer.php?p=details&id=26521
+brn_eez <- st_read("brunei-eez.json")   |>
+  st_make_valid() |>
+  st_shift_longitude()
+# ggplot(brn_eez) + geom_sf()
 
 if(!file.exists("usa.zip")){
   download.file("https://maritimeboundaries.noaa.gov/downloads/USMaritimeLimitsAndBoundariesSHP.zip",
@@ -120,22 +141,28 @@ ar <- function(x){
 }
 
 hs_col <- "blue"
-us_col <- "brown"
+us_col <- "darkgreen"
 
 m <- ggplot(eez)  +
   geom_sf(data = pockets_rect1, fill = hs_col) +
   geom_sf(data = pockets_rect2, fill = hs_col) +
+  geom_sf(data = phil_eez, fill = "grey65", colour = "white") +
   geom_sf(data = ind_eez, fill = "grey60", colour = "white") +
+  geom_sf(data = mal_eez, fill = "grey70", colour = "white") +
+  geom_sf(data = brn_eez, fill = "grey55", colour = "white") +
   geom_sf(data = tl_eez, fill = "grey50", colour = "white") +
   geom_sf(data = aus_eez, fill = "grey55", colour = "white") +
+  geom_sf(data = nz_eez, fill = "grey65", colour = "white") +
   geom_sf(data = usa_eez, fill = us_col, colour = "white") +
   geom_sf(aes(fill = forum), colour = "white") +
   geom_text(aes(x = X, y = Y, label = ISO_Ter1), colour = "steelblue", size = 3) +
   borders(regions = 'Australia', fill = "white") +
   annotate("text", x = 196, y = 20, label = "US islands (excluding Hawai'i and SPC territories)", colour = us_col, hjust =0) +
   annotate("text", x = 206, y = 12, label = "High sea pockets under WCPO", colour = hs_col, hjust =0) +
-  annotate("text", x = 181, y = -31, label = "Pacific Community (SPC) member\nPacific Island Countries and Territories (PICTs)", colour = "steelblue", hjust =0) +
-  annotate("text", x = 141, y = 15, label = "PICTs that are not Forum members", colour = "turquoise", hjust =1) +
+  annotate("text", x = 191, y = -34, label = "Pacific Community (SPC) member\nPacific Island Countries and Territories (PICTs)", 
+           colour = "steelblue", hjust = 0, lineheight = 0.9) +
+  annotate("text", x = 231, y = -18, label = "PICTs that are not\nForum members", 
+           colour = "turquoise", hjust = 0, lineheight = 0.9) +
   labs(x = "", y = "",
        title = "Some boundaries for the 'Blue Pacific Continent'? PICTs and neighbouring EEZ and high sea pockets",
        subtitle = glue("Area of EEZs in millions of square km: PICTs = {ar(eez)}, US islands = {ar(usa_eez)}, high sea pockets = {ar(pockets)}. Total area of 'Blue Pacific Continent', if around 35, is just under a quarter of the total Pacific.
