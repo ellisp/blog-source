@@ -26,12 +26,13 @@ standard <- read_excel(df2, skip = 16) |>
 agegrp <- read_csv(df1) |>
   clean_names()
 
-picts <- c(
+picts <- tibble(location = c(
   "Fiji",
   "New Caledonia",
   "Papua New Guinea",
   "Solomon Islands",
   "Vanuatu",
+  
   "Guam",
   "Kiribati",
   "Marshall Islands",
@@ -39,6 +40,7 @@ picts <- c(
   "Nauru",
   "Northern Mariana Islands",
   "Palau",
+  
   "American Samoa",
   "Cook Islands",
   "French Polynesia",
@@ -47,41 +49,66 @@ picts <- c(
   "Tokelau",
   "Tonga",
   "Tuvalu",
-  "Wallis and Futuna Islands"
-)
+  "Wallis and Futuna Islands"),
+  subregion = rep(c("Melanesia", "Micronesia", "Polynesia"), times = c(5, 7, 9)))
 
-stopifnot(length(picts) == 21)         
-stopifnot(all(picts %in% agegrp$Location))
+stopifnot(nrow(picts) == 21)         
+stopifnot(all(picts$location %in% agegrp$location))
 
 old_grps <- c("65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-99", "100+") 
 stopifnot(all(old_grps %in% unique(agegrp$age_grp)))
 
+cagr <- function(x1, x2, year){
+  y <- (x2 / x1) ^ (1 / year) - 1
+  return(y)
+}
+
+cagr(100, 110, 5)
+
 pict_sum <- agegrp |>
-  filter(location %in% picts) |>
+  inner_join(picts, by = "location") |>
   mutate(old = age_grp %in% old_grps) |>
-  group_by(location, time) |>
+  group_by(location, time, subregion) |>
   summarise(pop = sum(pop_total),
             prop_old = sum(pop_total[old]) / pop) |>
   ungroup() |>
+  group_by(location) |>
+  arrange(time) |>
+  mutate(pop2024 = pop[time == 2024],
+         yoy_growth = pop / dplyr::lag(pop) - 1,
+         coming_growth = cagr(pop2024, pop[time == 2050], 26)) |>
+  ungroup() |>
+  mutate(pop2024_rank = as.numeric(as.factor(rank(-pop2024)))) |>
   filter(time %in% 1950:2050)
   # filter(time %in% seq(from = 1950, to = 2050, by = 5))
 
+library(RColorBrewer)
+
 p <- pict_sum |>
-  ggplot(aes(x = time, y = prop_old, colour = location)) +
-  annotate("rect", xmin = 2024, xmax = 2050, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.5) +
+  ggplot(aes(x = time, y = prop_old, colour = coming_growth, group = location)) +
+  annotate("rect", xmin = 2023, xmax = 2050, ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.5) +
   geom_line() +
+ # geom_vline(xintercept = 2050, colour = "black") +
   geom_point(data = filter(pict_sum, time %in% c(1950, 2024, 2050)), 
              aes(size = pop), alpha = 0.5) +
   geom_text_repel(data = filter(pict_sum, time == 2050), direction = "y",
-                  aes(label = location), hjust = 0, nudge_x = 3, 
-                  min.segment.length = 5, family = "Calibri") +
-  xlim(1950, 2070) +
-  guides(colour = "none") +
+                  aes(label = location), hjust = 0, nudge_x = 3, seed = 123,
+                  min.segment.length = 5, family = "Calibri",
+                  alpha = 1, ) +
+  scale_colour_viridis_c(option = "D", label = percent) +
+#  scale_color_gradientn(colours = brewer.pal(7, "RdYlBu")[7:1], label = percent) +
   scale_y_continuous(label = percent) +
+  scale_x_continuous(breaks = seq(from = 1950, to = 2050, by = 25), limits = c(1950, 2070)) +
   scale_size_area(label = comma_format(suffix = "m", scale = 1/1000), 
-                  breaks = c(0.1, 5, 10) * 1000, max_size = 12) +
-  theme(legend.position = c(0.2, 0.8)) +
+                  breaks = c(0.1, 1, 2, 5, 10, 20) * 1000, max_size = 12) +
+  # theme_dark(base_family = "Calibri") +
+  # theme(legend.position = c(0.2, 0.6),
+  #       legend.background = element_rect(fill = "grey20"),
+  #       legend.text = element_text(colour = "grey80"),
+  #       legend.title = element_text(colour = "white")) +
+  theme(legend.position = c(0.2, 0.6)) +
   labs(x = "", y = "Proportion of population that is 65 or older",
+       colour = "Population growth rate\n2024-2050",
        size= " Population",
        title = "Aging populations in the Pacific",
        caption = "Source: UN World Population Prospects 2024")
