@@ -1,3 +1,46 @@
+---
+layout: post
+title: Population age changes in the Pacific
+date: 2024-07-27
+tag: 
+   - Pacific
+   - WorkRelated
+   - Demography
+description: I polish up some visualisations of demographic trends in the Pacific.
+image: /img/0271-aging-linechart.svg
+socialimage: https:/freerangestats.info/img/0271-aging-linechart.png
+category: R
+---
+
+The UN has released the [2024 Revision of World Population Prospects](https://population.un.org/wpp/) and I wanted to see the latest estimates of how Pacific Island Country and Territories (PICTs) populations will age in coming years.
+
+## Aging populations
+
+After quite a bit of experimentation and iteration through different variants, I came up with this chart of the proportion of elderly people in the different PICTs:
+
+<object type="image/svg+xml" data='/img/0271-aging-linechart.svg' width='100%'><img src='/img/0271-aging-linechart.png' width='100%'></object>
+
+The choice of "percentage of population that is aged 65 and over" seemed straightforward enough giving my aims to understand population aging. The harder questions were about what to map colour to. I tried an individual colour for each country - this was probably the easiest to read, and maybe what I'd use if the chart was for a more general readership. I also tried mapping colour to subregion (Melanesia, Polynesia and Micronesia), to population growth rates, and population sizes, before settling on GDP per capita in 2023 as a genuinely interesting additional variable that highlights some relationships between aging and income.
+
+What I like about the chart I eventually chose is how it clearly shows the three clusters of countries, in terms of projected aging to 2050; and the top two (most aging) clusters of four countries each are clearly richer (in terms of GDP per capita in 2023) than the larger, bottom (least aging) cluster of poorer countries. Tiny Niue and Nauru being exceptions as countries with less predicted aging despite relatively high GDP; but Niue is a particularly difficult country to model because of its tiny size and ease of movement to New Zealand, and Nauru's economic status is complex for all sorts of interesting historical reasons.
+
+I did feel the sub-regional aspect was an important one too, despite not choosing it in the end for colour. So I made a faceted version of the same chart to show that, which I think works quite nicely too:
+
+<object type="image/svg+xml" data='/img/0271-aging-linechart-facet.svg' width='100%'><img src='/img/0271-aging-linechart-facet.png' width='100%'></object>
+
+All the code for these charts is in one chunk at the bottom of the blog. It's all straightforward stuff, importing data from two data sources and then some moderately finicky plot polishing. The power of the grammar of graphics really shone through in making it easy to iterate through different versions of these before coming to the final production charts; this isn't so obvious in just reading the code except for when we see the simple one-liner conversion of the main chart into the faceted one.
+
+## Absolute size of population by age
+
+I wanted a sense of the absolute magnitudes too. Proportions of populations by PICT are all very well, but how many millions of people are we talking about in different age groups? It turns out this is an important thing to visualise because of how easy it is to forget that, in numbers of people terms, the Pacific is dominated by Melanesia, and Melanesia in turn is mostly Papua New Guinea. Again after a bit of iteration and experimentation I came up with this chart to show that:
+
+<object type="image/svg+xml" data='/img/0271-aging-areachart.svg' width='100%'><img src='/img/0271-aging-areachart.png' width='100%'></object>
+
+## R code
+
+Well that's all for today very straightforward stuff but some nice charts. Big thanks to the UN for making the detailed data in the World Population Projections so nicely accessible. Here's the code to import that data, plus GDP per capita from the Pacific Data Hub at my own work, and turn it into those charts.
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(scales)
 library(readxl)
@@ -113,7 +156,7 @@ pict_sum <- agegrp |>
 #----------------------compare aging to GDP-----------
 myfont <- "Roboto"
 
-p <- pict_sum |>
+p1 <- pict_sum |>
   ggplot(aes(x = time, y = prop_old, colour = gdp_per_capita_2023, group = location)) +
   annotate("rect", xmin = 2011, xmax = 2023.5, ymin = -Inf, ymax = Inf, fill = "grey90", alpha = 0.5) +
   annotate("rect", xmin = 2023.5, xmax = 2050.5, ymin = -Inf, ymax = Inf, fill = "grey70", alpha = 0.5) +
@@ -139,21 +182,20 @@ p <- pict_sum |>
        subtitle = "Shaded areas indicate increasingly dependent on projections",
        caption = "Source: UN World Population Prospects 2024 (population); SPC Pocket Summary (GDP)")
 
-svg_png(p, file = "../img/0271-aging-linechart", w = 10, h = 6)
+print(p1)                  
                   
-                  
-p2 <- p +
+# faceted version                  
+p2 <- p1 +
   facet_wrap(~subregion, ncol = 2) +
   theme(legend.position = c(0.8, 0.2),
         legend.direction = "horizontal")
 
 
-svg_png(p2, file = "../img/0271-aging-linechart-facet", w = 12.5, h = 7)
-
+print(p2)
 
 #------------------population by age group in absolute numbers-----------------
+# colour palette for the sub-regions
 sr_pal <- c("palegreen", brewer_pal(palette = "Accent")(4)[c(1,3,2)])
-
 
 p3 <- pict_sum |>
   mutate(location2 = case_when(
@@ -187,4 +229,6 @@ p3 <- pict_sum |>
        subtitle = "Shaded areas indicate increasingly dependent on projections",
        caption = "Source: UN World Population Prospects 2024")
 
-svg_png(p3, file = "../img/0271-aging-areachart", w = 10, h = 5)
+print(p3)
+
+{% endhighlight %}
