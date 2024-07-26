@@ -173,4 +173,4 @@ p3 <- pict_sum |>
        #subtitle = "Excluding PNG",
        caption = "Source: UN World Population Prospects 2024")
 
-svg_png(p3, file = "../img/0271-aging-barchart", w = 10, h = 5)
+svg_png(p3, file = "../img/0271-aging-areachart", w = 10, h = 5)
