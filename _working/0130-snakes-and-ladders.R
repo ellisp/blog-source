@@ -256,7 +256,6 @@ for(i in (n-7):1){
 # - rolling 3 sixes goes back to square one (and in some variants, then you must roll six again to start)
 
 
-# TODO - simulation; including maybe an animation
 
 sims <- list()
 reps <- 10000
@@ -315,3 +314,104 @@ ggplot(lengths, aes(x= x)) +
   geom_density(fill = "blue", alpha = 0.2) +
   labs(x = "Number of moves before winning") +
   ggtitle("Distribution of length of one player snakes and ladders games")
+
+
+#-----------------different approach------------
+
+
+board <- c(1:100, 99:95)
+board[snakes_and_ladders$starting] <- board[snakes_and_ladders$ending]
+
+
+sl_game <- function(start = 0, end = 100){
+  if(!start %in% c(0, board)){
+    return(NULL)
+  }
+  positions <- position <- start
+  turns <- 0
+  while(position != 100){
+    turns <- turns + 1
+    dice <- sample(1:6, 1)
+    position <- board[position + dice]
+    positions <- c(positions,position)
+    
+    if(dice == 6 & position != end){
+      dice <- sample(1:6, 1)
+      position <- board[position + dice]
+      positions <- c(positions,position)
+    }
+    
+    if(dice == 6 & position != end){
+      dice <- sample(1:6, 1)
+      if(dice == 6){
+        position <- 1
+      } else{
+        position <- board[position + dice]
+      }
+      positions <- c(positions,position)
+    }
+  }
+  
+  return(list(positions = positions, rolls = length(positions), turns = turns))
+}
+
+sl_game(0)
+sl_game(1)
+sl_game(2)
+
+results <- tibble(start = numeric(), rep =numeric(), turns = numeric())
+reps <- 1000
+starts <- 0:99
+starts <- starts[starts %in% c(0, board)]
+for(start in starts){
+  cat(start)
+  for(rep in 1:reps){
+    this_game <- sl_game(start)
+    res <- tibble(start = start, rep = rep, turns = this_game$turns)
+    results <- rbind(results, res)
+  }
+}
+dim(results)
+
+results |>
+  group_by(start) |>
+  summarise(mean(turns))
+
+distrib <- results |>
+  count(start, turns) |>
+  group_by(start) |>
+  mutate(prop = n / sum(n)) |>
+  ungroup() |>
+  mutate(link = 1) |>
+  select(start, turns, prop, link)
+
+who_wins <- distrib |>
+  left_join(distrib, by = "link", 
+            suffix = c("_p1", "_p2"), 
+            relationship = "many-to-many") |>
+  mutate(prob = prop_p1 * prop_p2) |>
+  group_by(start_p1, start_p2) |>
+  summarise(p1 = sum(prob[turns_p1 <= turns_p2]),
+            p2 = sum(prob[turns_p1 > turns_p2])) |>
+  mutate(unusual = p1 > 0.55 & start_p2 > start_p1)
+  
+
+who_wins |>
+  ggplot(aes(x = start_p1, y = start_p2, fill = p1)) +
+  geom_tile() +
+  geom_tile(data = filter(who_wins, unusual), fill = "white", colour = "black") +
+  scale_fill_gradientn(colours = c("red", "white", "blue")) +
+  labs(x = "Player one starting square",
+       y = "Player 2 starting square",
+       fill = "Probability of player one winning",
+       subtitle = "Player 1 has the dice. 6 gets you another roll. Three 6s is back to square 1. 
+'Bounce back' rule applies if you don't land exactly on square 100.
+Black squares indicate situations where it is worth betting on Player 1 even though they are behind",
+       title = "Chance of winning a standard snakes and ladders game at different positions")
+
+
+# some examples where it would be worth putting money on player 1 even
+# though they are behind
+who_wins |>
+  filter(unusual) |>
+  arrange(desc(p1))
