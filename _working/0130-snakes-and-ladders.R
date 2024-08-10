@@ -68,7 +68,7 @@ sl_game <- function(start = 0, end = 100){
   }
   positions <- position <- start
   turns <- 0
-  while(position != 100){
+  while(position != end){
     turns <- turns + 1
     dice <- sample(1:6, 1)
     position <- board[position + dice]
@@ -139,6 +139,9 @@ pd <- setwd("0130-tmp")
 system('magick -loop 0 -delay 40 *.png "0130-snakes-and-ladders.gif"')
 setwd(pd)
 
+file.rename("0130-tmp/0130-snakes-and-ladders.gif",
+            "../img/0130-snakes-and-ladders.gif")
+
 number_turns <- tibble(turns = sapply(sims_0, function(x){x$turns}),
                        rolls = sapply(sims_0, function(x){x$rolls}))
 
@@ -148,13 +151,14 @@ number_turns |>
   summarise(mean(value),
             median(value))
 
-ggplot(number_turns, aes(x= turns)) +
+p2 <- ggplot(number_turns, aes(x= turns)) +
   geom_density(fill = "blue", alpha = 0.2) +
   labs(x = "Number of moves before winning",
        title = "Distribution of length of one player snakes and ladders games",
        subtitle = "6 gets you another role, three 6s is back to square 1.
 'Bounce back' rule applies when trying to finish exactly on 100")
 
+svg_png(p2, "../img/0130-lengths", w = 8, h = 5)
 
 #-----------------chance of winning from different positions------------
 # set up parallel processing cluster
@@ -220,7 +224,7 @@ who_wins <- distrib |>
   mutate(unusual = p1 > 0.55 & start_p2 > start_p1)
   
 # Visualise the chance of winning from various positions
-who_wins |>
+p3 <- who_wins |>
   ggplot(aes(x = start_p1, y = start_p2, fill = p1)) +
   geom_tile() +
   geom_tile(data = filter(who_wins, unusual), fill = "white", colour = "black") +
@@ -228,11 +232,12 @@ who_wins |>
   labs(x = "Player one current square",
        y = "Player 2 current square",
        fill = "Probability of player one winning",
-       subtitle = "Player 1 has the dice. 6 gets you another roll. Three 6s is back to square 1. 
-'Bounce back' rule applies if you don't land exactly on square 100.
+       subtitle = "Rules: 6 gets you another roll. Three 6s is back to square 1. 'Bounce back' rule applies if you don't land
+exactly on square 100. Player 1 has the dice.
 Black squares indicate situations where it is worth betting on Player 1 even though they are behind",
        title = "Chance of winning a standard snakes and ladders game at different positions")
 
+svg_png(p3, "../img/0130-unusual-winning-chances", w = 8, h = 7)
 
 # some examples where it would be worth putting money on player 1 even
 # though they are behind
@@ -240,3 +245,19 @@ who_wins |>
   filter(unusual) |>
   arrange(desc(p1))
 
+
+
+p4 <- who_wins |>
+  ggplot(aes(x = start_p1, y = start_p2, fill = p1)) +
+  geom_tile() +
+  geom_tile(data = filter(who_wins, p2 < 0.25), fill = "white", colour = "black") +
+  scale_fill_gradientn(colours = c("red", "white", "blue")) +
+  labs(x = "Player one current square",
+       y = "Player 2 current square",
+       fill = "Probability of player one winning",
+       subtitle = "Rules: 6 gets you another roll. Three 6s is back to square 1. 'Bounce back' rule applies if you don't land
+exactly on square 100. Player 1 has the dice.
+Black squares indicate situations where Player 2 should decline an offered doubling cube",
+       title = "Chance of winning a standard snakes and ladders game at different positions")
+
+svg_png(p4, "../img/0130-doubling-cube", w = 8, h = 7)
