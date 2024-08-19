@@ -243,7 +243,8 @@ svg_png(p3, "../img/0130-unusual-winning-chances", w = 8, h = 7)
 # though they are behind
 who_wins |>
   filter(unusual) |>
-  arrange(desc(p1))
+  mutate(how_surprising = start_p2 / start_p1 * p1) |>
+  arrange(desc(how_surprising))
 
 
 

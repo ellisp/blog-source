@@ -5,13 +5,13 @@ date: 2024-08-10
 tag: 
    - Games
    - Animations
-description: When playing the common actual rules of Snakes and Ladders it is more complex than a simple mathematical model; I simulate results and put forward some findings that could be useful in a future high stakes Snakes and Ladders game. 
+description: When playing Snakes and Ladders with the common rules actually used, it is more complex than a simple mathematical model; I simulate games and put forward some findings that could be useful in a future high stakes Snakes and Ladders game. 
 image: /img/0130-snakes-and-ladders.gif
 socialimage: https:/freerangestats.info/img/0130-snakes-and-ladders.gif
 category: R
 ---
 
-More than five years ago I started a [series of posts on games of chance](https://freerangestats.info/blog/2018/10/27/dice-games) and for one reason or another never got around to finishing them. Partially redressing that, here is a long-lost and now tidied up post on Snakes and Ladders. Read it before you next gaze across the smoke filled casino table at your opponent, a sinister operative of SMERSH, and take a sip at your vodka martini before deciding whether to take his proferred wager or not with him on square 90 and you on 75...
+More than five years ago I started a [series of posts on games of chance](https://freerangestats.info/blog/2018/10/27/dice-games) and for one reason or another never got around to finishing them. Partially redressing that, here is a long-lost and now tidied up post on Snakes and Ladders. Read it before you next *gaze across the smoke filled casino table at your opponent, a sinister operative of SMERSH, and take a sip at your vodka martini while deciding whether to take his proferred wager or not with him on square 90 and you on 75...*
 
 OK, maybe that scenario is unlikely. But one of my themes in these posts is that even games of pure chance will become skill if you gamble on them. Choices like whether to bet, what odds to offer or accept, and (in some games) whether to offer, accept or decline a doubling cube all turn even a pure chance game like [Persian Monarchs](/blog/2018/12/23/persian-monarchs) into one where the best player will win (in the long run).
 
@@ -128,8 +128,10 @@ sl_game <- function(start = 0, end = 100){
 }
 
 sl_game(0)
+
 # should be NULL as it's not possible to finish a turn on 1 so can't start there either:
 sl_game(1)
+
 sl_game(2)
 
 # simulate 10000 games starting from square zero
@@ -209,7 +211,7 @@ The distribution of the number of rolls required is very much squewed with a lon
 
 OK, so where does the gambling come in? Gambling becomes interesting when there is a choice about the *timing* or *odds* of a wager. If all gambling was an even odds stake put down before the game, then Snakes and Ladders would stay a game of pure chance. But if it is possible, say at the beginning of your turn, to size up the board and say "I'll bet you on even odds that I'll win", you're making a choice based on your knowledge of the game. A naive observer might think that anyone who is at a more advanced square is more likely to win, and therefore could be trapped into taking a bet that would only be fair if there were favourable odds given to them.
 
-To explore this with Snakes and Ladders, I simulated a thousand solo games from each square that is a valid starting position for a turn (e.g. excluding squares that are at the bottom of a ladder - you can't end a turn on that square because if you land there you would go straight up the ladder). This gives us a probability distribution for how many turns it is expected to take to win from that point. If we do a full join of this distribution to itself, we will get a joint probability for how many turns it will take player 1 to win from that position and every combination of player 2's starting points.
+To explore this with Snakes and Ladders, I simulated ten thousand solo games with the counter starting from each square that is a valid starting position for a turn (e.g. excluding squares that are at the bottom of a ladder - you can't end a turn on that square because if you land there you would go straight up the ladder). This gives us a probability distribution for how many turns it is expected to take to win from that point. If we do a full join of this distribution to itself, we will get a joint probability for how many turns it will take player 1 to win from that position and every combination of player 2's starting points.
 
 We can visualise the result in a chart like this one. The highlight boxes are where Player 1, who is about to roll, has a surprisingly good chance of winning (higher than 0.55), despite being behind Player 2 in the race. These are the probable opportunities to offer a 50:50 bet to your opponent; only an unusually disciplined or knowledgeable player would think they were losing in this position.
 
