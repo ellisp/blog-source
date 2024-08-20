@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Design effects for stratified sub-populations
-date: 2024-08-17
+date: 2024-10-17
 tag: 
    - Surveys
    - WorkRelated
