@@ -1,6 +1,5 @@
 
 library(tidyverse)
-library(mapproj)
 library(sf)
 library(extrafont)
 library(rnaturalearth)
@@ -12,6 +11,7 @@ library(glue)
 nf <- function(x){
   y <- case_when(
     x > 1e6 ~ glue::glue("{round(x / 1e6, 1)}m"),
+    x > 1e4 ~ glue::glue("{round(x / 1e3, 0)}k"),
     TRUE ~ scales::comma(signif(x, 2))
   )
   return(y)
@@ -24,9 +24,10 @@ north_crs <- st_crs(3411)
 
 
 # 27MB download:
-download.file("https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/exports/csv?lang=en&timezone=UTC&use_labels=true&delimiter=%3B",
-              destfile = "cities.txt")
-
+if(!file.exists("cities.txt")){
+  download.file("https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/exports/csv?lang=en&timezone=UTC&use_labels=true&delimiter=%3B",
+                destfile = "cities.txt")
+}
 cities <- read_delim("cities.txt", delim = ";")
 
 
@@ -76,7 +77,7 @@ m1 <- most_north |>
   geom_sf(data = north_world, fill = "grey90", colour = NA) +
   geom_circle(aes(x0 = zero, y0 = zero, r = radius, colour = radius)) +
   geom_sf() +
-  geom_text_repel(aes(x = X, y = Y, label = label), family = ff, seed = 123) +
+  geom_text_repel(aes(x = X, y = Y, label = label), family = ff, seed = 123, size = 3) +
   # these limits are in the transformed coordinates, were chosen by hand / trial and error:
   coord_sf(ylim = c(-3000000  , 7000000), lims_method = "orthogonal",
            xlim = c(-6000000, 6000000   )) +
@@ -105,7 +106,7 @@ m2 <- most_south |>
   geom_sf(data = south_world, fill = "grey90", colour = NA) +
   geom_circle(aes(x0 = zero, y0 = zero, r = radius, colour = radius)) +
   geom_sf() +
-  geom_text_repel(aes(x = X, y = Y, label = label), family = ff, seed = 123) +
+  geom_text_repel(aes(x = X, y = Y, label = label), family = ff, seed = 123, size = 3) +
   # these limits are in the transformed coordinates, were chosen by hand / trial and error:
   coord_sf(ylim = c(-11000000  , 11000000), lims_method = "orthogonal",
            xlim = c(-7000000, 20000000   )) +
