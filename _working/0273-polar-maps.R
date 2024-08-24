@@ -57,7 +57,7 @@ most_south <- cbind(most_south, st_coordinates(most_south))
 
 # borders of countries north of Shanghai
 north_world <- ne_countries() |>
-  filter(label_y < 30) |>
+  filter(label_y > 30) |>
   st_transform(crs = north_crs)
 
 # borders of countries south of Shanghai
@@ -65,23 +65,26 @@ south_world <- ne_countries() |>
   filter(label_y < 35) |>
   st_transform(crs = south_crs)
 
-w <- map_data("world") |>
-  as_tibble()
-
-
 ff <- "Calibri"
 
 m1 <- most_north |>
-  ggplot(aes(x = long, y = lat)) +
-  annotate("rect", xmin = 0, xmax = 180, ymin = 31, ymax = 90, fill = "steelblue", colour = NA) +
-  annotate("rect", xmin = 5, xmax = -185, ymin = 31, ymax = 90, fill = "steelblue", colour = NA) +
-  annotate("text", x = 0, y = 90, colour = "white", size = 3, label = "Pole", family = ff) +
-  geom_polygon(data = filter(w, lat > 30), aes(group = group), fill = "grey90") +
-  geom_hline(yintercept = most_north$lat, colour = "white") +
-  geom_point() +
-  geom_text_repel(aes(label = Name), family = ff, seed = 123) +
-  coord_map(projection = "orthographic") +
-  theme_void(base_family = "Calibri")
+  mutate(zero = 0,
+         radius = sqrt(X ^ 2 + Y ^ 2),
+         label = glue("{Name}, {nf(Population)}")) |>
+  ggplot() +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "steelblue") +
+  geom_sf(data = north_world, fill = "grey90", colour = NA) +
+  geom_circle(aes(x0 = zero, y0 = zero, r = radius, colour = radius)) +
+  geom_sf() +
+  geom_text_repel(aes(x = X, y = Y, label = label), family = ff, seed = 123) +
+  # these limits are in the transformed coordinates, were chosen by hand / trial and error:
+  coord_sf(ylim = c(-3000000  , 7000000), lims_method = "orthogonal",
+           xlim = c(-6000000, 6000000   )) +
+  theme_void() +
+  #  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
+  scale_colour_viridis_c(direction = -1) +
+  labs(title = "Settlements that have no larger settlement further north of them") +
+  theme(legend.position = "none")
 
 
 
