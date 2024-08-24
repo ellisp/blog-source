@@ -1,3 +1,5 @@
+# based on an idea at
+# https://brilliantmaps.com/no-settlement-further-north/?fbclid=IwY2xjawE2h7NleHRuA2FlbQIxMAABHdcWMCUYztUNNvniU4XJvlfREJo24ulRyp4qks8c_cWKOpwspzjYCXa4uQ_aem_hy058OxYQsPH_Ay_SX8t5Q
 
 #-----------------prep----------------
 library(tidyverse)
@@ -18,13 +20,14 @@ nf <- function(x){
   return(y)
 }
 
-# Fontface to use
-ff <- "Calibri"
+# Font to use
+ff <- "Roboto"
 
 #-------------------download cities data-------------
 
 
-# obtained CRS from https://spatialreference.org/ref/epsg/?search=polar
+# obtained polar-centred coordinate reference systems (CRS) for later use, from 
+# https://spatialreference.org/ref/epsg/?search=polar
 south_crs <- st_crs(3031)
 north_crs <- st_crs(3411)
 
@@ -58,12 +61,10 @@ most_north <- st_transform(most_north, crs = north_crs)
 most_north <- cbind(most_north, st_coordinates(most_north))
 
 
-# borders of countries north of Shanghai
+# borders of countries north of Shanghai, from Natural Earth
 north_world <- ne_countries() |>
   filter(label_y > 30) |>
   st_transform(crs = north_crs)
-
-
 
 m1 <- most_north |>
   mutate(zero = 0,
@@ -84,11 +85,7 @@ m1 <- most_north |>
   labs(title = "Settlements that have no larger settlement further north of them") +
   theme(legend.position = "none")
 
-
-
-
-svg_png(m1, file = "../img/0272-most-north", w = 9, h = 9)
-
+svg_png(m1, file = "../img/0274-most-north", w = 9, h = 8)
 
 #------------most south---------------
 
@@ -126,6 +123,6 @@ m2 <- most_south |>
   labs(title = "Settlements that have no larger settlement further south of them") +
   theme(legend.position = "none")
 
-svg_png(m2, file = "../img/0272-most-south", w = 9, h = 9)
+svg_png(m2, file = "../img/0274-most-south", w = 9, h = 8)
 
 
