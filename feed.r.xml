@@ -10,7 +10,7 @@
 		{% for post in site.categories.R limit:10 %}
 			<item>
 				<title>{{ post.title | xml_escape }} by @ellis2013nz</title>
-					<description>{{ post.content | replace:"/img/", "https:/freerangestats.info/img/" | xml_escape }}</description>
+					<description>{{ post.content | replace:"/img/", "https://freerangestats.info/img/" | xml_escape }}</description>
 				<pubDate>{{ post.date | date_to_rfc822 }}</pubDate>
 				<link>{{ site.url }}{{ post.url }}</link>
 				<guid isPermaLink="true">{{ site.url }}{{ post.url }}</guid>
