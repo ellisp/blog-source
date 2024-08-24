@@ -1,4 +1,5 @@
 
+#-----------------prep----------------
 library(tidyverse)
 library(sf)
 library(extrafont)
@@ -17,6 +18,11 @@ nf <- function(x){
   return(y)
 }
 
+# Fontface to use
+ff <- "Calibri"
+
+#-------------------download cities data-------------
+
 
 # obtained CRS from https://spatialreference.org/ref/epsg/?search=polar
 south_crs <- st_crs(3031)
@@ -28,7 +34,10 @@ if(!file.exists("cities.txt")){
   download.file("https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/exports/csv?lang=en&timezone=UTC&use_labels=true&delimiter=%3B",
                 destfile = "cities.txt")
 }
-cities <- read_delim("cities.txt", delim = ";")
+
+if(!exists("cities")){
+  cities <- read_delim("cities.txt", delim = ";")
+}
 
 
 d <- cities |>
@@ -36,6 +45,8 @@ d <- cities |>
   mutate(lat = as.numeric(str_squish(lat)),
          long = as.numeric(str_squish(long))) |>
   select(Name, `Country name EN`, `Country Code`, Population, lat, long) 
+
+#-----------------most north-------------
 
 most_north <- d |>
   arrange(desc(lat)) |>
@@ -47,26 +58,12 @@ most_north <- st_transform(most_north, crs = north_crs)
 most_north <- cbind(most_north, st_coordinates(most_north))
 
 
-most_south <- d |>
-  arrange(lat) |>
-  mutate(max_pop = cummax(Population)) |>
-  filter(Population >= max_pop) |>
-  st_as_sf(coords = c("long", "lat"), remove = FALSE, crs = st_crs("WGS84"))
-
-most_south <- st_transform(most_south, crs = south_crs)
-most_south <- cbind(most_south, st_coordinates(most_south))
-
 # borders of countries north of Shanghai
 north_world <- ne_countries() |>
   filter(label_y > 30) |>
   st_transform(crs = north_crs)
 
-# borders of countries south of Shanghai
-south_world <- ne_countries() |>
-  filter(label_y < 35) |>
-  st_transform(crs = south_crs)
 
-ff <- "Calibri"
 
 m1 <- most_north |>
   mutate(zero = 0,
@@ -81,7 +78,7 @@ m1 <- most_north |>
   # these limits are in the transformed coordinates, were chosen by hand / trial and error:
   coord_sf(ylim = c(-3000000  , 7000000), lims_method = "orthogonal",
            xlim = c(-6000000, 6000000   )) +
-  theme_void() +
+  theme_void(base_family = ff) +
   #  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
   scale_colour_viridis_c(direction = -1) +
   labs(title = "Settlements that have no larger settlement further north of them") +
@@ -93,9 +90,22 @@ m1 <- most_north |>
 svg_png(m1, file = "../img/0272-most-north", w = 9, h = 9)
 
 
+#------------most south---------------
+
+most_south <- d |>
+  arrange(lat) |>
+  mutate(max_pop = cummax(Population)) |>
+  filter(Population >= max_pop) |>
+  st_as_sf(coords = c("long", "lat"), remove = FALSE, crs = st_crs("WGS84"))
+
+most_south <- st_transform(most_south, crs = south_crs)
+most_south <- cbind(most_south, st_coordinates(most_south))
 
 
-
+# borders of countries south of Shanghai
+south_world <- ne_countries() |>
+  filter(label_y < 35) |>
+  st_transform(crs = south_crs)
 
 m2 <- most_south |>
   mutate(zero = 0,
@@ -110,7 +120,7 @@ m2 <- most_south |>
   # these limits are in the transformed coordinates, were chosen by hand / trial and error:
   coord_sf(ylim = c(-11000000  , 11000000), lims_method = "orthogonal",
            xlim = c(-7000000, 20000000   )) +
-  theme_void() +
+  theme_void(base_family = ff) +
 #  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
   scale_colour_viridis_c(direction = -1) +
   labs(title = "Settlements that have no larger settlement further south of them") +
