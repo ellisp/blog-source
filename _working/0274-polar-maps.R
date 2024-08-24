@@ -71,7 +71,9 @@ m1 <- most_north |>
          radius = sqrt(X ^ 2 + Y ^ 2),
          label = glue("{Name}, {nf(Population)}")) |>
   ggplot() +
-  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "steelblue") +
+  # draw the sea as background:
+  geom_circle(data = tibble(x = 0, r = 8.5e6),
+              aes(x0 = x, y0 = x, r = r), fill = "steelblue", colour = NA) +
   geom_sf(data = north_world, fill = "grey90", colour = NA) +
   geom_circle(aes(x0 = zero, y0 = zero, r = radius, colour = radius)) +
   geom_sf() +
@@ -80,7 +82,6 @@ m1 <- most_north |>
   coord_sf(ylim = c(-3000000  , 7000000), lims_method = "orthogonal",
            xlim = c(-6000000, 6000000   )) +
   theme_void(base_family = ff) +
-  #  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
   scale_colour_viridis_c(direction = -1) +
   labs(title = "Settlements that have no larger settlement further north of them") +
   theme(legend.position = "none")

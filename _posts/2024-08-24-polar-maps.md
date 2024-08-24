@@ -11,8 +11,6 @@ image: /img/0274-most-south.png
 socialimage: https:/freerangestats.info/img/0274-most-south.png
 category: R
 ---
-
-
 I stumbled across [this page by Brilliant Maps](https://brilliantmaps.com/no-settlement-further-north/?fbclid=IwY2xjawE2h7NleHRuA2FlbQIxMAABHdcWMCUYztUNNvniU4XJvlfREJo24ulRyp4qks8c_cWKOpwspzjYCXa4uQ_aem_hy058OxYQsPH_Ay_SX8t5Q) showing settlements with no larger settlement to their north. The author noted that Helsinki was omitted by error. I wanted to address that error, and as a resident of the southern half of the globe myself, to produce a similar map with relation to the south pole.
 
 First there's a matter of sourcing data on cities' and towns' populations. There are several possible sources but I chose [this dataset on opendatasoft, of all cities with a population > 1000](https://public.opendatasoft.com/explore/dataset/geonames-all-cities-with-a-population-1000/table/?disjunctive.cou_name_en&sort=name). This doesn't go to the tiny settlements in the original Brilliant Maps image, but it's good enough for me.
@@ -66,7 +64,7 @@ d <- cities |>
   select(Name, `Country name EN`, `Country Code`, Population, lat, long) 
 {% endhighlight %}
 
-Next is the job of identifying cities that are bigger than any others to their north. This was a bit of a logic problem which I addressed by sorting all the cities by distrance from the north pole (highest latitude first), making a new column which is the cumulative maximum population so far, and retaining only those cities that are equal to or higher than that maximum population. This gets me a list of just 20 cities.
+Next is the job of identifying cities that are bigger than any others to their north. This was a bit of a fiddly problem which I addressed by sorting all the cities by distrance from the north pole (highest latitude first), making a new column which is the cumulative maximum population so far, and retaining only those cities that are equal to or higher than that maximum population. This gets me a list of just 20 cities.
 
 I then turn them into simple features objects with geometry (based on the latitude and longitude), and transform them to coordinates that will represent the world flattened out centred around the north pole, using the coordinate reference system I calculated before.
 
@@ -96,7 +94,9 @@ m1 <- most_north |>
          radius = sqrt(X ^ 2 + Y ^ 2),
          label = glue("{Name}, {nf(Population)}")) |>
   ggplot() +
-  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "steelblue") +
+  # draw the sea as background:
+  geom_circle(data = tibble(x = 0, r = 8.5e6),
+              aes(x0 = x, y0 = x, r = r), fill = "steelblue", colour = NA) +
   geom_sf(data = north_world, fill = "grey90", colour = NA) +
   geom_circle(aes(x0 = zero, y0 = zero, r = radius, colour = radius)) +
   geom_sf() +
@@ -105,11 +105,9 @@ m1 <- most_north |>
   coord_sf(ylim = c(-3000000  , 7000000), lims_method = "orthogonal",
            xlim = c(-6000000, 6000000   )) +
   theme_void(base_family = ff) +
-  #  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
   scale_colour_viridis_c(direction = -1) +
   labs(title = "Settlements that have no larger settlement further north of them") +
   theme(legend.position = "none")
-
 {% endhighlight %}
 
 And that results in this map:
@@ -156,7 +154,6 @@ m2 <- most_south |>
   coord_sf(ylim = c(-11000000  , 11000000), lims_method = "orthogonal",
            xlim = c(-7000000, 20000000   )) +
   theme_void(base_family = ff) +
-#  annotate("text", x = 0, y = 0, label = "Pole", family = ff) +
   scale_colour_viridis_c(direction = -1) +
   labs(title = "Settlements that have no larger settlement further south of them") +
   theme(legend.position = "none")
@@ -166,5 +163,7 @@ m2 <- most_south |>
 ...which gets me this map. Nice.
 
 <object type="image/svg+xml" data='/img/0274-most-south.svg' width='100%'><img src='/img/0274-most-south.png' width='100%'></object>
+
+This map goes well over the equator and in some ways gives a distorted view of the world; the sphere has been badly flattened and warped to show Shanghai and the south pole on the same rectangle. But I'm not going to worry about it for now.
 
 OK that's all folks.
