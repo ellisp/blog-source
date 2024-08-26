@@ -87,8 +87,7 @@ p4 <- d |>
   summarise(aus_oecd_ratio = obs_value[ref_area == "Australia"] / obs_value[ref_area == "OECD average"] * 100) |>
   ggplot(aes(x = tp, y = aus_oecd_ratio)) +
   facet_wrap(~str_wrap(full_measure, 40)) +
-  geom_line(colour = "steelblue")  +
-  scale_colour_manual(values = palette)  +
+  geom_line(colour = "steelblue")  +s
   theme(legend.position = c(0.3, 0.7)) +
   labs(title = "Australia | OECD average relative growth in various measures",
        subtitle = "Ratio set to equal 100 in first quarter of 2014. Indicator shows a relative comparison of growth rates, not an absolute comparison.",
