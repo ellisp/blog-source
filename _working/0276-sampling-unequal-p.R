@@ -8,10 +8,11 @@
 
 library(tidyverse)
 library(glue)
+library(GGally)
 
 # TODO - plot should say which sampling method used.
-
-compare_ppswor <- function(n =10,
+# might want to change how w is set
+compare_ppswor <- function(n = 10,
                            N = 20,
                            replace = FALSE,
                            reps = 1e5,
@@ -65,7 +66,7 @@ P <- function(p, n, k){
   return(new_p)
 }
 
-sample_unequal <- function(x, size, prob, replace = FALSE){
+sample_unequal <- function(x, size, prob, replace = FALSE, keep = FALSE){
 
   if(size > length(x)){
     stop("Sample size cannot be larger than the population of units")
@@ -75,31 +76,110 @@ sample_unequal <- function(x, size, prob, replace = FALSE){
     stop("Only sampling without replacement implemented at this point")
   }
   
+  if(size > (1 / max(prob))){
+    stop("Sample size cannot be larger than 1 / max(prob)")
+  }
+  
+  d <- tibble(x, prob)
+  
   the_sample <- x[NULL]
   remnants <- x
   remnant_p <- prob
   
   for(k in 1:size){
-    latest_sample <- sample(remnants, size = 1, prob = P(remnant_p, size, k))
+    new_p <- P(remnant_p, size, k)
+    
+    if(keep){
+      d2 <- tibble(x = remnants, prob = new_p)
+      names(d2)[2] <- paste0("k", k)
+      d <- d |>
+        left_join(d2, by = "x")
+    }
+    
+    if(min(new_p) < 0){
+      warning("Some negative probabilities returned")
+      new_p <- pmax(0, new_p)
+    }
+    
+    latest_sample <- sample(remnants, size = 1, prob = new_p)
     which_chosen <- which(remnants == latest_sample)
     remnants <- remnants[-which_chosen]
     remnant_p <- remnant_p[-which_chosen]
     the_sample <- c(the_sample, latest_sample)
-  }
+    
+      }
   
-  return(the_sample)
+  if(keep){
+    return(list(the_sample = the_sample, d = d)) 
+  } else {
+    return(the_sample)
+  }
 }  
 
 
+compare_ppswor(FUN = sample, reps = 4000)
+# there is still some systematic bias in the new method, but it is much better:
+compare_ppswor(FUN = sample_unequal, reps = 10000)
+
+compare_ppswor(n = 5, FUN = sample_unequal, reps = 1000)
+compare_ppswor(n = 10, FUN = sample_unequal, reps = 1000)
+
+# doesn't work when sample gets more than 50% of N
+compare_ppswor(n = 11, FUN = sample_unequal, reps = 10000)
+
+# as StasK says in the comments on cross-validated, if 1-rp < 0
+# For us that happens when sample is more thna 50% but that's
+# just because of how our p is defined
+# there is a significant problem
+
+#----------------------closer look at an example---------------
 N = 20
 x <- paste0("unit", 1:N)
 x <- factor(x, levels = x)
 p <- 1:N / sum(1:N)
 stopifnot(round(sum(P(p, 10, 1)), 2) == 1)
 
+y <- sample_unequal(x, 10, p, keep = TRUE)
 
-sample_unequal(x, 10, p)
+apply(y$d[,-1], 2, sum, na.rm = TRUE)
 
-compare_ppswor(FUN = sample, reps = 4000)
-# there is still some systematic bias in the new method, but it is much better:
-compare_ppswor(FUN = sample_unequal, reps = 10000)
+y$d[ , -1] |>
+  ggpairs()
+
+
+par(mfrow = c(2,2), bty = "l", pch = 19, family = "Calibri", 
+    col = "steelblue", font.main = 1)
+
+plot(p, P(p, 1, 1), main = "Sample size = 1", xlab = ""); abline(0, 1)
+plot(p, P(p, 5, 1), main = "Sample size = 5", xlab = ""); abline(0, 1)
+plot(p, P(p, 10, 1), main = "Sample size = 10"); abline(0, 1)
+plot(p, P(p, 20, 1), main = "Sample size = 20"); abline(0, 1)
+
+
+
+P(p, 10, 1)
+P(p, 11, 1)
+
+#-------------larger population and sample-----
+
+N = 2000
+x <- paste0("unit", 1:N)
+x <- factor(x, levels = x)
+p <- 1:N / sum(1:N)
+
+# works ok
+sample_unequal(x, size = 1000, p, keep = FALSE)
+
+# doesn';t because this is when the 1-rp < 0
+sample_unequal(x, size = 1001, p, keep = FALSE)
+
+# with less variation in the weights
+set.seed(123)
+p2 <- runif(N, 1, 5)
+p2 <- p2 / sum(p2)
+sample_unequal(x, size = 1001, p2, keep = FALSE)
+1/max(p2) 
+sample_unequal(x, size = 1150, p2, keep = FALSE)
+sample_unequal(x, size = 1200, p2, keep = FALSE)
+
+min(P(p2, 1190, 1))
