@@ -9,6 +9,8 @@
 library(tidyverse)
 library(glue)
 
+# TODO - plot should say which sampling method used.
+
 compare_ppswor <- function(n =10,
                            N = 20,
                            replace = FALSE,
