@@ -16,21 +16,22 @@ compare_ppswor <- function(n = 10,
                            N = 20,
                            replace = FALSE,
                            reps = 1e5,
+                           prob = 1:N / sum(1:N),
                            FUN = sample){
 
   x <- paste0("unit", 1:N)
   x <- factor(x, levels = x)
-  w <- 1:N / sum(1:N)
+  prob <- prob / sum(prob)
   
   
   samples <- lapply(rep(n, reps), function(size){
-    FUN(x, size = size, prob = w, replace = replace)
+    FUN(x, size = size, prob = prob, replace = replace)
     })
   
   s <- ifelse(replace, 'with replacement', 'without replacement')
   
   p <- tibble(
-    original = w,
+    original = prob,
     selected = as.numeric(table(unlist(samples))) / (reps * n)
   )  |>
     ggplot(aes(x = original, y = selected)) +
@@ -49,6 +50,11 @@ compare_ppswor(replace = TRUE)
 compare_ppswor()
 compare_ppswor(N = 50, replace = FALSE)
 compare_ppswor(N = 250, replace = FALSE)
+
+
+compare_ppswor(N = 20, prob= runif(20, 1, 5), replace = FALSE)
+compare_ppswor(N = 20, prob= runif(20, 1, 5), replace = TRUE)
+
 
 #---------Brewer method-------------
 # Taken from the answer by StasK at
@@ -119,13 +125,19 @@ sample_unequal <- function(x, size, prob, replace = FALSE, keep = FALSE){
 
 compare_ppswor(FUN = sample, reps = 4000)
 # there is still some systematic bias in the new method, but it is much better:
-compare_ppswor(FUN = sample_unequal, reps = 10000)
+compare_ppswor(FUN = sample_unequal, reps = 4000)
+compare_ppswor(FUN = sample_unequal, reps = 10000, prob = runif(20, 1, 10))
 
 compare_ppswor(n = 5, FUN = sample_unequal, reps = 1000)
 compare_ppswor(n = 10, FUN = sample_unequal, reps = 1000)
 
-# doesn't work when sample gets more than 50% of N
-compare_ppswor(n = 11, FUN = sample_unequal, reps = 10000)
+# doesn't work when sample gets more than 50% of N in our default case
+compare_ppswor(n = 11, FUN = sample_unequal, reps = 1000)
+
+# with other probabilities with less variance it's ok
+compare_ppswor(n = 11, FUN = sample_unequal, reps = 1000, prob = runif(20, 1, 10))
+compare_ppswor(n = 13, FUN = sample_unequal, reps = 1000, prob = runif(20, 1, 10))
+compare_ppswor(n = 14, FUN = sample_unequal, reps = 1000, prob = runif(20, 1, 10))
 
 # as StasK says in the comments on cross-validated, if 1-rp < 0
 # For us that happens when sample is more thna 50% but that's
