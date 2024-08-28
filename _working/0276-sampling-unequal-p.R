@@ -27,6 +27,7 @@ compare_ppswor <- function(n =10,
     })
   
   s <- ifelse(replace, 'with replacement', 'without replacement')
+  m <- ifelse(identical(FUN, sample), "R's native `sample()` function.", "experimental function based on Brewer (1975).")
   
   p <- tibble(
     original = w,
@@ -37,7 +38,7 @@ compare_ppswor <- function(n =10,
     geom_point(colour = "steelblue") +
     labs(x = "Original probability",
          y = "Actual probability of selection",
-         subtitle = glue("Population of {N}, sample size {n}, sampling {s}."),
+         subtitle = glue("Population of {N}, sample size {n}, sampling {s}.\nUsing {m}"),
          title = "Use of `sample()` with unequal probabilities of sampling") +
     coord_equal() 
   
@@ -100,6 +101,8 @@ stopifnot(round(sum(P(p, 10, 1)), 2) == 1)
 
 sample_unequal(x, 10, p)
 
-compare_ppswor(FUN = sample, reps = 4000)
+compare_ppswor(FUN = sample_unequal, reps = 1000)
+
+compare_ppswor(FUN = sample, reps = 10000)
 # there is still some systematic bias in the new method, but it is much better:
 compare_ppswor(FUN = sample_unequal, reps = 10000)
