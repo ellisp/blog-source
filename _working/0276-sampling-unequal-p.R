@@ -84,7 +84,7 @@ sample_unequal <- function(x, size, prob, replace = FALSE, keep = FALSE){
   }
   
   if(size > (1 / max(prob))){
-    stop("Sample size cannot be larger than 1 / max(prob)")
+    stop(glue("Sample size ({size}) cannot be larger than 1 / max(prob) (which is {1 / max(prob)})"))
   }
   
   d <- tibble(x, prob)
@@ -204,5 +204,4 @@ sample_unequal(x, size = 1001, p2, keep = FALSE)
 sample_unequal(x, size = 1150, p2, keep = FALSE)
 sample_unequal(x, size = 1200, p2, keep = FALSE)
 
-min(P(p2, 1190, 1))
 
