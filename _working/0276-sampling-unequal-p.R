@@ -10,8 +10,6 @@ library(tidyverse)
 library(glue)
 library(GGally)
 
-# TODO - plot should say which sampling method used.
-# might want to change how w is set
 compare_ppswor <- function(n = 10,
                            N = 20,
                            replace = FALSE,
@@ -38,8 +36,8 @@ compare_ppswor <- function(n = 10,
     ggplot(aes(x = original, y = selected)) +
     geom_abline(slope = 1 , intercept = 0, colour = "orange") +
     geom_point(colour = "steelblue") +
-    labs(x = "Original probability",
-         y = "Actual probability of selection",
+    labs(x = "Original 'probability' or weight",
+         y = "Actual propoinion of selection",
          subtitle = glue("Population of {N}, sample size {n}, sampling {s}.\nUsing {m}"),
          title = "Use of `sample()` with unequal probabilities of sampling") +
     coord_equal() 
@@ -47,15 +45,20 @@ compare_ppswor <- function(n = 10,
   return(p)
 }
 
-compare_ppswor(replace = TRUE)
-compare_ppswor()
-compare_ppswor(N = 50, replace = FALSE)
-compare_ppswor(N = 250, replace = FALSE)
+p1 <- compare_ppswor(replace = TRUE)
+svg_png(p1, "../img/0276-20-10-replace")
 
+p2 <- compare_ppswor()
+svg_png(p2, "../img/0276-20-10-no-replace")
 
-compare_ppswor(N = 20, prob= runif(20, 1, 5), replace = FALSE)
-compare_ppswor(N = 20, prob= runif(20, 1, 5), replace = TRUE)
+p3 <- compare_ppswor(N = 50, replace = FALSE)
+p4 <- compare_ppswor(N = 250, replace = FALSE)
 
+svg_png(p3, "../img/0276-50-10-no-replace")
+svg_png(p4, "../img/0276-250-10-no-replace")
+
+p5 <- compare_ppswor(N = 20, n = 20, replace = FALSE)
+svg_png(p5, "../img/0276-20-20-no-replace")
 
 #---------Brewer method-------------
 # Taken from the answer by StasK at
@@ -124,12 +127,18 @@ sample_unequal <- function(x, size, prob, replace = FALSE, keep = FALSE){
 }  
 
 
-compare_ppswor(FUN = sample, reps = 4000)
+compare_ppswor(FUN = sample, reps = 10000)
 # there is still some systematic bias in the new method, but it is much better:
-compare_ppswor(FUN = sample_unequal, reps = 4000)
-compare_ppswor(FUN = sample_unequal, reps = 10000, prob = runif(20, 1, 10))
+set.seed(123)
+p6 <- compare_ppswor(FUN = sample_unequal, reps = 10000)
+svg_png(p6, "../img/0276-20-10-no-replace-brewer")
 
-compare_ppswor(n = 5, FUN = sample_unequal, reps = 1000)
+p7 <- compare_ppswor(n = 5, FUN = sample_unequal, reps = 10000)
+svg_png(p7, "../img/0276-20-5-no-replace-brewer")
+
+stop()
+
+#------------------extra not for blog--------------
 compare_ppswor(n = 10, FUN = sample_unequal, reps = 1000)
 
 # doesn't work when sample gets more than 50% of N in our default case

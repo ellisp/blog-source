@@ -66,7 +66,7 @@ d |>
        caption = the_caption)
 {% endhighlight %}
 
-Now, I've long been interested in the impact of choice of year for indexing series like this. I have argued before [on this blog](http://127.0.0.1:4000/blog/2016/08/18/dualaxes) that many of the criticisisms of dual axes timeseries plots can be mitigated by treating the lines on the page as indexed time series and choosing scales accordingly; but related to this is the risk that choosing a different index year for your series can have significant difference on the visual impression of the chart.
+Now, I've long been interested in the impact of choice of year for indexing series like this. I have argued before [on this blog](/blog/2016/08/18/dualaxes) that many of the criticisisms of dual axes timeseries plots can be mitigated by treating the lines on the page as indexed time series and choosing scales accordingly; but related to this is the risk that choosing a different index year for your series can have significant difference on the visual impression of the chart.
 
 In the case of the income chart, I was struck with how Australia's real household income grew faster than the OECD average for some years from 2007 and then, from around 2014, the OECD started to catch up. But to see this you have to pay attention to the gap between the lines, whereas the crossing of the lines in 2022 is visually dramatic and appears to really mean something. But it doesn't! or at least, not as much as the naive viewer might think; what the crossing of the lines means is just that the OECD average growth since 2007 has caught up with the Australian growth since 2007, it doesn't mean the OECD average has caught up in absolute terms. 
 
