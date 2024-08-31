@@ -68,7 +68,7 @@ svg_png(p5, "../img/0276-20-20-no-replace")
 
 #' @param p probabilities of remaining units
 #' @param n total sample size
-#' @param k which unit this is for the sampling of
+#' @param k which sequence of the sample this is for the sampling of
 P <- function(p, n, k){
   r <- n - k + 1
   D <- sum((p * (1 - p)) / (1 - r * p))
