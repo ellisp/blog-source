@@ -37,7 +37,7 @@ compare_ppswor <- function(n = 10,
     geom_abline(slope = 1 , intercept = 0, colour = "orange") +
     geom_point(colour = "steelblue") +
     labs(x = "Original 'probability' or weight",
-         y = "Actual propoinion of selection",
+         y = "Actual proportion of selections",
          subtitle = glue("Population of {N}, sample size {n}, sampling {s}.\nUsing {m}"),
          title = "Use of `sample()` with unequal probabilities of sampling") +
     coord_equal() 
