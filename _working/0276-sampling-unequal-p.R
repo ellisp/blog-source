@@ -9,6 +9,7 @@
 library(tidyverse)
 library(glue)
 library(GGally)
+library(sampling)
 
 compare_ppswor <- function(n = 10,
                            N = 20,
@@ -27,7 +28,9 @@ compare_ppswor <- function(n = 10,
     })
   
   s <- ifelse(replace, 'with replacement', 'without replacement')
-  m <- ifelse(identical(FUN, sample), "R's native `sample()` function.", "experimental function based on Brewer (1975).")
+  m <- case_when(identical(FUN, sample) ~ "R's native `sample()` function.", 
+                 identical(FUN, sample_unequal) ~ "experimental function based on Brewer (1975).",
+                 identical(FUN, sample_brewer) ~ "Brewer (1975) as implemented by Tillé/Matei.")
   
   p <- tibble(
     original = prob,
@@ -127,10 +130,10 @@ sample_unequal <- function(x, size, prob, replace = FALSE, keep = FALSE){
 }  
 
 
-compare_ppswor(FUN = sample, reps = 10000)
+compare_ppswor(FUN = sample, reps = 1000)
 # there is still some systematic bias in the new method, but it is much better:
 set.seed(123)
-p6 <- compare_ppswor(FUN = sample_unequal, reps = 10000)
+p6 <- compare_ppswor(FUN = sample_unequal, reps = 1000)
 svg_png(p6, "../img/0276-20-10-no-replace-brewer")
 
 p7 <- compare_ppswor(n = 5, FUN = sample_unequal, reps = 10000)
@@ -138,6 +141,17 @@ svg_png(p7, "../img/0276-20-5-no-replace-brewer")
 
 stop()
 
+#--------------using sampling library------------------
+library(sampling)
+sample_brewer <- function(x, size, prob, replace = FALSE, keep = FALSE){
+ pik <- prob / sum(prob) * size
+ s <- UPbrewer(pik)
+ the_sample <- x[which(s == 1)]
+ return(the_sample)
+ }
+
+p8 <- compare_ppswor(FUN = sample_brewer, reps = 10000)
+svg_png(p8, "../img/0276-20-10-brewer-better")
 #------------------extra not for blog--------------
 compare_ppswor(n = 10, FUN = sample_unequal, reps = 1000)
 
