@@ -5,6 +5,15 @@ library(glue)
 
 download.file("https://www.abs.gov.au/statistics/people/people-and-communities/general-social-survey-summary-results-australia/2020/GSS_Table5.xlsx",
               destfile = "gss_table5.xlsx", mode = "wb")
+demog_cats <- c(
+  "Sex", "Whether currently smokes", "Age group", "Employed",
+  "Level of highest non-school qualification",
+  "Engagement in employment or study",
+  "Family composition of household",
+  "Marital status",
+  "Main Source of Household Income",
+  "Current weekly household equivalised gross income quintiles"
+)
 
 d <- read_excel("gss_table5.xlsx", skip = 6, sheet = "Table 5.1_Estimate") |>
   rename(variable = ...1) |>
@@ -19,42 +28,72 @@ d <- read_excel("gss_table5.xlsx", skip = 6, sheet = "Table 5.1_Estimate") |>
   mutate(prop = value / sum(value)) |>
   mutate(variable = fct_reorder(variable, sequence),
          var_wrap = fct_reorder(str_wrap(variable, 20), sequence)) |>
-  ungroup()
+  ungroup() |>
+  mutate(cat_type = ifelse(category %in% demog_cats, "Demography", "Experience and attitudes"))
 
-d
-View(d)
+# check no typos in the demography categories
+stopifnot(all(demog_cats %in% d$category))
 
 # some categories have long answers and are difficult to present on a chart
 difficult_cats <- c("Community involvement", "Cultural tolerance and discrimination",
                     "Family and community support", "Crime and safety", "Stressors")
 
-d |>
+p <- d |>
   filter(!category %in% difficult_cats) |>
   filter(sexuality != "Total persons") |>
   filter(variable != "Persons aged 15 years and over") |>
   ggplot(aes(x = var_wrap, y = prop, fill = sexuality)) +
   geom_col(position = "dodge") +
   facet_wrap(~str_wrap(category, 35), scales = "free") +
-  labs(x = "", fill = "") +
+  labs(x = "", fill = "",
+       title = "Comparison of LGB+ and heterosexual attitudes",
+       subtitle = "Selected questions from Australia's General Social Survey, 2020") +
   scale_y_continuous(label = percent) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = c(0.8, 0.1))
 
+sc <- 1.1
+svg_png(p, "../img/0278-many-facets", w = 16 * sc, h = 9.5 * sc)
 
+k <- 18
 d2 <- d |>
-  select(category, variable, sexuality, prop) |>
+  select(category, variable, sexuality, prop, cat_type) |>
   spread(sexuality, prop) |>
-  mutate(ratio = `Gay, Lesbian or Bisexual` / Heterosexual) |>
-  mutate(label = glue("{category} is '{variable}'")) |>
-  select(label, ratio)
-
-# The ten things with higher proportion of LBTIQ+ in it
-d2 |> arrange(desc(ratio))  |> slice(1:10)
+  mutate(ratio = `Gay, Lesbian or Bisexual` / Heterosexual,
+         rabs = pmax(ratio, 1 / ratio)) |>
+  mutate(label = glue("{category}:\n'{variable}'")) |>
+  mutate(label2 = fct_reorder(label, ratio))  |>
+  arrange(desc(rabs)) |>
+  slice(1:k)
   
-# the ten things with lower proportion
-d2 |> arrange(ratio) |> slice(1:10)
+  
 
+d3 <- d2 |>
+  select(label2, glb = `Gay, Lesbian or Bisexual`, 
+             hs = Heterosexual, ratio, cat_type) |>
+  mutate(glb2 = ifelse(glb > hs, glb -0.018, glb + 0.018)) |>
+  mutate(variable = ifelse(ratio > 1, "Gay, Lesbian or Bisexual",
+                           "Heterosexual"))
 
+d2 |>
+  select(label2, `Gay, Lesbian or Bisexual`, Heterosexual, cat_type) |>
+  gather(variable, value, -label2, -cat_type) |>
+  ggplot(aes(x = value, y = label2, colour = variable)) +
+  facet_wrap(~cat_type, scales = "free") +
+  geom_segment(data = d3, linewidth = 1.1, alpha = 0.5,
+               aes(yend = label2, xend =glb2, x = hs),
+               arrow = arrow(angle = 15, length = unit(0.15, "inches"))) +
+  geom_point(size = 5) +
+  # annotate("text", x = max(c(d3$glb, d3$hs)) - 0.01, y = c(2, k-1), hjust = 1, 
+  #          label = c(
+  #            "Heterosexuals more likely to say...", 
+  #            "LGB+ more likely to say...")) +
+  scale_x_continuous(label = percent) +
+  labs(x = "Prevalence of view",
+       y = "",
+       colour = "",
+       title = "Most distinctive differences in characteristics or attitude between LGB+ and heterosexual Australians",
+       subtitle = "Responses from the General Social Survey 2020")
 
 #------can you deduce population subset sizes from the confidence intervals------
 # You *can* but it's very rough
