@@ -55,19 +55,22 @@ p <- d |>
 sc <- 1.1
 svg_png(p, "../img/0278-many-facets", w = 16 * sc, h = 9.5 * sc)
 
-k <- 18
+k <- 22
 d2 <- d |>
   select(category, variable, sexuality, prop, cat_type) |>
   spread(sexuality, prop) |>
   mutate(ratio = `Gay, Lesbian or Bisexual` / Heterosexual,
          rabs = pmax(ratio, 1 / ratio)) |>
   mutate(label = glue("{category}:\n'{variable}'")) |>
-  mutate(label2 = fct_reorder(label, ratio))  |>
+  mutate(lab_seq = case_when(
+    grepl("employ", label, ignore.case = TRUE) ~ -150,
+    grepl("income", label, ignore.case = TRUE) ~ -200,
+    cat_type == "Demography" ~ -as.numeric(as.factor(label)),
+    TRUE ~ ratio)) |>
+  mutate(label2 = fct_reorder(label, lab_seq))  |>
   arrange(desc(rabs)) |>
   slice(1:k)
   
-  
-
 d3 <- d2 |>
   select(label2, glb = `Gay, Lesbian or Bisexual`, 
              hs = Heterosexual, ratio, cat_type) |>
@@ -79,11 +82,11 @@ d2 |>
   select(label2, `Gay, Lesbian or Bisexual`, Heterosexual, cat_type) |>
   gather(variable, value, -label2, -cat_type) |>
   ggplot(aes(x = value, y = label2, colour = variable)) +
-  facet_wrap(~cat_type, scales = "free") +
+  facet_wrap(~cat_type, scales = "free_y") +
   geom_segment(data = d3, linewidth = 1.1, alpha = 0.5,
                aes(yend = label2, xend =glb2, x = hs),
                arrow = arrow(angle = 15, length = unit(0.15, "inches"))) +
-  geom_point(size = 5) +
+  geom_point(size = 4) +
   # annotate("text", x = max(c(d3$glb, d3$hs)) - 0.01, y = c(2, k-1), hjust = 1, 
   #          label = c(
   #            "Heterosexuals more likely to say...", 
@@ -92,7 +95,7 @@ d2 |>
   labs(x = "Prevalence of view",
        y = "",
        colour = "",
-       title = "Most distinctive differences in characteristics or attitude between LGB+ and heterosexual Australians",
+       title = "Key differences in characteristics or attitude between LGB+ and heterosexual Australians",
        subtitle = "Responses from the General Social Survey 2020")
 
 #------can you deduce population subset sizes from the confidence intervals------
