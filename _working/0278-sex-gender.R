@@ -29,7 +29,9 @@ d <- read_excel("gss_table5.xlsx", skip = 6, sheet = "Table 5.1_Estimate") |>
   mutate(variable = fct_reorder(variable, sequence),
          var_wrap = fct_reorder(str_wrap(variable, 20), sequence)) |>
   ungroup() |>
-  mutate(cat_type = ifelse(category %in% demog_cats, "Demography", "Experience and attitudes"))
+  mutate(cat_type = ifelse(category %in% demog_cats, 
+                           "Characteristics", "Experiences and attitudes")) |>
+  mutate(sexuality = ifelse(sexuality == "Gay, Lesbian or Bisexual", "Gay, Lesbian, Bisexual or Other", sexuality))
 
 # check no typos in the demography categories
 stopifnot(all(demog_cats %in% d$category))
@@ -38,7 +40,8 @@ stopifnot(all(demog_cats %in% d$category))
 difficult_cats <- c("Community involvement", "Cultural tolerance and discrimination",
                     "Family and community support", "Crime and safety", "Stressors")
 
-p <- d |>
+# draw basic faceted barchart
+p1 <- d |>
   filter(!category %in% difficult_cats) |>
   filter(sexuality != "Total persons") |>
   filter(variable != "Persons aged 15 years and over") |>
@@ -53,33 +56,43 @@ p <- d |>
         legend.position = c(0.8, 0.1))
 
 sc <- 1.1
-svg_png(p, "../img/0278-many-facets", w = 16 * sc, h = 9.5 * sc)
+svg_png(p1, "../img/0278-many-facets", w = 16 * sc, h = 9.5 * sc)
 
+# better visualisation that focuses on results.
+# number of questions to pick to highlight:
 k <- 22
 d2 <- d |>
   select(category, variable, sexuality, prop, cat_type) |>
   spread(sexuality, prop) |>
-  mutate(ratio = `Gay, Lesbian or Bisexual` / Heterosexual,
-         rabs = pmax(ratio, 1 / ratio)) |>
-  mutate(label = glue("{category}:\n'{variable}'")) |>
+  mutate(ratio = `Gay, Lesbian, Bisexual or Other` / Heterosexual,
+         rabs = pmax(ratio, 1 / ratio),
+         diff = `Gay, Lesbian, Bisexual or Other` - Heterosexual) |>
+  mutate(label = case_when(
+    category %in% c("Age group", "Marital status", "Employed", "Engagement in employment or study") ~ 
+      as.character(variable),
+    TRUE ~ glue("{category}:\n'{variable}'"))) |>
   mutate(lab_seq = case_when(
     grepl("employ", label, ignore.case = TRUE) ~ -150,
     grepl("income", label, ignore.case = TRUE) ~ -200,
-    cat_type == "Demography" ~ -as.numeric(as.factor(label)),
-    TRUE ~ ratio)) |>
+    cat_type == "Characteristics" ~ -as.numeric(as.factor(label)),
+    TRUE ~ diff)) |>
   mutate(label2 = fct_reorder(label, lab_seq))  |>
   arrange(desc(rabs)) |>
+  # don't show any where the absolute difference is less than 5 percentage points:
+  filter(abs(diff) > 0.05) |>
   slice(1:k)
   
 d3 <- d2 |>
-  select(label2, glb = `Gay, Lesbian or Bisexual`, 
+  select(label2, glb = `Gay, Lesbian, Bisexual or Other`, 
              hs = Heterosexual, ratio, cat_type) |>
-  mutate(glb2 = ifelse(glb > hs, glb -0.018, glb + 0.018)) |>
-  mutate(variable = ifelse(ratio > 1, "Gay, Lesbian or Bisexual",
+  mutate(glb2 = ifelse(glb > hs, glb -0.026, glb + 0.026)) |>
+  # variable for using to draw colour of segments and arrows:
+  mutate(variable = ifelse(ratio > 1, "Gay, Lesbian, Bisexual or Other",
                            "Heterosexual"))
 
-d2 |>
-  select(label2, `Gay, Lesbian or Bisexual`, Heterosexual, cat_type) |>
+# draw lollipop / arrow plot
+p2 <- d2 |>
+  select(label2, `Gay, Lesbian, Bisexual or Other`, Heterosexual, cat_type) |>
   gather(variable, value, -label2, -cat_type) |>
   ggplot(aes(x = value, y = label2, colour = variable)) +
   facet_wrap(~cat_type, scales = "free_y") +
@@ -87,16 +100,15 @@ d2 |>
                aes(yend = label2, xend =glb2, x = hs),
                arrow = arrow(angle = 15, length = unit(0.15, "inches"))) +
   geom_point(size = 4) +
-  # annotate("text", x = max(c(d3$glb, d3$hs)) - 0.01, y = c(2, k-1), hjust = 1, 
-  #          label = c(
-  #            "Heterosexuals more likely to say...", 
-  #            "LGB+ more likely to say...")) +
   scale_x_continuous(label = percent) +
-  labs(x = "Prevalence of view",
+  labs(x = "Prevalence of response",
        y = "",
        colour = "",
-       title = "Key differences in characteristics or attitude between LGB+ and heterosexual Australians",
+       title = "Key differences between LGB+ and heterosexual Australians",
        subtitle = "Responses from the General Social Survey 2020")
+
+svg_png(p2, "../img/0278-lollipops", w = 13, h = 7)
+
 
 #------can you deduce population subset sizes from the confidence intervals------
 # You *can* but it's very rough
