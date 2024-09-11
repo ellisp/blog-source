@@ -1,11 +1,13 @@
 library(tidyverse)
 library(readxl)
 library(glue)
+library(prismatic)
 
-
-download.file("https://www.abs.gov.au/statistics/people/people-and-communities/general-social-survey-summary-results-australia/2020/GSS_Table5.xlsx",
-              destfile = "gss_table5.xlsx", mode = "wb")
-demog_cats <- c(
+if(!file.exists("gss_table5.xlsx")){
+  download.file("https://www.abs.gov.au/statistics/people/people-and-communities/general-social-survey-summary-results-australia/2020/GSS_Table5.xlsx",
+                destfile = "gss_table5.xlsx", mode = "wb")
+}
+  demog_cats <- c(
   "Sex", "Whether currently smokes", "Age group", "Employed",
   "Level of highest non-school qualification",
   "Engagement in employment or study",
@@ -96,8 +98,10 @@ p2 <- d2 |>
   gather(variable, value, -label2, -cat_type) |>
   ggplot(aes(x = value, y = label2, colour = variable)) +
   facet_wrap(~cat_type, scales = "free_y") +
-  geom_segment(data = d3, linewidth = 1.1, alpha = 0.5,
-               aes(yend = label2, xend =glb2, x = hs),
+  geom_segment(data = d3, linewidth = 1.1,
+               aes(yend = label2, xend =glb2, x = hs, 
+                   colour = stage(start = variable, 
+                                  after_scale = prismatic::clr_lighten(colour, space = "combined"))),
                arrow = arrow(angle = 15, length = unit(0.15, "inches"))) +
   geom_point(size = 4) +
   scale_x_continuous(label = percent) +
@@ -109,6 +113,7 @@ p2 <- d2 |>
 
 svg_png(p2, "../img/0278-lollipops", w = 13, h = 7)
 
+stop()
 
 #------can you deduce population subset sizes from the confidence intervals------
 # You *can* but it's very rough

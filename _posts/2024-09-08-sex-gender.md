@@ -185,8 +185,10 @@ d2 |>
   gather(variable, value, -label2, -cat_type) |>
   ggplot(aes(x = value, y = label2, colour = variable)) +
   facet_wrap(~cat_type, scales = "free_y") +
-  geom_segment(data = d3, linewidth = 1.1, alpha = 0.5,
-               aes(yend = label2, xend =glb2, x = hs),
+  geom_segment(data = d3, linewidth = 1.1,
+               aes(yend = label2, xend =glb2, x = hs, 
+                   colour = stage(start = variable, 
+                                  after_scale = prismatic::clr_lighten(colour, space = "combined"))),
                arrow = arrow(angle = 15, length = unit(0.15, "inches"))) +
   geom_point(size = 4) +
   scale_x_continuous(label = percent) +
@@ -206,3 +208,8 @@ That code also produced a more straightforward chart which I show here for compa
 <object type="image/svg+xml" data='/img/0278-many-facets.svg' width='100%'><img src='/img/0278-many-facets.png' width='100%'></object>
 
 That's all for today. Do read (and follow, in your next survey questionnaire with questions on sex or gender) that standard on sex, gender, etc. - it's good stuff.
+
+### Late edits / update
+
+- thanks to @baptnz@social.nz who pointed out on Mastodon a better method of making the arrows appear light rather than the transparency hack I originally used. His method, using the 'prismatic' package, I have edited my code above and is now in use.
+- immediately after I wrote all the above I discovered that while I was publishing the original post, the Government has now announced that the questions on sexual orientation, sex at birth, and gender now will all be included in the Census; but not the question on sexual characteristics. So this is a good outcome for those wanting to estimate gender issues and trans/cis status, although those with interest in sexual characteristics are still disappointed.
