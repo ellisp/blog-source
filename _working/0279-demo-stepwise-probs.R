@@ -147,7 +147,7 @@ sim_steps(xcm = 0.7, ysdm = 12)$p1
 
 
 
-var_params <- expand_grid(xcm = 1:9 / 10, ysdm = 1:9 * 3, n = c(200, 2000))
+var_params <- expand_grid(xcm = 0:9 / 10, ysdm = 1:9 * 3, n = c(200, 2000))
 
 many_params <- tibble()
 
@@ -155,7 +155,8 @@ for(i in 1:nrow(var_params)){
   cat(i)
   res <- sim_steps(xcm = var_params[i, ]$xcm, 
                    ysdm = var_params[i, ]$ysdm,
-                   n = var_params[i, ]$n)
+                   n = var_params[i, ]$n,
+                   runs = 200)
   many_params <- rbind(many_params, res$biases_df)
 }
 
@@ -163,7 +164,7 @@ many_params |>
   mutate(n = glue("n = {n}")) |>
   ggplot(aes(x = r2, y = bias, colour = model)) +
   facet_grid(n ~ as.ordered(xcm)) +
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, method = "loess", formula = y ~ x, span = 0.8) +
   geom_point() +
   scale_x_continuous(breaks = c(0.2, 0.8)) +
   labs(x = "R-squared (proportion of Y's variance explained by model)",
@@ -178,7 +179,7 @@ many_params |>
   ggplot(aes(x = xcm, y = ysdm, fill = bias)) +
   facet_grid(model~n) +
   geom_tile() +
-  scale_fill_gradient(low = "white", high = "red") +
+  scale_fill_gradientn(colours = c("white", "steelblue", "darkred")) +
   labs(x = "Correlation between the X variables",
        y = "Standard deviation of the Y variable",
        fill = "Average bias of estimated variable coefficients:",
