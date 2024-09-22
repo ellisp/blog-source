@@ -12,7 +12,7 @@ s3s <- expand_grid(s1 = squares, s2 = squares, s3 = squares) |>
   mutate(sum_3_sq = s1 + s2 + s3)
 
 # example:
-filter(s3s, sum_3_sq == 397)
+filter(s3s, sum_3_sq == 401)
 
 s3s_sum <- s3s |>
   group_by(sum_3_sq) |>
@@ -46,3 +46,8 @@ if(max(res$number_3_square_sums) < 11){
 
 svg_png(p, glue("../img/0280-primes-squares-k{k}"), w = 9, h = 7)
 }
+
+s3s |>
+  filter(sum_3_sq == 9931) |>
+  mutate(s1 = sqrt(s1), s2 = sqrt(s2), s3 =sqrt(s3))
+
