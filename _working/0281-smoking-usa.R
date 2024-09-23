@@ -38,39 +38,6 @@ length(smoking)
 stopifnot(unique(sapply(smoking, function(x){x$submeasuredesc})) == 
             "Cigarette Consumption (Pack Sales Per Capita)")
 
-#--------smoking tax download-----------
-fn2 <- snlmefn <- "smoking-tax-usa.json"
-
-if(!file.exists(fn2)){
-  download.file("https://data.cdc.gov/resource/7nwe-3aj9.json?submeasureid=451CGS&$where=year<2001&$limit=5000",
-                destfile = fn2)
-}
-
-smoking_tax <- read_json(fn2)
-# check we got the right submeasre - 
-stopifnot(unique(sapply(smoking_tax, function(x){x$submeasuredesc})) == 
-            "State Tax per pack")
-
-tax_df <- lapply(smoking_tax, as_tibble) |>
-  bind_rows() |>
-  # geolocation has 3 elements so creates three rows for
-  # each observation, so we just drop it column and take
-  # distinct values to hack around this
-  select(-geolocation)  |>
-  distinct()  |>
-  mutate(tax_per_pack = as.numeric(data_value),
-         year = as.numeric(year))|>
-  select(locationdesc, year, tax_per_pack)
-
-tax_df |>
-  filter(year == max(year)) |>
-  group_by(locationdesc) |>
-  summarise(avg_tax = mean(as.numeric(tax_per_pack))) |>
-  arrange(desc(avg_tax)) |> View()
-
-tax_df |>
-  ggplot(aes(x = year, y = data_value, group = locationdesc)) +
-  geom_line()
 
 #-------------convert to rectangles-----------
 smoking_df <- lapply(smoking, as_tibble) |>
@@ -83,23 +50,14 @@ smoking_df <- lapply(smoking, as_tibble) |>
   mutate(year = as.numeric(year),
         cigs_pp = as.numeric(data_value),
         is_ca = ifelse(locationdesc == "California", "California", "Other")) |>
-  left_join(tax_df, by = c("year", "locationdesc")) |>
   arrange(locationdesc, year)
 
-smoking_df  |>
-  mutate(locationdesc = fct_reorder(locationdesc, cigs_pp))   |>
-  ggplot(aes(x = tax_per_pack, y = cigs_pp, colour = year)) +
-  geom_path()  +
-  facet_wrap(~locationdesc) +
-  scale_colour_viridis_c(direction = -1) +
-#  geom_point() +
-  scale_x_log10(label = dollar) + 
-  scale_y_log10()
-
-# to do - which are the states that had "similar measures"?
-# it's not obvious at all from the taxes
+# which are the states that had "similar measures"?
+# it's not obvious at all from the taxes. In fact I don't
+# like these exclusions, but  I'm just going to do it 
+# the same way as the original for now
 orig70 <- orig |>
-  filter(year %in% 1970:197) |>
+  filter(year %in% 1970:1972) |>
   select(state, cigsale, year) |>
   mutate(cigsale = round(cigsale, 1)) |>
   spread(year, cigsale)
@@ -110,12 +68,16 @@ non_matches <- smoking_df |>
   mutate(cigs_pp = round(cigs_pp, 1)) |>
   spread(year, cigs_pp) |>
   anti_join(orig70)
-length(unique(smoking_df$locationdesc))
-length(unique(orig$state))
 
-View(matches)
+smoking_df <- filter(smoking_df, !locationdesc %in% non_matches$locationdesc)
+
+# check we have the right number of states as the original
+stopifnot(length(unique(smoking_df$locationdesc)) == 
+            length(unique(orig$state)))
+
+
 smoking_df |>
-  ggplot(aes(x = year, y = data_value, group = locationdesc, colour = is_ca)) +
+  ggplot(aes(x = year, y = cigs_pp, group = locationdesc, colour = is_ca)) +
   geom_line() +
   # redraw just hte California line so it is at the forefront
   geom_line(data = filter(smoking_df, is_ca == "California"), size = 2) +
@@ -124,15 +86,15 @@ smoking_df |>
 
 smoking_df |>
   group_by(year, is_ca) |>
-  summarise(data_value = mean(data_value)) |>
-  ggplot(aes(x = year, y = data_value, colour = is_ca)) +
+  summarise(cigs_pp = mean(cigs_pp)) |>
+  ggplot(aes(x = year, y = cigs_pp, colour = is_ca)) +
   geom_line()
 
 smoking_w <- smoking_df |>
-  select(locationabbr, year, data_value) |>
+  select(locationabbr, year, cigs_pp) |>
   group_by(year) %>% 
-  mutate(state_avg = mean(data_value[locationabbr != "CA"])) %>% 
-  spread(locationabbr, data_value) |>
+  mutate(state_avg = mean(cigs_pp[locationabbr != "CA"])) %>% 
+  spread(locationabbr, cigs_pp) |>
   mutate(post_88 = as.numeric(year > 1988))
 
 
@@ -169,8 +131,6 @@ summary(model3)
 # of course we should do *both*
 
 model4 <- # whatever you do wiht a GAM to have autocorrelation...
-plot(model)
-dim(smoking_w)
-range(smoking_w$year)
 
-names(smoking_w)
+  
+  
