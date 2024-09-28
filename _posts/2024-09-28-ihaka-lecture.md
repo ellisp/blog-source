@@ -21,3 +21,5 @@ Overall, I emphasised the importance of R being part of a broader toolkit and a 
 I also talked a bit about how errors in analysis are universal, invisible, and catastrophic. If that doesn't motivate people to start doing some decent quality control, I don't know what will! 
 
 The 'storyline' is a great technique I was trained on in a course on writing for the New Zealand public sector. I always find it helps to structure reports and presentations if I take the time to plan them first. In case people are interested in making their own summaries of this sort, you could use the [RMarkdown source code of that storyline](https://github.com/ellisp/ihaka-lecture-2024/blob/main/ellis-ihaka-storyline.Rmd), which of course is available in GitHub (or I'd be a bit of a hypocrite wouldn't I). It uses the flexdashboard template. Of course a storyline doesn't need to be written in RMarkdown, but I find it a simple and disciplined way to write them without having to worry about formatting.
+
+Big thanks to the University of Auckland Department of Statistics and all the good folks there for inviting me to give this talk and looking after me so nicely while in New Zealand.
