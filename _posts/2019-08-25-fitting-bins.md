@@ -132,7 +132,7 @@ volumes_bin <- dplyr::select(volumes, left, right) %>%
   as.data.frame()
 
 # Fit model  
-fitted_distribution_gamma <- fitdistcens(volumes_bin, "gamma")
+fitted_distribution_gamma <- fitdistcens(volumes_bin, "gamma", start = list(rate = 0.01, shape = 1.5))
 
 # overall fit:
 summary(fitted_distribution_gamma)
@@ -287,7 +287,7 @@ bus_counts <- bus_counts_orig %>%
   filter(!grepl("^Total", industry) & code != "9999") %>%
   filter((`0-0` + `1-19` + `20-199` + `200-30000`) > 0) %>%
   gather(employees, freq, -state, -code, -industry) %>%
-  separate(employees, by = "-", into = c("left", "right"), remove = FALSE) %>%
+  separate(employees, sep = "-", into = c("left", "right"), remove = FALSE) %>%
   mutate(left = as.numeric(left),
          right = as.numeric(right),
          employees = fct_reorder(employees, -left)) %>%
