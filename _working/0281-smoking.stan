@@ -5,10 +5,10 @@ data {
   vector[N] y;      // outcome vector
 }
 parameters {
-  real alpha;           // intercept
-  vector<lower=0,upper=1>[K] beta;       // coefficients for predictors
+  real a;           // intercept
+  vector<lower=0,upper=1>[K] b;       // coefficients for predictors
   real<lower=0> sigma;  // error scale
 }
 model {
-  y ~ normal(x * beta + alpha, sigma);  // likelihood
+  y ~ normal(x * b + a, sigma);  // likelihood
 }

@@ -571,7 +571,7 @@ conflicts_prefer(Matrix::unpack)
 stan_res <- stan(file= "0281-smoking.stan", data = stan_data)
 
 
-
+sum(apply(extract(stan_res, "b")$b,2, mean))
 plot(0:100/100, dbeta(0:100/100, 1, 5), type = "l")
 
 #--------------version with synth package-----------
