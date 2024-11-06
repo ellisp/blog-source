@@ -557,7 +557,8 @@ stan_data <- list(
   N = length(y),
   K = ncol(x),
   x = x,
-  y = y
+  y = y,
+  start_props = rep(1 / ncol(x), ncol(x))
 )
 conflicts_prefer(rstan::extract)
 conflicts_prefer(jsonlite::flatten)
