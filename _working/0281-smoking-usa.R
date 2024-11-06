@@ -8,6 +8,11 @@ library(Synth)
 library(rstan)
 options(mc.cores = min(8, parallel::detectCores()))
 
+conflicts_prefer(readr::col_factor)
+conflicts_prefer(dplyr::collapse)
+conflicts_prefer(scales::discard)
+conflicts_prefer(tidyr::expand)
+
 # Visiting this:
 # https://towardsdatascience.com/causal-inference-with-synthetic-control-in-python-4a79ee636325
 # which itself is basically taken straight from:
@@ -548,8 +553,26 @@ orig |>
 
 #---------------version with Stan--------------
 
+stan_data <- list(
+  N = length(y),
+  K = ncol(x),
+  x = x,
+  y = y
+)
+conflicts_prefer(rstan::extract)
+conflicts_prefer(jsonlite::flatten)
+conflicts_prefer(extrafont::font_install)
+conflicts_prefer(dplyr::lag)
+conflicts_prefer(scales::modulus_trans)
+conflicts_prefer(tidyr::pack)
+conflicts_prefer(jsonlite::prettify)
+conflicts_prefer(Matrix::unpack)
+
+stan_res <- stan(file= "0281-smoking.stan", data = stan_data)
 
 
+
+plot(0:100/100, dbeta(0:100/100, 1, 5), type = "l")
 
 #--------------version with synth package-----------
 
