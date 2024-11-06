@@ -3,6 +3,10 @@ library(tidyverse)
 library(mgcv)
 library(glmnet)
 library(nlme)
+library(patchwork)
+library(Synth)
+library(rstan)
+options(mc.cores = min(8, parallel::detectCores()))
 
 # Visiting this:
 # https://towardsdatascience.com/causal-inference-with-synthetic-control-in-python-4a79ee636325
@@ -469,13 +473,13 @@ calc_state("CA", alpha = 0)[[1]] |>
   geom_line()
 
 # ridge regression, only using packs in the choice of weights for synthetic control
-calc_state("CA", alpha = 0, just_packs = TRUE)[[1]] |>
+calc_state("CA", alpha = 0)[[1]] |>
   gather(variable, value, -year, -state) |>
   ggplot(aes(x = year, y = value, colour = variable)) +
   geom_line()
 
 # lasso, only using packs in the choice of weights for synthetic control
-calc_state("CA", alpha = 1, just_packs = TRUE)[[1]] |>
+calc_state("CA", alpha = 1)[[1]] |>
   gather(variable, value, -year, -state) |>
   ggplot(aes(x = year, y = value, colour = variable)) +
   geom_line()
@@ -540,3 +544,15 @@ orig |>
   labs(x = "Retail price in Causality Book's data",
        y = "Cost per pack in CDC data\n(scaled to match original)") +
   geom_abline(slope = 1, intercept = 0)
+
+
+#---------------version with Stan--------------
+
+
+
+
+#--------------version with synth package-----------
+
+
+
+
