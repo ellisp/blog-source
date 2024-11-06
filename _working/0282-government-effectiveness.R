@@ -14,19 +14,14 @@ picts <- c("Vanuatu", "Fiji", "Solomon Islands",
            "Tonga", "French Polynesia", "Cook Islands",
            "Niue", "Tokelau", "Tuvalu", "Palau",
            "Nauru", "New Caledonia", "Wallis and Futuna",
-           "Northern Mariana Islands", "Guam", "American Samoa", "Pitcairn")
-stopifnot(length(picts) == 22)
-
-d2 <- d |>
-  group_by(year) |>
-  summarise(GE.EST = mean(GE.EST, na.rm = TRUE)) |>
-  drop_na() |>
-  mutate(country = "World average")
+           "Northern Mariana Islands", "Guam", "American Samoa", "Pitcairn",
+           "Pacific island small states", "Small states", "New Zealand", "Australia")
+stopifnot(length(picts) == 24)
 
 picts[!picts %in% d$country]
 
-unique(d$country)
-#CairoWin()
+unique(d$country)[grepl("cook", unique(d$country), ignore.case = TRUE)]
+CairoWin()
 d |>
   filter(country %in% picts) |>
   drop_na() |>

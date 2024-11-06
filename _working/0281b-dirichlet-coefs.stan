@@ -7,9 +7,10 @@ data {
 parameters {
   simplex[k] b;       // coefficients for predictors
   real<lower=0> sigma;  // error scale
+  real<lower=0, upper = 1> alpha; // parameter for dirichlet distribution
 }
 model {
-  // b ~ beta(1, 37); // prior
-  b ~ dirichlet(rep_vector(1, k));
+  alpha ~ beta(2, 2);
+  b ~ dirichlet(rep_vector(alpha, k));
   y ~ normal(X * b, sigma);  // likelihood
 }
