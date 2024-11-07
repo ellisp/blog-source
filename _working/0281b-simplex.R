@@ -3,11 +3,12 @@
 # simplex
 
 library(glmnet)
-library(MASS) # for eqscplot
+library(MASS)   # for eqscplot
 library(pracma) # for lsqlincon
 library(rstan)
 options(mc.cores = parallel::detectCores())
-
+par(bty = "l", family = "Roboto")
+mypar <- par()
 
 detach("package:conflicted", unload=TRUE)
 
@@ -26,13 +27,21 @@ true_coefs <- c(0.2, 0.6, -0.1, 0, 0.4)
 y <- X %*% true_coefs + rnorm(n, 0, 2)
 
 #-------------method 1 - unconstrained regression------
-# This is the best way to recover the trued DGP
+# This is the best way to recover the true DGP
 mod1 <- lm(y ~ X - 1)
 coefs1 <- coef(mod1)
-coefs1
+round(coefs1, 2)
 sum(coefs1)
-par(bty = "l")
-eqscplot(true_coefs, coefs1); abline(0, 1)
+f <- function(newx, main = ""){
+  eqscplot(true_coefs, newx, bty = "l", 
+           xlab = "Coefficients from original data generating process",
+           ylab = "Coefficients from model",
+           main = main) 
+  abline(0, 1, col = "grey")
+}
+
+f2 <- function(){f(coefs1, "OLS")}
+svg_png(f2, "../img/0281b-mod1", w = 8, h = 7)
 
 #-----------method 2 - transform-----------
 # This way will get you coefficients that add up to 1,
@@ -44,9 +53,12 @@ y2 <- y - X[, 5]
 
 mod2 <- lm(y2 ~ X2 - 1)
 coefs2 <- c(coef(mod2), 1 - sum(coef(mod2)))
-coefs2
+round(coefs2, 2)
 sum(coefs2)
-eqscplot(true_coefs, coefs2); abline(0, 1)
+
+f2 <- function(){f(coefs2, "Transformation")}
+svg_png(f2, "../img/0281b-mod2", w = 8, h = 7)
+
 
 #----------method 3 - transform, regularise and constrain-----------
 # This method is guaranteed to get you coefficients that add up to 1,
@@ -59,9 +71,11 @@ mod3 <- cv.glmnet(X2, y2, intercept = FALSE, alpha = 0,
 # Coefficients from glmnet include the intercept even though we forced it to be zero
 # which is why we need the [-1] in the below
 coefs3 <- c(as.vector(coef(mod3)[-1]), 1 - sum(coef(mod3)))
-coefs3
+round(coefs3, 2)
 sum(coefs3)
-eqscplot(true_coefs, coefs3); abline(0, 1)
+
+f2 <- function(){f(coefs3, "Transform and ridge")}
+svg_png(f2, "../img/0281b-mod3", w = 8, h = 7)
 
 #---------------method 4 - quadratic programming-----------------
 # This is based on dariober's solution, which itself is Elvis' solution
@@ -79,11 +93,11 @@ ub <- rep(1, ncol(X))
 
 # And solve:
 coefs4 <- lsqlincon(X, y, Aeq= Aeq, beq= beq, lb= lb, ub= ub)
-coefs4
+round(coefs4, 2)
 sum(coefs4)
 
-eqscplot(true_coefs, coefs4); abline(0, 1)
-eqscplot(coefs3, coefs4); abline(0, 1)
+f2 <- function(){f(coefs4, "Quadratic programming")}
+svg_png(f2, "../img/0281b-mod4", w = 8, h = 7)
 
 
 
@@ -100,6 +114,13 @@ mod5 <- stan("0281b-dirichlet-coefs.stan", data = stan_data)
 
 
 coefs5 <- apply(extract(mod5, "b")$b,2, mean)
+
+round(coefs5, 2)
+sum(coefs5)
+
+f2 <- function(){f(coefs5, "Dirichlet prior")}
+svg_png(f2, "../img/0281b-mod5", w = 8, h = 7)
+
 #---------------comparisons------------
 norm_coefs <- pmax(0, true_coefs) # remove negative values
 norm_coefs <- norm_coefs / sum(norm_coefs) # force to ad dup to one
@@ -119,9 +140,12 @@ pairs(cbind('Actual data\ngenerating process' = true_coefs,
         text(mean(range(x)), mean(range(y)), round(cor(x, y), 2), 
              col = "steelblue", font = 2)
         },
-  main = "hi")
-# unfortunately
+  main = "Comparison of different methods for creating a weighted average with weights adding up to one")
 
+# basically the Stan and quadratic programming approaches give near-identical
+# results, and they are the best results in terms of capturing the proportions
+# in the original DGP while respecting the constraints to add to 1, be in (0,1).
+# The worst approach is the glmnet one (which is sad as I quite like that one)
 
 
 #-----------scribble-------------------
