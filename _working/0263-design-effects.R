@@ -3,6 +3,11 @@ library(tidyverse)
 library(scales)
 library(survey)
 
+url <- "https://raw.githubusercontent.com/ellisp/blog-source/refs/heads/master/_working/simulated-survey.csv"
+df <- "simulated-survey.csv"
+if(!file.exists(df)){
+  download.file(url, destfile = df)
+}
 sim_surv <- read_csv("simulated-survey.csv")
 
 sim_surv_des <- svydesign(~neighborhood + ind_id, weights = ~fweight, 
