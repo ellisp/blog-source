@@ -10,8 +10,10 @@ if(!file.exists(df)){
 }
 sim_surv <- read_csv("simulated-survey.csv")
 
+# Specify survey design - stratified by province, and 2 stages, both with finite populations
 sim_surv_des <- svydesign(~neighborhood + ind_id, weights = ~fweight, 
-                          strata = ~province, fpc = ~nb_in_province + pop_in_neighborhood,
+                          strata = ~province, 
+                          fpc = ~nb_in_province + pop_in_neighborhood,
                           data = sim_surv, nest = TRUE)
 
 svymean(~likes_cats, design = sim_surv_des, deff = TRUE)
