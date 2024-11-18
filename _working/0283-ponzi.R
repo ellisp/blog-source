@@ -1,6 +1,6 @@
 
 
-
+#https://bsky.app/intent/compose?text=I%27m%20reading%20through%20the%20Bluesky%20API%20docs%21%20%F0%9F%A6%8B%0Ahttps%3A//docs.bsky.app
 
 library(tidyverse)
 
@@ -10,9 +10,31 @@ library(tidyverse)
 # - make the amount added a random log normal number
 # - make the random amount pulled towards the average for that individual from the past
 
+rlognormal <- function(n, mu, cv){
+  if(cv == 0){
+    output <- rep(mu, n)
+  } else {
+    sdlog <- sqrt(log(cv ^2 + 1))
+    meanlog <- log(mu) - (1 / (2 * sdlog ^ 2))
+    output <- rlnorm(n, meanlog = meanlog, sdlog = sdlog)
+  }
+  
+  return(output)
+  
+}
+
+mean(log(rlnorm(2000, 5, log(2.5))))
+
+stopifnot(mean(rlognormal(1000, 100, 0)) == 100)
+stopifnot(sd(rlognormal(1000, 100, 0)) == 0)
+stopifnot(round(mean(rlognormal(1000, 100, 2))) == 100)
+stopifnot(round(sd(rlognormal(1000, 100, 2)) / 100) == 2)
+
+
+
 ponzi <- function(number_investors = c(1:100, 100:1) * 10, 
                   mu = 100, 
-                  sd = 0, 
+                  cv = 0, 
                   invest_more_rate = 0.1,
                   withdraw_small_rate = 0.1,
                   withdraw_all_rate = 0.05,
