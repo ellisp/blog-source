@@ -5,22 +5,43 @@
 library(tidyverse)
 
 
+# TODO 
+# - add a 'fee' that is extracted by the scammers each month
+# - make the amount added a random log normal number
+# - make the random amount pulled towards the average for that individual from the past
 
-
-ponzi <- function(orig_investors = 10, 
+ponzi <- function(number_investors = c(1:100, 100:1) * 10, 
                   mu = 100, 
                   sd = 0, 
-                  new_investor_growth = 1,
                   invest_more_rate = 0.1,
                   withdraw_small_rate = 0.1,
                   withdraw_all_rate = 0.05,
                   roll_over_rate = (1 - invest_more_rate - 
                                          withdraw_small_rate - withdraw_all_rate),
-                  ceiling = 1e6){
+                  ceiling = 1e7){
   
-  number_new_investors <- orig_investors
+  #---------checks on number of investors------------
+  if(min(number_investors) < 0){
+    stop("number_investors should be a vector of numbers of 0 or greater")
+  }
   
-  status <- tibble(id = 1:orig_investors,
+  if(number_investors[1] < 1){
+    stop("First element of number_investors should be greater than 0")
+  }
+  
+  number_investors <- round(number_investors)
+  
+  # make sure we have enough for 2000time periods
+  nni <- length(number_investors) 
+  if(nni < 2000){
+    number_investors <- c(number_investors, 
+                          rep(number_investors[length(number_investors)]), 2000 - nni)
+  }
+  
+  #---------------------set up month 1------------------
+  number_new_investors <- number_investors[1]
+  
+  status <- tibble(id = 1:number_new_investors,
                    invested = mu,
                    value_tmp = mu,
                    value = mu,
@@ -29,6 +50,7 @@ ponzi <- function(orig_investors = 10,
   
   cash_on_hand <- with(status, sum(invested) - sum(withdrawn))
   
+  #---------------------months 2 and onwards---------------------
   while(cash_on_hand > 0 & max(status$id) < ceiling){
     update <-  status |>
       filter(time_period == max(time_period)) |>
@@ -55,8 +77,7 @@ ponzi <- function(orig_investors = 10,
       select(-action) |>
       mutate(time_period = max(status$time_period + 1))
     
-    # this is doing it as a ratio of all 
-    number_new_investors <- round(new_investor_growth * number_new_investors)
+    number_new_investors <- number_investors[unique(update$time_period)]
     if(number_new_investors > 0){
     
       new_investors <- tibble(id = 1:number_new_investors + max(status$id),
@@ -87,7 +108,7 @@ ponzi <- function(orig_investors = 10,
   return(status)
 }
 
-status <- ponzi(new_investor_growth = 1.5, invest_more_rate = 0.2, 
+status <- ponzi(invest_more_rate = 0.2, 
                 withdraw_all_rate = 0.01)
 
 status  |>
@@ -99,6 +120,15 @@ status  |>
             total_investors = max(id),
             leverage = round(paper_value / total_invested)) |>
   t()
+
+status  |>
+  group_by(time_period) |>
+  summarise(`Paper value` = sum(value),
+            `Real value` = pmax(0, sum(invested) - sum(withdrawn))) |>
+  gather(variable, value, -time_period) |>
+  ggplot(aes(x = time_period, y = value, colour = variable)) +
+  geom_line() +
+  scale_y_log10(label = dollar)
 
 tail(status)
 max(status$id)
