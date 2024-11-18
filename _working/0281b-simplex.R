@@ -7,8 +7,6 @@ library(MASS)   # for eqscplot
 library(pracma) # for lsqlincon
 library(rstan)
 options(mc.cores = parallel::detectCores())
-par(bty = "l", family = "Roboto")
-mypar <- par()
 
 detach("package:conflicted", unload=TRUE)
 
@@ -125,7 +123,8 @@ svg_png(f2, "../img/0281b-mod5", w = 8, h = 7)
 norm_coefs <- pmax(0, true_coefs) # remove negative values
 norm_coefs <- norm_coefs / sum(norm_coefs) # force to ad dup to one
 
-pairs(cbind('Actual data\ngenerating process' = true_coefs, 
+f<- function(){
+  pairs(cbind('Actual data\ngenerating process' = true_coefs, 
             'Normalised to\nadd to one and > 0' = norm_coefs, 
             "Ordinary least squares,\nwon't add to 1, not\nconstrained to (0,1)" = coefs1, 
             'Transform and OLS, add to 1\nbut can be negative' = coefs2, 
@@ -141,6 +140,10 @@ pairs(cbind('Actual data\ngenerating process' = true_coefs,
              col = "steelblue", font = 2)
         },
   main = "Comparison of different methods for creating a weighted average with weights adding up to one")
+}
+
+svg_png(f, "../img/0281b-pairs", w = 11, h = 10)
+
 
 # basically the Stan and quadratic programming approaches give near-identical
 # results, and they are the best results in terms of capturing the proportions

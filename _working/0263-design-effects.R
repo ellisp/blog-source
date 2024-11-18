@@ -42,22 +42,39 @@ results <- sim_surv |>
          DEff_1 = (se_complex / se_with_even_n) ^ 2,
          DEff_2 = (se_complex / se_with_actual_n) ^ 2) 
 
-# need to check I have all the labels the right way around here
+
 p <- results |>
-  mutate(ratio = n / even_n) |>
-  ggplot(aes(x = DEff_1, y = DEff_2, label = province, fill = ratio)) +
-  geom_abline(intercept = 0, slope = 1, colour = "steelblue") +
-  geom_label(fontface = "bold", colour = "white") +
-  scale_fill_viridis_c(option = "C", direction = -1) +
-  coord_equal() +
-  annotate("text", x = c(1, 2.7), y = c(2.6, 1.4), label = 
-             c("Bigger design effect\nwith actual sampling", 
-               "Bigger design effect\nwith random sampling")) +
-  labs(x = str_wrap("Design effect based on sample sizes from simple random sampling", 40),
-       y = str_wrap("Design effect calculated based on actual sample sizes", 30),
-       fill = str_wrap("Ratio of actual sample size to hypothetical one from random sampling", 30),
-       subtitle = "In Stata, this is the different between estat effect and estat effect, srssubpop",
-       title = "Calculating design effects for an estimate partitioned by a categorical variable")
+  mutate(ratio_n = n / even_n,
+         ratio_deff = DEff_2 / DEff_1) |>
+  ggplot(aes(x = ratio_n, y = ratio_deff, label = province)) +
+  geom_abline(slope =1 , intercept = 0, colour = "grey") +
+  geom_text(colour = "steelblue", fontface = "bold") +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(x = "Oversampling ratio for actual sample\n(>1 is oversampled, <1 is undersampled)",
+       y = "Design effect ratio",
+       subtitle = "Ratio of 'srssubpop' design effect to Stata default design effect
+Grey line shows equality of the two ratios.",
+       title = "Two types of design effect") +
+  coord_equal()
+
+
+# # need to check I have all the labels the right way around here
+# p <- results |>
+#   mutate(ratio = n / even_n) |>
+#   ggplot(aes(x = DEff_1, y = DEff_2, label = province, fill = ratio)) +
+#   geom_abline(intercept = 0, slope = 1, colour = "steelblue") +
+#   geom_label(fontface = "bold", colour = "white") +
+#   scale_fill_viridis_c(option = "C", direction = -1) +
+#   coord_equal() +
+#   annotate("text", x = c(1, 2.7), y = c(2.6, 1.4), label = 
+#              c("Bigger design effect\nwith actual sampling", 
+#                "Bigger design effect\nwith random sampling")) +
+#   labs(x = str_wrap("Design effect based on sample sizes from simple random sampling", 40),
+#        y = str_wrap("Design effect calculated based on actual sample sizes", 30),
+#        fill = str_wrap("Ratio of actual sample size to hypothetical one from random sampling", 30),
+#        subtitle = "In Stata, this is the different between estat effect and estat effect, srssubpop",
+#        title = "Calculating design effects for an estimate partitioned by a categorical variable")
 
 svg_png(p, "../img/0263-scatter", w = 8, h = 7)
 

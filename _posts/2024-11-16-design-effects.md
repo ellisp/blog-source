@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Design effects for stratified sub-populations
-date: 2024-11-10
+date: 2024-11-16
 tag: 
    - Surveys
    - WorkRelated
@@ -18,11 +18,11 @@ It's all about the [design effect in a complex survey](https://en.wikipedia.org/
 
 > "In survey methodology, the design effect ... is a measure of the expected impact of a sampling design on the variance of an estimator for some parameter of a population. It is calculated as the ratio of the variance of an estimator based on a sample from an (often) complex sampling design, to the variance of an alternative estimator based on a simple random sample (SRS) of the same number of elements."
 
-So a design effect of 1 means the variance of your estimator (and hence its standard error) is the same in your complex survey design as if you'd just sampled from the population at random. Values higher than 1 are the norm, and mean that you have a higher variance in your estimate as a price of something else in your complex design (for example, maybe you are sampling clusters that live closer together to make it easier for interviewers to interview several households at once, which reduces cost but increases variance).
+So a design effect of 1 means the variance of your estimator (and hence its standard error) is the same in your complex survey design as if you'd just sampled simply from the population at random. Values higher than 1 are the norm, and mean that you have a higher variance in your estimate as a price of something else in your complex design (for example, maybe you are sampling clusters that live closer together to make it easier for interviewers to interview several households at once, which reduces cost but increases variance).
 
 My puzzle related to when you are estimating some measure of interest over different levels of a categorical variable that features in the sample design (say, the unemployment rate in different states of Australia, in a survey where the sample was stratified by state), and in particular when some levels been over-sampled and some under-sampled. By which I mean, the fraction of the total population that has been sampled is different for different levels of this variable. Perhaps Tasmania (a small state) was over-sampled from to make sure there were enough people to report on unemployment separately for Tasmania.
 
-A concrete example (I'm going to use) would be a survey that was stratified by province, and some provinces have had a high proportion of the population sampled for some reason that we don't need to worry about, but let's presume it's a good one (like, wanting a minimum number of people from each province to report the estimate of interest with a reasonably small confidence interval). The variable of interest in this survey is `likes_cats` which is either 1 or 0 and indicates whether the survey respondent likes cats. (Warning - no attempt has been made to make the proportion who likes cats in this made up data resemble reality).
+A concrete example I'm going to use is a survey that was stratified by province, and some provinces have had a high proportion of the population sampled for some reason that we don't need to worry about, but let's presume it's a good one (like, wanting a minimum number of people from each province to report the estimate of interest with a reasonably small confidence interval). The variable of interest in this survey is `likes_cats` which is either 1 or 0 and indicates whether the survey respondent likes cats. (Warning - no attempt has been made to make the proportion who likes cats in this made up data resemble reality).
 
 The thing that started me on this as a problem was noticing differences between Stata and R output, so I'll be structuring the blog around that. I guess this also serves the useful case of an example of the same survey being analysed in both environments.
 
@@ -68,7 +68,7 @@ svyset neighborhood [pweight=fweight], singleunit(centered) ///
 
 These are pretty similar workflows. Stata has the extra step - for Reasons - of encoding a string variable we're going to want to use later as numeric. R's `svydesign` function and the Stata `svyset` function do essentially identical jobs in a pretty similar way, telling the software the stratified, two stage design we're going to be using and giving it the columns to look at for the finite population corrections. Our sample design is to pick a number of neighbourhoods in each province, and then a number of individuals in each neighbourhood, so we're interested in both the total number of neighbourhoods in each province and the total number of individuals in each neighbourhood.
 
-(Note - in real life I would be declaring that the sun of `fweight` in each province has been calibrated to match the population total in that province, but doing this introduced some further complications with the R / Stata comparison that I decided were distractions, to look at some other time.)
+(Note - in real life I would be declaring that the sun of `fweight` in each province has been calibrated to match the population total in that province, but doing this introduced some further limitations with Stata that I decided were distractions, to look at some other time.)
 
 To check that we're in agreement, let's start by asking both environments the proportion of people that like cats, the standard error of that proportion, and the design effect.
 
@@ -149,11 +149,11 @@ Well, the answer turns out to be pretty straightforward. In [the Stata manual fo
 
 As per Wikipedia, the design effect is a comparison of the actual estimated standard error of the proportion of people who like cats in each province, with the standard error "you would have got with a simple random sampling design" (it is actually the ratio of the variances, which is the squared standard error, but as we are typically thinking in terms of standard error and that is what both R and Stata return, I'm emphasising that part of the concet). 
 
-But there are two ways of looking at this "you would have got with a simple random sampling design". 
+But there are two ways of looking at this variance that "you would have got with a simple random sampling design". 
 
-One way is to say that you have the sample that you, but let's pretend the design was just simple random sampling, and calculate the standard error accordingly; square both standard errors and divide one by the other. This is what is happening in R.
+One way is to say that you have the sample numbers in each province that you have, but let's pretend the design that gave it to you was just simple random sampling, and calculate the standard error accordingly; square both standard errors and divide one by the other. This is what is happening in R.
 
-The other ways is to reflect on one more step, and say "hang on, if we'd really had a simple random sample, we wouldn't have these sample sizes in the first place. For example, we've only got 864 samples in province A because we deliberately oversampled there. If we'd used simple random sampling, it would have been more like 362. Let's compare our standard errors from the actual sample to *the standard errors we would have likely got from simple random sampling, including less people in province A and more in province G than we actually got". This is what is happening in Stata.
+The other ways is to reflect on one more step, and say "hang on, if we'd really had a simple random sample, we wouldn't have these sample sizes in the first place. For example, we've only got 864 samples in province A because we deliberately oversampled there. If we'd used simple random sampling, it would have been more like 362. Let's compare our standard errors from the actual sample to *the standard errors we would have likely got from simple random sampling, including less people in province A and more in province G than we actually got*." This is what is happening in Stata. That's why province A has that design effect of 0.64 - the stratified sample design gave us extra samples in province A, so the design is actually giving us *reduced* variance there, compared to a genuine simple random sample.
 
 So the reason this second method has a design effect of less than 1 for province A is that it says "the only reason you have so many people in your sample from province A is the stratification part of the sampling design. So when we want to say 'what impact has the design had on our estimates', it's only fair to say that the estimate you've got is a lot more precise than you would have under simple random sampling."
 
@@ -195,11 +195,13 @@ The `survey` package in R defaults to the equivalent of Stata's `srssubpop` opti
 - `n` is the actual sample size
 - `N` is the population size in that province
 - `even_n` is the hypothetical approximate sample size you would have drawn from that population under simple random sampling
-- `se_with_actual_n` is the standard error, pretending there is no complex survey design to worry about, with the actual number of samples in that province. In other words `sqrt(p * (1 - p) / n * (N - n) / (N - 1))`
-- `se_with_even_n` is the same but calaculated with the hypothetical more even sample size if you'd hard real simple random sampling. So same as the above, but using `even_n` instead of `n`.
+- `se_with_actual_n` is the standard error, pretending there is no complex survey design to worry about, with the actual number of samples in that province. In other words `sqrt(p * (1 - p) / n * (N - n) / (N - 1))` which is the usual standard error for a proportion, with finite population correction.
+- `se_with_even_n` is the same but calculated with the hypothetical more even sample size if you'd hard real simple random sampling. So same as the above, but using `even_n` instead of `n`.
 - `se_complex` is the actual standard error, taking into account the complex survey design.
 - `DEff_1` is `(se_complex / se_with_even_n) ^ 2` ie the Stata default method
 - `DEff_2` is `(se_complex / se_with_actual_n) ^ 2` ie the R default method
+
+<hr>
 
 |province | avg_weight|         p|    n|         N| even_n| se_with_actual_n| se_with_even_n| se_complex|    DEff_1|   DEff_2|
 |:--------|----------:|---------:|----:|---------:|------:|----------------:|--------------:|----------:|---------:|--------:|
@@ -212,11 +214,15 @@ The `survey` package in R defaults to the equivalent of Stata's `srssubpop` opti
 |G        |   7.497966| 0.4153480| 1088|  8157.787|    572|        0.0139086|      0.0198700|  0.0153559| 0.5972474| 1.218938|
 |H        |  19.407325| 0.4066567| 1631| 31653.346|   2221|        0.0118457|      0.0100508|  0.0132919| 1.7489189| 1.259086|
 
-I (literally) can't have a blog post without a plot, so here is an attempt to show some of the key information from that table visually. I've opted to use colour of the label fills to show the ratio of `n` to `even_n`, to show which provinces are those that have been deliberately over-sampled - which is intended to highlight how this leads to method 1 returning a higher design effect than method 2. I doubt it will ever work as a stand-alone visual explanation, but perhaps it will make sense after all the above explanation!
+<hr>
 
-Here's the code that calculated that table and drew the plot:
+For variables not highly correlated with the over/under-sampling structure, the design effects will not vary by much the two methods. For variables that *are*, the Stata manual suggests using the `srssubpop`. What this suggests to me is that it is safe to use the `srssubpop` option more generally - when it makes much difference is precisely the time that it is more likely to be used.
+
+I (literally) can't have a blog post without a plot, so here is an attempt to show some of the key information from that table visually. I tried a few different ways to show this visually, and ultimately opted for just comparing two ratios - that of the design effect from one method compared to the other, and the actual sample size compared to the expected sample size under unstratified simple random sampling.
 
 <object type="image/svg+xml" data='/img/0263-scatter.svg' width='100%'><img src='/img/0263-scatter.png' width='100%'></object>
+
+Here's the code that calculated that table and drew the plot:
 
 {% highlight R lineanchors %}
 results <- sim_surv |>
@@ -234,20 +240,20 @@ results <- sim_surv |>
          DEff_2 = (se_complex / se_with_actual_n) ^ 2) 
 
 results |>
-  mutate(ratio = n / even_n) |>
-  ggplot(aes(x = DEff_1, y = DEff_2, label = province, fill = ratio)) +
-  geom_abline(intercept = 0, slope = 1, colour = "steelblue") +
-  geom_label(fontface = "bold", colour = "white") +
-  scale_fill_viridis_c(option = "C", direction = -1) +
-  coord_equal() +
-  annotate("text", x = c(1, 2.7), y = c(2.6, 1.4), label = 
-             c("Bigger design effect\nwith actual sampling", 
-               "Bigger design effect\nwith random sampling")) +
-  labs(x = str_wrap("Design effect based on sample sizes from simple random sampling", 40),
-       y = str_wrap("Design effect calculated based on actual sample sizes", 30),
-       fill = str_wrap("Ratio of actual sample size to hypothetical one from random sampling", 30),
-       subtitle = "In Stata, this is the different between estat effect and estat effect, srssubpop",
-       title = "Calculating design effects for an estimate partitioned by a categorical variable")
+  mutate(ratio_n = n / even_n,
+         ratio_deff = DEff_2 / DEff_1) |>
+  ggplot(aes(x = ratio_n, y = ratio_deff, label = province)) +
+  geom_abline(slope =1 , intercept = 0, colour = "grey") +
+  geom_text(colour = "steelblue", fontface = "bold") +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(x = "Oversampling ratio for actual sample\n(>1 is oversampled, <1 is undersampled)",
+       y = "Design effect ratio",
+       subtitle = "Ratio of 'srssubpop' design effect to Stata default design effect
+Grey line shows equality of the two ratios.",
+       title = "Two types of design effect") +
+  coord_equal()
+
 
 {% endhighlight %}
 
