@@ -1,7 +1,5 @@
 
 
-#https://bsky.app/intent/compose?text=I%27m%20reading%20through%20the%20Bluesky%20API%20docs%21%20%F0%9F%A6%8B%0Ahttps%3A//docs.bsky.app
-
 library(tidyverse)
 
 
@@ -10,12 +8,25 @@ library(tidyverse)
 # - make the amount added a random log normal number
 # - make the random amount pulled towards the average for that individual from the past
 
-rlognormal <- function(n, mu, cv){
+#' Generate samples from a log normal distribvution given E(X) and coefficient
+#' of variation
+#' @details Only needed because rlnorm() has the parameters of hte Normal
+#' distribution that log(X) follows and I wanted a version that used the
+#' actual mean of X and its coefficient of variation.
+#' 
+#' Also (important) because if the coefficient of variation is 0, it
+#' still returns values!
+#' 
+rlognormal <- function(n, ex, cv){
   if(cv == 0){
-    output <- rep(mu, n)
+    output <- rep(ex, n)
   } else {
-    sdlog <- sqrt(log(cv ^2 + 1))
-    meanlog <- log(mu) - (1 / (2 * sdlog ^ 2))
+    
+    sdlog <- sqrt(log(cv ^ 2 + 1)) 
+    
+    meanlog <- log(ex) - (sdlog ^ 2) / 2
+    
+    
     output <- rlnorm(n, meanlog = meanlog, sdlog = sdlog)
   }
   
@@ -23,15 +34,19 @@ rlognormal <- function(n, mu, cv){
   
 }
 
-mean(log(rlnorm(2000, 5, log(2.5))))
+# check that this function works
 
+# If cv is zero, should just return a whole bunch of ex (i.e. 100):
 stopifnot(mean(rlognormal(1000, 100, 0)) == 100)
 stopifnot(sd(rlognormal(1000, 100, 0)) == 0)
-stopifnot(round(mean(rlognormal(1000, 100, 2))) == 100)
-stopifnot(round(sd(rlognormal(1000, 100, 2)) / 100) == 2)
+
+# If cv is not zero, check that the mean and coefficient of variation
+# are as expectd:
+stopifnot(round(mean(rlognormal(10000, 100, 0.5))) == 100)
+stopifnot(round(sd(rlognormal(10000, 100, 0.5)) / 100, 1) == 0.5)
 
 
-
+#' Simulate ponzi scheme
 ponzi <- function(number_investors = c(1:100, 100:1) * 10, 
                   mu = 100, 
                   cv = 0, 
@@ -64,9 +79,9 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
   number_new_investors <- number_investors[1]
   
   status <- tibble(id = 1:number_new_investors,
-                   invested = mu,
-                   value_tmp = mu,
-                   value = mu,
+                   invested = rlognormal(number_new_investors, mu, cv),
+                   value_tmp = invested,
+                   value = invested,
                    withdrawn = 0,
                    time_period = 1)
   
@@ -81,31 +96,32 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
                              size = n(),
                              replace = TRUE,
                              prob = c(withdraw_all_rate, withdraw_small_rate, roll_over_rate, invest_more_rate)))|>
+      mutate(incr_tmp = rlognormal(n(), mu, cv)) |>
       mutate(withdrawn = case_when(
         action == "withdraw_all" ~ withdrawn + value_tmp,
-        action == "withdraw_small" ~ withdrawn + mu,
+        action == "withdraw_small" ~ withdrawn + incr_tmp,
         TRUE ~ withdrawn
       )) |>
       mutate(value = case_when(
         action == "withdraw_all" ~ 0,
-        action == "withdraw_small" ~ value_tmp - mu,
+        action == "withdraw_small" ~ value_tmp - incr_tmp,
         action == "rollover" ~ value_tmp,
-        action == "invest" ~ value_tmp + 100
+        action == "invest" ~ value_tmp + incr_tmp
       )) |>
       mutate(invested = case_when(
-        action == "invest" ~ invested + 100,
+        action == "invest" ~ invested + incr_tmp,
         TRUE ~ invested
       ))  |>
-      select(-action) |>
+      select(-action, -incr_tmp) |>
       mutate(time_period = max(status$time_period + 1))
     
     number_new_investors <- number_investors[unique(update$time_period)]
     if(number_new_investors > 0){
     
       new_investors <- tibble(id = 1:number_new_investors + max(status$id),
-                              invested = mu,
-                              value_tmp = mu,
-                              value = mu,
+                              invested = rlognormal(number_new_investors, mu, cv),
+                              value_tmp = invested,
+                              value = invested,
                               withdrawn = 0,
                               time_period = unique(update$time_period))
     } else {
@@ -131,7 +147,8 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
 }
 
 status <- ponzi(invest_more_rate = 0.2, 
-                withdraw_all_rate = 0.01)
+                withdraw_all_rate = 0.01,
+                cv = 0.5)
 
 status  |>
   filter(time_period == max(time_period)) |>
