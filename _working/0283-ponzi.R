@@ -162,62 +162,49 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
 
 #-----------------some examples-----------------
 
-status <- ponzi(invest_more_rate = 0.2, 
-                withdraw_all_rate = 0.01,
-                cv = 0.5, keep_history = TRUE)
 
-status  |>
-  filter(time_period == max(time_period)) |>
-  summarise(total_invested = sum(invested),
-            total_withdrawn = sum(withdrawn),
-            total_extracted = sum(extracted),
-            paper_value = sum(value),
-            months = unique(time_period),
-            total_investors = max(id),
-            leverage = round(paper_value / total_invested)) |>
-  t()
+ponzi_plot <- function(status){
 
-status  |>
-  group_by(time_period) |>
-  summarise(`Paper value` = sum(value),
-            `Real value` = pmax(0, sum(invested) - sum(withdrawn))) |>
-  gather(variable, value, -time_period) |>
-  ggplot(aes(x = time_period, y = value, colour = variable)) +
-  geom_line() +
-  scale_y_log10(label = dollar)
+  status  |>
+    filter(time_period == max(time_period)) |>
+    summarise(total_invested = sum(invested),
+              total_withdrawn = sum(withdrawn),
+              total_extracted = sum(extracted),
+              paper_value = sum(value),
+              months = unique(time_period),
+              total_investors = max(id),
+              leverage = round(paper_value / total_invested)) |>
+    t()
+  
+  status  |>
+    group_by(time_period) |>
+    summarise(`Paper value` = sum(value),
+              `Real value` = pmax(0, sum(invested) - sum(withdrawn)),
+              `Extracted by scammers` = sum(extracted)) |>
+    gather(variable, value, -time_period) |>
+    ggplot(aes(x = time_period, y = value, colour = variable)) +
+    geom_line() +
+    scale_y_log10(label = dollar)
+}
 
+
+p1 <- ponzi(invest_more_rate = 0.2,
+            withdraw_all_rate = 0.01,
+            cv = 0.5, keep_history = TRUE) |>
+  ponzi_plot()
 
 # what if the number of investors grew by 50% each month,
 # 50% of current investor chose to invest more ach round,
 # and only 1/1000 people decided to withdraw everying
-status <- ponzi(number_investors = round(10 * 1.5 ^ (1:100)),
-                invest_more_rate = 0.5, 
-                withdraw_all_rate = 0.001,
-                cv = 0.5,
-                keep_history = TRUE)
+p2 <- ponzi(number_investors = round(10 * 1.5 ^ (1:100)),
+            invest_more_rate = 0.5, 
+            withdraw_all_rate = 0.001,
+            cv = 0.5,
+            keep_history = TRUE) |>
+  ponzi_plot()
 
-# still only lasts about 25 months, but paper value gets up to $105b
-status  |>
-  filter(time_period == max(time_period)) |>
-  summarise(total_invested = sum(invested),
-            total_withdrawn = sum(withdrawn),
-            total_extracted = sum(extracted),
-            paper_value = sum(value),
-            months = unique(time_period),
-            total_investors = max(id),
-            leverage = round(paper_value / total_invested)) |>
-  t()
-
-status  |>
-  group_by(time_period) |>
-  summarise(`Paper value` = sum(value),
-            `Real value` = pmax(0, sum(invested) - sum(withdrawn)),
-            `Extracted by scammers` = sum(extracted)) |>
-  gather(variable, value, -time_period) |>
-  ggplot(aes(x = time_period, y = value, colour = variable)) +
-  geom_line() +
-  scale_y_log10(label = dollar)
-
+svg_png(p1, "../img/0283-ponzi1")
+svg_png(p2, "../img/0283-ponzi2")
 
 #--------------systematic exploration-----------
 
@@ -236,7 +223,7 @@ params <- expand_grid(
   mutate(i = 1:n()) 
 
 # set up parallel processing cluster
-cluster <- makeCluster(4) 
+cluster <- makeCluster(7) 
 registerDoParallel(cluster)
 
 clusterEvalQ(cluster, {
@@ -284,7 +271,13 @@ p3 <- results |>
          withdraw_all_rate = glue("Exit: {withdraw_all_rate}")) |>
   ggplot(aes(x = investor_growth, y = months, colour = as.ordered(cv))) +
   facet_grid(extraction_rate~withdraw_all_rate) +
-  geom_jitter()
+  geom_jitter()  +
+  labs(colour = "Variation in investor amounts",
+       y = "Length of scam (in months)",
+       x = "Monthly growth in number of 'investors'\n(2 = doubling per month)",
+       subtitle = "subtitle here",
+       title = "How long can a Ponzi scheme last?")
+
 
 
 p4 <- results |>
@@ -298,4 +291,8 @@ p4 <- results |>
   labs(colour = "Variation in investor amounts",
        y = "Total extracted by scammers",
        x = "Monthly growth in number of 'investors'\n(2 = doubling per month)",
-       subtitle = str_wrap("Key success factor for a Ponzi scheme is to quickly and consistently double your 'investors'", 60))
+       subtitle = "Key success factor for a Ponzi scheme is to quickly and consistently double your 'investors'",
+       title = "How much can the scammers extract from a Ponzi scheme?")
+
+svg_png(p3, "../img/0283-months",w = 10, h = 8)
+svg_png(p4, "../img/0283-extract",w = 10, h = 8)
