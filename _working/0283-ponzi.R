@@ -1,11 +1,11 @@
 
 
 library(tidyverse)
+library(foreach)
+library(doParallel)
+library(glue)
 
-
-# TODO 
-# - add a 'fee' that is extracted by the scammers each month
-# - make the amount added a random log normal number
+# TODO #glue() TODO 
 # - make the random amount pulled towards the average for that individual from the past
 
 #' Generate samples from a log normal distribvution given E(X) and coefficient
@@ -42,8 +42,9 @@ stopifnot(sd(rlognormal(1000, 100, 0)) == 0)
 
 # If cv is not zero, check that the mean and coefficient of variation
 # are as expectd:
-stopifnot(round(mean(rlognormal(10000, 100, 0.5))) == 100)
-stopifnot(round(sd(rlognormal(10000, 100, 0.5)) / 100, 1) == 0.5)
+set.seed(321)
+stopifnot(round(mean(rlognormal(100000, 100, 0.5))) == 100)
+stopifnot(round(sd(rlognormal(100000, 100, 0.5)) / 100, 1) == 0.5)
 
 
 #' Simulate ponzi scheme
@@ -55,7 +56,9 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
                   withdraw_all_rate = 0.05,
                   roll_over_rate = (1 - invest_more_rate - 
                                          withdraw_small_rate - withdraw_all_rate),
-                  ceiling = 1e7){
+                  ceiling = 1e7,
+                  extraction_rate = 0.01,
+                  keep_history = TRUE){
   
   #---------checks on number of investors------------
   if(min(number_investors) < 0){
@@ -68,7 +71,7 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
   
   number_investors <- round(number_investors)
   
-  # make sure we have enough for 2000time periods
+  # make sure we have enough for 2000 time periods
   nni <- length(number_investors) 
   if(nni < 2000){
     number_investors <- c(number_investors, 
@@ -83,9 +86,10 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
                    value_tmp = invested,
                    value = invested,
                    withdrawn = 0,
-                   time_period = 1)
+                   time_period = 1,
+                   extracted = 0)
   
-  cash_on_hand <- with(status, sum(invested) - sum(withdrawn))
+  cash_on_hand <- with(status, sum(invested) - sum(withdrawn) - sum(extracted))
   
   #---------------------months 2 and onwards---------------------
   while(cash_on_hand > 0 & max(status$id) < ceiling){
@@ -112,7 +116,12 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
         action == "invest" ~ invested + incr_tmp,
         TRUE ~ invested
       ))  |>
-      select(-action, -incr_tmp) |>
+      # the people running the Ponzi scheme extract a percentage of the
+      # real money available, calculated per investor (so fully withdrawn
+      # investors not included):
+      mutate(extract_tmp = pmax(0, (invested - withdrawn - extracted) * extraction_rate),
+             extracted = extracted + extract_tmp) |>
+      select(-action, -incr_tmp, -extract_tmp) |>
       mutate(time_period = max(status$time_period + 1))
     
     number_new_investors <- number_investors[unique(update$time_period)]
@@ -123,16 +132,21 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
                               value_tmp = invested,
                               value = invested,
                               withdrawn = 0,
-                              time_period = unique(update$time_period))
+                              time_period = unique(update$time_period),
+                              extracted = 0)
     } else {
       new_investors <- tibble()
     }  
     
-    status <- rbind(status, update, new_investors)
+    if(keep_history){
+      status <- rbind(status, update, new_investors)
+    } else {
+      status <- rbind(update, new_investors)
+    }
     
     cash_on_hand <- status |>
       filter(time_period == max(time_period)) |>
-      summarise(x = sum(invested) - sum(withdrawn)) |>
+      summarise(x = sum(invested) - sum(withdrawn) - sum(extracted)) |>
       pull(x)
     
     total_invested <- status |>
@@ -146,14 +160,17 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
   return(status)
 }
 
+#-----------------some examples-----------------
+
 status <- ponzi(invest_more_rate = 0.2, 
                 withdraw_all_rate = 0.01,
-                cv = 0.5)
+                cv = 0.5, keep_history = TRUE)
 
 status  |>
   filter(time_period == max(time_period)) |>
   summarise(total_invested = sum(invested),
             total_withdrawn = sum(withdrawn),
+            total_extracted = sum(extracted),
             paper_value = sum(value),
             months = unique(time_period),
             total_investors = max(id),
@@ -169,5 +186,116 @@ status  |>
   geom_line() +
   scale_y_log10(label = dollar)
 
-tail(status)
-max(status$id)
+
+# what if the number of investors grew by 50% each month,
+# 50% of current investor chose to invest more ach round,
+# and only 1/1000 people decided to withdraw everying
+status <- ponzi(number_investors = round(10 * 1.5 ^ (1:100)),
+                invest_more_rate = 0.5, 
+                withdraw_all_rate = 0.001,
+                cv = 0.5,
+                keep_history = TRUE)
+
+# still only lasts about 25 months, but paper value gets up to $105b
+status  |>
+  filter(time_period == max(time_period)) |>
+  summarise(total_invested = sum(invested),
+            total_withdrawn = sum(withdrawn),
+            total_extracted = sum(extracted),
+            paper_value = sum(value),
+            months = unique(time_period),
+            total_investors = max(id),
+            leverage = round(paper_value / total_invested)) |>
+  t()
+
+status  |>
+  group_by(time_period) |>
+  summarise(`Paper value` = sum(value),
+            `Real value` = pmax(0, sum(invested) - sum(withdrawn)),
+            `Extracted by scammers` = sum(extracted)) |>
+  gather(variable, value, -time_period) |>
+  ggplot(aes(x = time_period, y = value, colour = variable)) +
+  geom_line() +
+  scale_y_log10(label = dollar)
+
+
+#--------------systematic exploration-----------
+
+set.seed(123)
+params <- expand_grid(
+  investor_growth = c(1, 1.2, 1.4, 1.6, 1.8),
+  cv = c(0, 0.5, 1),
+  invest_more_rate = c(0, 0.1, 0.2),
+  withdraw_all_rate = c(0.001, 0.01, 0.05),
+  extraction_rate = c(0.001, 0.01, 0.05)
+) |>
+  # give me three of each
+  slice(1:n(), 1:n(), 1:n()) |>
+  # bit of randomness in one of the most important parameters
+  mutate(investor_growth = investor_growth + runif(n(), -0.1, 0.1)) |>
+  mutate(i = 1:n()) 
+
+# set up parallel processing cluster
+cluster <- makeCluster(4) 
+registerDoParallel(cluster)
+
+clusterEvalQ(cluster, {
+  library(foreach)
+  library(tidyverse)
+})
+
+clusterExport(cluster, c("params", "ponzi"))
+
+results <- foreach(i = 1:nrow(params), .combine = rbind) %dopar% {
+  set.seed(i)
+  
+  ni <- round(10 * params[i, ]$investor_growth ^ (1:2000))
+  
+  this_sim <- ponzi(number_investors = ni,
+                  invest_more_rate = params[i, ]$invest_more_rate, 
+                  withdraw_all_rate = params[i, ]$withdraw_all_rate,
+                  extraction_rate = params[i, ]$extraction_rate,
+                  cv = params[i, ]$cv,
+                  ceiling = 1e7,
+                  keep_history = FALSE) |>
+    filter(time_period == max(time_period))|>
+    summarise(total_invested = sum(invested),
+              total_withdrawn = sum(withdrawn),
+              total_extracted = sum(extracted),
+              paper_value = sum(value),
+              months = unique(time_period),
+              total_investors = max(id),
+              leverage = round(paper_value / total_invested),
+              i = i)
+  
+  return(this_sim)
+  
+}
+
+# note the peak at 20 months that's when you hit the ceiling of 10million
+# people
+
+# lm(log(total_extracted) ~ investor_growth + cv + withdraw_all_rate, data = results)
+
+
+p3 <- results |>
+  left_join(params, by = "i") |>
+  mutate(extraction_rate = glue("Extrct: {extraction_rate}"),
+         withdraw_all_rate = glue("Exit: {withdraw_all_rate}")) |>
+  ggplot(aes(x = investor_growth, y = months, colour = as.ordered(cv))) +
+  facet_grid(extraction_rate~withdraw_all_rate) +
+  geom_jitter()
+
+
+p4 <- results |>
+  left_join(params, by = "i") |>
+  mutate(extraction_rate = glue("'Tax' scammed:\n{extraction_rate}"),
+         withdraw_all_rate = glue("Exit: {withdraw_all_rate}")) |>
+  ggplot(aes(x = investor_growth, y = total_extracted, colour = as.ordered(cv))) +
+  facet_grid(extraction_rate~withdraw_all_rate) +
+  geom_jitter() +
+  scale_y_log10(label = dollar) +
+  labs(colour = "Variation in investor amounts",
+       y = "Total extracted by scammers",
+       x = "Monthly growth in number of 'investors'\n(2 = doubling per month)",
+       subtitle = str_wrap("Key success factor for a Ponzi scheme is to quickly and consistently double your 'investors'", 60))
