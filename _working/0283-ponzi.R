@@ -5,17 +5,16 @@ library(foreach)
 library(doParallel)
 library(glue)
 
-# TODO #glue() TODO 
-# - make the random amount pulled towards the average for that individual from the past
-
 #' Generate samples from a log normal distribvution given E(X) and coefficient
 #' of variation
-#' @details Only needed because rlnorm() has the parameters of hte Normal
-#' distribution that log(X) follows and I wanted a version that used the
-#' actual mean of X and its coefficient of variation.
-#' 
-#' Also (important) because if the coefficient of variation is 0, it
-#' still returns values!
+#'
+#' @param n number of samples to generate
+#' @param ex expected value of the distribution, on its observed (not log) scale
+#' @param cv coefficient of variation (ie standard deviation as a proportion of
+#'   the mean) of the distribution, on its observed (not log) scale
+#' @details Only needed because rlnorm() has the parameters of the Normal
+#'   distribution that log(X) follows and I wanted a version that used the
+#'   actual mean of X and its coefficient of variation.
 #' 
 rlognormal <- function(n, ex, cv){
   if(cv == 0){
@@ -46,8 +45,41 @@ set.seed(321)
 stopifnot(round(mean(rlognormal(100000, 100, 0.5))) == 100)
 stopifnot(round(sd(rlognormal(100000, 100, 0.5)) / 100, 1) == 0.5)
 
+p <- function(){
+par(bty = "l", mfrow = c(1, 2))
+plot(density(rlognormal(1000, 100, cv = 0.5)), 
+     main = "Log-normal distribution,\nmean 100 and cv 0.5")
+plot(density(rlognormal(1000, 100, cv = 2)), 
+     main = "Log-normal distribution\nmean 100 and cv 2")
+}
+
+svg_png(p, "../img/0283-log-normal")
 
 #' Simulate ponzi scheme
+#'
+#' @param number_investors vector of number of new investors joining the scheme
+#'   each time period. If this is less than 2000 time periods long it will be
+#'   filled out with repeats of the last element.
+#' @param mu average investment of each investor when they first join or invest
+#'   further
+#' @param cv coefficient of variation of the amount that investors each invest
+#' @param invest_more_rate the proportion of investors in each time period that
+#'   invest additional funds
+#' @param withdraw_small_rate the proportion of investors in each time period
+#'   that withdraw a small amount equivalent to their original investment
+#' @param withdraw_all_rate the proportion of investors in each time period that
+#'   withdraw the entire paper value of their investment
+#' @param roll_over_rate the proportion of investors who simply leave their
+#'   investment as it is at the end of each investment, neither withdrawing or
+#'   investing further
+#' @param ceiling the maximum number of investors that can ever be involved in
+#'   the scheme, including those that have already withdrawn all funds. If the
+#'   cumulative sum of number_investors exceeds ceiling then no more investors
+#'   are added ie \code{ceiling} overrides \code{number_investors}
+#' @param extraction_rate The proportion of the total real value of the scheme
+#'   that the owners extract for their own use, each time period
+#' @param keep_history whether to return the state of the scheme at each
+#'   time_period (if TRUE), or only the final state (if FALSe)
 ponzi <- function(number_investors = c(1:100, 100:1) * 10, 
                   mu = 100, 
                   cv = 0, 
@@ -76,6 +108,15 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
   if(nni < 2000){
     number_investors <- c(number_investors, 
                           rep(number_investors[length(number_investors)]), 2000 - nni)
+  }
+  
+  #--------------Other checks--------------
+  if(invest_more_rate + withdraw_small_rate + withdraw_all_rate + roll_over_rate != 1){
+    stop("invest_more_rate, withdraw_small_rate, withdraw_all_rate and roll_over_rate should add to one")
+  }
+  
+  if(extraction_rate < 0 | extraction_rate > 1){
+    stop("extraction_rate should be between zero and one")
   }
   
   #---------------------set up month 1------------------
