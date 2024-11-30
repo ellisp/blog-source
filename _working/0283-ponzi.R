@@ -53,9 +53,9 @@ plot(density(rlognormal(1000, 100, cv = 2)),
      main = "Log-normal distribution\nmean 100 and cv 2")
 }
 
-svg_png(p, "../img/0283-log-normal")
+svg_png(p, "../img/0283-log-normal", h = 3)
 
-#' Simulate ponzi scheme
+#' Simulate ponzi scheme that doubles in paper value each time period
 #'
 #' @param number_investors vector of number of new investors joining the scheme
 #'   each time period. If this is less than 2000 time periods long it will be
@@ -80,6 +80,8 @@ svg_png(p, "../img/0283-log-normal")
 #'   that the owners extract for their own use, each time period
 #' @param keep_history whether to return the state of the scheme at each
 #'   time_period (if TRUE), or only the final state (if FALSe)
+#' @param time_multiplier how much the investors are promised their investment
+#'   increases by each time period; defaults to 2 ie doubling
 ponzi <- function(number_investors = c(1:100, 100:1) * 10, 
                   mu = 100, 
                   cv = 0, 
@@ -90,7 +92,8 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
                                          withdraw_small_rate - withdraw_all_rate),
                   ceiling = 1e7,
                   extraction_rate = 0.01,
-                  keep_history = TRUE){
+                  keep_history = TRUE,
+                  time_multiplier = 2){
   
   #---------checks on number of investors------------
   if(min(number_investors) < 0){
@@ -134,25 +137,37 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
   
   #---------------------months 2 and onwards---------------------
   while(cash_on_hand > 0 & max(status$id) < ceiling){
+    
+    # we make a new state for our existing investors, which is going to later be
+    # appended to the state so far:
     update <-  status |>
+      # limit to the state from the last time_period:
       filter(time_period == max(time_period)) |>
-      mutate(value_tmp = value_tmp * 2) |>
+      # Double the 'value' of existing investments
+      mutate(value_tmp = value_tmp * time_multiplier) |>
+      # Decide for each investor what they are going to do this time period:
       mutate(action = sample(c("withdraw_all", "withdraw_small", "rollover", "invest"),
                              size = n(),
                              replace = TRUE,
-                             prob = c(withdraw_all_rate, withdraw_small_rate, roll_over_rate, invest_more_rate)))|>
+                             prob = c(withdraw_all_rate, withdraw_small_rate, 
+                                      roll_over_rate, invest_more_rate))) |>
+      # An incremental amount which might be used for furhter investments or for withdrawals:
       mutate(incr_tmp = rlognormal(n(), mu, cv)) |>
+      # some people try to withdraw their paper value. This increases the amount
+      # they have ever withdrawn:
       mutate(withdrawn = case_when(
         action == "withdraw_all" ~ withdrawn + value_tmp,
         action == "withdraw_small" ~ withdrawn + incr_tmp,
         TRUE ~ withdrawn
       )) |>
+      # ... and decreases their paper value by the same amount
       mutate(value = case_when(
         action == "withdraw_all" ~ 0,
         action == "withdraw_small" ~ value_tmp - incr_tmp,
         action == "rollover" ~ value_tmp,
         action == "invest" ~ value_tmp + incr_tmp
       )) |>
+      # Some other people choose to invest more:
       mutate(invested = case_when(
         action == "invest" ~ invested + incr_tmp,
         TRUE ~ invested
@@ -163,8 +178,10 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
       mutate(extract_tmp = pmax(0, (invested - withdrawn - extracted) * extraction_rate),
              extracted = extracted + extract_tmp) |>
       select(-action, -incr_tmp, -extract_tmp) |>
+      # time period goes up one:
       mutate(time_period = max(status$time_period + 1))
     
+    # We are also going to get a number of new investors:
     number_new_investors <- number_investors[unique(update$time_period)]
     if(number_new_investors > 0){
     
@@ -179,22 +196,22 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
       new_investors <- tibble()
     }  
     
+    # depending on whether the user wants all the history, we either append our
+    # new update for the previous investors and our new investors to the old state,
+    # or we just keep the latest update on previous investors plus our new investors:
     if(keep_history){
       status <- rbind(status, update, new_investors)
     } else {
       status <- rbind(update, new_investors)
     }
     
+    # We need to determine if the scheme has gone bust, by calculating its
+    # actual cash available (the amount invested so far, minus the total
+    # withdrawn and total extracted)
     cash_on_hand <- status |>
       filter(time_period == max(time_period)) |>
       summarise(x = sum(invested) - sum(withdrawn) - sum(extracted)) |>
       pull(x)
-    
-    total_invested <- status |>
-      filter(time_period == max(time_period)) |>
-      summarise(x = sum(invested)) |>
-      pull(x)
-    
     
   }  
   
@@ -204,11 +221,11 @@ ponzi <- function(number_investors = c(1:100, 100:1) * 10,
 #-----------------some examples-----------------
 
 
-ponzi_plot <- function(status){
+ponzi_plot <- function(status, return_numbers = FALSE){
 
-  status  |>
-    filter(time_period == max(time_period)) |>
-    summarise(total_invested = sum(invested),
+  numbers <- status  |>
+    dplyr::filter(time_period == max(time_period)) |>
+    dplyr::summarise(total_invested = sum(invested),
               total_withdrawn = sum(withdrawn),
               total_extracted = sum(extracted),
               paper_value = sum(value),
@@ -217,22 +234,29 @@ ponzi_plot <- function(status){
               leverage = round(paper_value / total_invested)) |>
     t()
   
-  status  |>
-    group_by(time_period) |>
-    summarise(`Paper value` = sum(value),
+  plot <- status  |>
+    dplyr::group_by(time_period) |>
+    dplyr::summarise(`Paper value` = sum(value),
               `Real value` = pmax(0, sum(invested) - sum(withdrawn)),
               `Extracted by scammers` = sum(extracted)) |>
-    gather(variable, value, -time_period) |>
-    ggplot(aes(x = time_period, y = value, colour = variable)) +
-    geom_line() +
-    scale_y_log10(label = dollar)
+    tidyr::gather(variable, value, -time_period) |>
+    ggplot2::ggplot(aes(x = time_period, y = value, colour = variable)) +
+    ggplot2::geom_line() +
+    ggplot2::scale_y_log10(label = dollar) +
+    labs(colour = "", y = "Value", x = "Number of months")
+  
+  if(return_numbers){
+    return(numbers)
+  } else {
+    return(plot)
+  }
 }
 
-
+set.seed(123)
 p1 <- ponzi(invest_more_rate = 0.2,
             withdraw_all_rate = 0.01,
-            cv = 0.5, keep_history = TRUE) |>
-  ponzi_plot()
+            cv = 2, keep_history = TRUE) |>
+  ponzi_plot(return_numbers = FALSE)
 
 # what if the number of investors grew by 50% each month,
 # 50% of current investor chose to invest more ach round,
@@ -240,7 +264,7 @@ p1 <- ponzi(invest_more_rate = 0.2,
 p2 <- ponzi(number_investors = round(10 * 1.5 ^ (1:100)),
             invest_more_rate = 0.5, 
             withdraw_all_rate = 0.001,
-            cv = 0.5,
+            cv = 2,
             keep_history = TRUE) |>
   ponzi_plot()
 
@@ -315,8 +339,8 @@ p3 <- results |>
   geom_jitter()  +
   labs(colour = "Variation in investor amounts",
        y = "Length of scam (in months)",
-       x = "Monthly growth in number of 'investors'\n(2 = doubling per month)",
-       subtitle = "subtitle here",
+       x = "Monthly growth in number of 'investors'\n(2 = doubling per month; capped at 10 million)",
+       subtitle = "A low 'exit rate' (by investors/victims) is key to prolonging a Ponzi scheme",
        title = "How long can a Ponzi scheme last?")
 
 
@@ -331,8 +355,8 @@ p4 <- results |>
   scale_y_log10(label = dollar) +
   labs(colour = "Variation in investor amounts",
        y = "Total extracted by scammers",
-       x = "Monthly growth in number of 'investors'\n(2 = doubling per month)",
-       subtitle = "Key success factor for a Ponzi scheme is to quickly and consistently double your 'investors'",
+       x = "Monthly growth in number of 'investors'\n(2 = doubling per month; capped at 10 million)",
+       subtitle = "Key success factor for getting rich from a Ponzi scheme is to quickly and consistently grow your 'investors' and extract as much 'tax' you can.",
        title = "How much can the scammers extract from a Ponzi scheme?")
 
 svg_png(p3, "../img/0283-months",w = 10, h = 8)
