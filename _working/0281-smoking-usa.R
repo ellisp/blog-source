@@ -8,6 +8,9 @@ library(Synth)
 library(rstan)
 options(mc.cores = min(8, parallel::detectCores()))
 
+# see also https://www.aeaweb.org/articles?id=10.1257/pol.20170144
+# for an alternative case study of synthetic control
+
 conflicts_prefer(readr::col_factor)
 conflicts_prefer(dplyr::collapse)
 conflicts_prefer(scales::discard)
