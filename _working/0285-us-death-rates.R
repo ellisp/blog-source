@@ -162,7 +162,10 @@ bar_one_country <- function(the_country,
                             comparison_countries = NULL,
                             subtitle = NULL,
                             st_width = 120,
-                            years = 2017:2019){
+                            years = 2017:2019,
+                            bar_fill = c("country_average", "this_country")){
+  
+  bar_fill <- match.arg(bar_fill)
   
   death_rates2 <- death_rates |>
     filter(time_period %in% years)
@@ -199,6 +202,9 @@ bar_one_country <- function(the_country,
   
   if(length(bad_countries) > 0){
     warning(glue("Dropping {pastec(bad_countries)} as missing some years"))
+    if(the_country %in% bad_countries){
+      stop("This is fatal for drawing this graph...")
+    }
     death_rates2 <- death_rates2 |>
       filter(!country %in% bad_countries)
     
@@ -222,27 +228,40 @@ bar_one_country <- function(the_country,
     mutate(time_period = as.numeric(time_period)) |>
     mutate(cause_of_death = fct_reorder(str_wrap(cause_of_death, 30), one_country)) |>
     group_by(cause_of_death) |>
-    mutate(comp_diff = mean(one_country) - mean(country_average)) |>
+    mutate(comp_diff = mean(one_country) - mean(country_average),
+           country_average = mean(country_average)) |>
     ungroup()
-
+  
   p <- one_wide |>
-    distinct(cause_of_death, comp_diff) |>
+    distinct(cause_of_death, comp_diff, country_average) |>
     mutate(cause_of_death = fct_reorder(str_wrap(cause_of_death, 40), comp_diff)) |>
-    ggplot(aes(x = comp_diff, y = cause_of_death, fill = comp_diff)) +
-    geom_col() +
+    ggplot(aes(x = comp_diff, y = cause_of_death)) +
     scale_fill_viridis_c() +
     labs(x = glue("Age standardised deaths per 100,000 in {the_country} compared to unweighted average of {length(unique(death_rates2$country))} countries"),
          y = "",
-         fill = "",
          caption = "Source: OECD. Analysis by freerangestats.info",
          title = glue("Where do extra deaths in {the_country} come from in {pastec(years)}?"),
          subtitle = str_wrap(subtitle, width = st_width))
+  
+  if(bar_fill == "this_country"){
+    p <- p +
+      geom_col(aes(fill = comp_diff)) +
+      labs(fill = glue("Rate in {the_country}"))
+    
+  } else {
+    p <- p +
+      geom_col(aes(fill = country_average)) +
+      labs(fill = "All-country average")
+    
+  }
   
   return(p)
 }
 
 
-bar_one_country("United States")
+bar_one_country("United States", bar_fill = "this_country")
+bar_one_country("United States", bar_fill = "country_average")
+
 bar_one_country("United States", years = 2021)
 
 # following would be an error, at least as at 12/12/2024:
@@ -254,11 +273,20 @@ bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finla
 # first year NZ appears is 2016:
 bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"), years = 2016)
 
-Cairo::CairoPDF("../img/0285-all-countries.pdf", width = 11, height = 8)
+bar_one_country("South Africa")
+
+Cairo::CairoPDF("../img/0285-all-countries-2017-2019.pdf", width = 11, height = 8)
 for(tc in sort(unique(death_rates$country))){
-  try(print(bar_one_country(tc)))
+  try(print(bar_one_country(tc, bar_fill = "country_average")))
 }
 dev.off()
+
+Cairo::CairoPDF("../img/0285-all-countries-2021.pdf", width = 11, height = 8)
+for(tc in sort(unique(death_rates$country))){
+  try(print(bar_one_country(tc, years = 2021, bar_fill = "country_average")))
+}
+dev.off()
+
 
 # note that assault, suicide etc impact on young people
 # so they disproportionately impact life expectancy
