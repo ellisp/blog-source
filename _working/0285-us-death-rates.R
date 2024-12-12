@@ -6,13 +6,20 @@ library(ggbiplot)
 library(WDI)
 library(ggrepel)
 
+#' Collapse a character vector
+#' 
+#' @param ... passed through to \code{paste()}
+#' @details
+#' this is just a convenience wrapper around paste()
+#' 
 pastec <- function(...){
   paste(..., collapse = ', ')
 }
 
-
+#===============Part 1 - life expectancy compared to health spend============
 #---------------life expectancy--
 
+# had to explore a bit to find the indicators to use
 # w <- WDIsearch("health")
 # View(w)
 
@@ -29,6 +36,7 @@ h  |>
 h2 <- h  |>
   # reove regions and groupings (which have ISO2 code beginning with Z or X
   # but leave in 4 countries with real codes beginning Z or X)
+  # and also knock out some specific things like EU, OECD average, etc
   filter((iso2c %in% c("ZW", "ZM", "ZA", "XK") | 
             !(grepl("^[XZ]", iso2c) |
                 iso2c %in% c("EU", "V1", "V2", "V3", "V4", "OE")))) |>
@@ -41,18 +49,23 @@ h2 <- h  |>
   slice(1)  |>
   ungroup()
 
-
+# going ot use this model to identify 'outlier' countries worth labelling
 mod <- lm(life_exp ~ log(health_spend), data = h2)
 
+# add the residuals of hte model and label any countries not from 2021 (this
+# label change was more necessary when I had multiple years in the data, but
+# I've left it in for future reference)
 h3 <- h2 |>
   mutate(res = as.numeric(residuals(mod)),
          country_yr = ifelse(year == 2021, 
                              country, glue("{country}, {year}")))
 
+# Draw scatter plot
 p1 <- h3 |> 
   ggplot(aes(x = health_spend, y = life_exp)) +
   geom_smooth(method = "lm", colour = "lightgreen", se = FALSE) +
   geom_point() +
+  # label some interesting countries:
   geom_text_repel(data = 
                     filter(h3,
                            health_spend > 8500 | 
@@ -73,6 +86,9 @@ p1 <- h3 |>
 
 svg_png(p1, "../img/0286-life-exp-scatter", w = 9, h = 6.5)
 
+
+#===============Part 2 - comparing various cause of death numbers=========
+
 #--------------metadata for causes of death------------------
 md <- readSDMX("https://sdmx.oecd.org/public/rest/dataflow/OECD.ELS.HD/DSD_HEALTH_STAT@DF_COM/1.0?references=all")
 
@@ -80,6 +96,9 @@ md <- readSDMX("https://sdmx.oecd.org/public/rest/dataflow/OECD.ELS.HD/DSD_HEALT
 sapply(md@codelists@codelists, \(x)x@Name$en)
 # noting number 7 is Cause of death and 2 is area ie country
 
+#' convenience function for extracting codelists from sdmx metadata
+#' 
+#' This is not very robust but does the job for today
 extract_codes <- function(metadata, id, description_name = "description"){
   codes <- md@codelists@codelists[[id]]@Code
   lookup <- tibble(code = sapply(codes, \(x)x@id), 
@@ -88,8 +107,6 @@ extract_codes <- function(metadata, id, description_name = "description"){
   return(lookup)
 }
 
-# you are meant to be able to get parent codes from this but
-# they all look to be NA
 
 cod_codes <- extract_codes(md, 7, "cause_of_death") 
 area_codes <- extract_codes(md, 2, "country") |>
@@ -97,6 +114,9 @@ area_codes <- extract_codes(md, 2, "country") |>
   mutate(country = as.character(sapply(country, \(x){x['en']}))
 )
 
+# you are meant to be able to get parent codes from this but they all look to be
+# NA so I couldn't see how to do this. So instead I've made a list by hand of
+# all those at the top level of hte classification
 high_level_cod <- c(
   "Certain infectious and parasitic diseases",
   "Neoplasms",
@@ -117,16 +137,15 @@ high_level_cod <- c(
   "Codes for special purposes: COVID-19" 
 )
 
+# The actual death rates (standardised by age)
 death_rates <- readSDMX("https://sdmx.oecd.org/public/rest/data/OECD.ELS.HD,DSD_HEALTH_STAT@DF_COM,1.0/.A..DT_10P5HB.._T...STANDARD....?startPeriod=2015&dimensionAtObservation=AllDimensions") |>
   as_tibble() |>
   clean_names() |>
   left_join(cod_codes, by = c("death_cause" = "code")) |>
   left_join(area_codes, by = c("ref_area" = "code"))
 
+# A problem, its different sets of countries for each year
 count(death_rates, time_period)
-death_rates |>
-  filter(time_period == 2022)|>
-  count(country)
 
 death_rates |>
   count(country, time_period) |>
@@ -225,15 +244,19 @@ bar_one_country <- function(the_country,
 
 bar_one_country("United States")
 bar_one_country("United States", years = 2021)
+
+# following would be an error, at least as at 12/12/2024:
 bar_one_country("United States", years = 2022)
 
+# drops New Zealand:
 bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"))
+
 # first year NZ appears is 2016:
 bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"), years = 2016)
 
 Cairo::CairoPDF("../img/0285-all-countries.pdf", width = 11, height = 8)
 for(tc in sort(unique(death_rates$country))){
-  print(bar_one_country(tc))
+  try(print(bar_one_country(tc)))
 }
 dev.off()
 
