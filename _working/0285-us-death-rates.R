@@ -114,9 +114,13 @@ area_codes <- extract_codes(md, 2, "country") |>
   mutate(country = as.character(sapply(country, \(x){x['en']}))
 )
 
+# the codeelists Code should have parentCode to show the hierarchical nature
+# of the cause of death codes, but it doesn't seem to be there
+sapply(md@codelists@codelists[[id]]@Code, \(x)x@parentCode)
+
 # you are meant to be able to get parent codes from this but they all look to be
-# NA so I couldn't see how to do this. So instead I've made a list by hand of
-# all those at the top level of hte classification
+# NA (see above( so I couldn't see how to do this. So instead I've made a list
+# by hand of all those at the top level of hte classification
 high_level_cod <- c(
   "Certain infectious and parasitic diseases",
   "Neoplasms",
