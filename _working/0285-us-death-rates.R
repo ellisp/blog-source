@@ -1,3 +1,4 @@
+#===============Setup==================
 library(tidyverse)
 library(rsdmx)
 library(janitor)
@@ -73,18 +74,21 @@ p1 <- h3 |>
                              life_exp < 55 |
                              res < -10 |
                              res > 7),
-                  aes(label = country_yr),
+                  aes(label = country_yr,
+                      # annoying ggrepel couldn't put Norway in a good position automatically
+                      # so I am going to move it ad hoc:
+                      x = ifelse(country == "Norway", health_spend * 1.189, health_spend)),
                   colour = "steelblue", 
-                  seed = 126,
+                  seed = 125,
                   size = 2.8) +
   scale_x_log10(label = dollar) +
   labs(x = "Health expenditure per capita (US dollars, logarithmic scale)",
        y = "Life expectancy",
        title = "Health expenditure is associated with higher life expectancy",
-       subtitle = "However there is substantial variation.",
+       subtitle = "USA is a high income outlier, but many poorer countries also have poor life expectancy given health spend per person.",
        caption = "Source: data for 2021 from the World Development Indicators; analysis by freerangestats.info")
 
-svg_png(p1, "../img/0286-life-exp-scatter", w = 9, h = 6.5)
+svg_png(p1, "../img/0285-life-exp-scatter", w = 9, h = 6.5)
 
 
 #===============Part 2 - comparing various cause of death numbers=========
@@ -116,7 +120,7 @@ area_codes <- extract_codes(md, 2, "country") |>
 
 # the codeelists Code should have parentCode to show the hierarchical nature
 # of the cause of death codes, but it doesn't seem to be there
-sapply(md@codelists@codelists[[id]]@Code, \(x)x@parentCode)
+sapply(md@codelists@codelists[[7]]@Code, \(x)x@parentCode)
 
 # you are meant to be able to get parent codes from this but they all look to be
 # NA (see above( so I couldn't see how to do this. So instead I've made a list
@@ -263,29 +267,24 @@ bar_one_country <- function(the_country,
 }
 
 
-bar_one_country("United States", bar_fill = "this_country")
-bar_one_country("United States", bar_fill = "country_average")
+p2 <- bar_one_country("United States", bar_fill = "country_average",
+                subtitle = "Comparison to all countries with available cause of death rates.")
 
-bar_one_country("United States", years = 2021)
+p3 <- bar_one_country("United States", years = 2021, 
+                      comparison_countries = unique(death_rates$country))
 
-# following would be an error, at least as at 12/12/2024:
-bar_one_country("United States", years = 2022)
+svg_png(p2, "../img/0285-us-1719", w = 11, h = 8)
+svg_png(p3, "../img/0285-us-21", w = 11, h = 8)
 
-# drops New Zealand:
-bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"))
-
-# first year NZ appears is 2016:
-bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"), years = 2016)
-
-bar_one_country("South Africa")
-
-Cairo::CairoPDF("../img/0285-all-countries-2017-2019.pdf", width = 11, height = 8)
+Cairo::CairoPDF("../img/0285-all-countries-2017-2019.pdf", 
+                width = 11, height = 8, title = "Cause of deaths 2017-2019")
 for(tc in sort(unique(death_rates$country))){
   try(print(bar_one_country(tc, bar_fill = "country_average")))
 }
 dev.off()
 
-Cairo::CairoPDF("../img/0285-all-countries-2021.pdf", width = 11, height = 8)
+Cairo::CairoPDF("../img/0285-all-countries-2021.pdf", 
+                width = 11, height = 8, title = "Cause of deaths 2021")
 for(tc in sort(unique(death_rates$country))){
   try(print(bar_one_country(tc, years = 2021, bar_fill = "country_average")))
 }
@@ -307,30 +306,26 @@ better_countries <- h2 |>
   mutate(country = ifelse(grepl("Korea, Rep.", country, fixed = TRUE), "Korea", country)) |>
   pull(country)
 
-bar_one_country("United States", 
+p4 <- bar_one_country("United States", 
                 comparison_countries = better_countries, 
-                st_width = 140,
                 years = 2017:2019)
 
-bar_one_country("United States", 
+p5 <- bar_one_country("United States", 
                 comparison_countries = better_countries, 
-                st_width = 140,
                 years = 2021)
 
-bar_one_country("United States", 
+p6 <- bar_one_country("Australia", 
                 comparison_countries = better_countries, 
-                st_width = 140,
-                years = 2020)
-
-bar_one_country("Australia", 
-                comparison_countries = better_countries, 
-                st_width = 140,
                 years = 2022)
 
-bar_one_country("Estonia", 
+p7 <- bar_one_country("Estonia", 
                 comparison_countries = better_countries, 
-                st_width = 140,
                 years = 2022)
+
+svg_png(p4, "../img/0285-us-1719-lim", w = 11, h = 8)
+svg_png(p5, "../img/0285-us-21-lim", w = 11, h = 8)
+svg_png(p6, "../img/0285-aus-22-lim", w = 11, h = 8)
+svg_png(p7, "../img/0285-est-22-lim", w = 11, h = 8)
 
 
 #-----------biplot--------
@@ -369,11 +364,16 @@ cod_biplot <- function(years, cod_col = "steelblue", min_loading = 0.25, ...){
   return(p)
 }
 
-cod_biplot(2021)
-cod_biplot(2020, min_loading = 0.1)
-cod_biplot(2017:2019, min_loading = 0.3)
+p8 <- cod_biplot(2021)
+p9 <- cod_biplot(2020, min_loading = 0.1)
+p10 <- cod_biplot(2017:2019, min_loading = 0.3)
+
+svg_png(p8, "../img/0285-biplot-21", w = 9, h = 6)
+svg_png(p9, "../img/0285-biplot-20", w = 9, h = 6)
+svg_png(p10, "../img/0285-biplot-1719", w = 9, h = 6)
 
 #---------not used------------
+# time series chart
 us_narrow <- us_wide |>
   gather(country, value, -cause_of_death, -time_period, -us_diff)
 
@@ -385,4 +385,22 @@ us_narrow |>
   scale_colour_manual(values = c("USA" = "red", 
                                  "OECD average" = "grey")) +
   scale_fill_viridis_c()
+
+
+
+# bonus charts
+# following would be an error, at least as at 12/12/2024:
+try(bar_one_country("United States", years = 2022))
+
+# couple of trial charts won't use
+# drops New Zealand:
+bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"))
+
+# first year NZ appears is 2016:
+bar_one_country("United States", c("Australia", "New Zealand", "Germany", "Finland"), years = 2016)
+
+bar_one_country("United States", 
+                comparison_countries = better_countries, 
+                st_width = 140,
+                years = 2020)
 
