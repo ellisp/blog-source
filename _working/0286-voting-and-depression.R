@@ -6,7 +6,6 @@ library(sf)
 
 # county level prevalence of depression at (have to hit the 'download' button)
 # https://stacks.cdc.gov/view/cdc/129404
-
 dep <- read_excel("cdc_129404_DS1.xlsx", skip = 1)
 
 fn <- "2024_US_County_Level_Presidential_Results.csv"
@@ -21,6 +20,13 @@ combined <- votes |>
   inner_join(dep, by = c("county_fips" = "CountyFIPS code")) |>
   mutate(cpe = `Crude Prevalence Estimate` / 100,
          aape = `Age-adjusted Prevalence Estimate` / 100)
+
+# what was missed?
+votes |>
+  anti_join(dep, by = c("county_fips" = "CountyFIPS code")) |>
+  count(state_name)
+# 37 counties in Alaska, 9 and Connecticut and 7 in DC. Will ignore these
+# for my purposes.
 
 #========================modelling==================
 
