@@ -22,7 +22,10 @@ combined <- votes |>
   mutate(cpe = `Crude Prevalence Estimate` / 100,
          aape = `Age-adjusted Prevalence Estimate` / 100)
 
-#---------------------modelling-----------------
+#========================modelling==================
+
+
+#----------Ordinary Least Squares------------------
 
 model <- lm(per_gop ~ cpe, data = combined)
 summary(model)
@@ -34,7 +37,7 @@ summary(model)
 
 the_caption = "Source: data from tonmcg and CDC; analysis by freerangestats.info"
 
-combined |>
+p1<- combined |>
   ggplot(aes(x= cpe, y = per_gop)) +
   geom_point(colour = "steelblue", alpha = 0.5) +
   geom_smooth(method = "lm", fill = "black", colour = "white", alpha = 0.8) +
@@ -42,10 +45,13 @@ combined |>
   scale_y_continuous(label = percent) +
   labs(x = "Crude prevalence estimate of depression",
        y = "Percentage vote for Trump in 2024 election",
-       subtitle = "Line is ordinary least squares fit to all county data",
+       subtitle = "Line is ordinary least squares fit to all county data together",
        title = "Counties with more depression voted more for Trump",
        caption = the_caption)
 
+svg_png(p1, "../img/0286-ols", w = 9, h = 6)
+
+#----------------Quasibinomial GLM----------------
 
 model2 <- glm(per_gop ~ cpe, 
               family = quasibinomial, data = combined, weights = total_votes)
@@ -53,13 +59,13 @@ summary(model2)
 
 preds2 <- predict(model2, type = "response", se.fit = TRUE)
 
-combined |>
+p2 <-combined |>
   mutate(fit = preds2$fit,
          se = preds2$se.fit,
          lower = fit - 1.96 * se,
          upper = fit + 1.96 * se) |>
-  ggplot(aes(x = cpe)) +
-  geom_point(aes(y = per_gop, colour = state_name), alpha = 0.5) +
+  ggplot(aes(x = cpe, y = per_gop)) +
+  geom_point(colour = "steelblue", alpha = 0.5) +
   geom_ribbon(aes(ymin = lower, ymax = upper), fill = "black", alpha = 0.5) +
   geom_line(aes(y = fit), colour = "white") +
   theme(legend.position = "none") +
@@ -67,25 +73,27 @@ combined |>
   scale_x_continuous(label  = percent)  +
   labs(x = "Crude prevalence estimate of depression",
        y = "Percentage vote for Trump in 2024 election",
-       subtitle = "Line is logistic regression fit to all county data",
+       subtitle = "Line is generalized linear model with quasibinomial response, fit to all county data together",
        title = "Counties with more depression voted more for Trump",
        caption = the_caption)
 
+svg_png(p2, "../img/0286-glm", w = 9, h = 6)
 
-model3 <- lme4::lmer(per_gop ~ cpe + (1 | state_name), data = combined)
-summary(model3)
+
+#---------------------With state random effect with lmer4::glmer--------------------
 
 model4 <- lme4::glmer(per_gop ~ cpe + (1 | state_name), 
                       family = "binomial", data = combined, 
                       weights = total_votes)
 # note can't use quasibinomial family with glmer so we aren;t really dealing
 # properly with the overdispersion. what to do about that? Confidence intervals
-# will be too narrow.
+# will be too narrow. Various alternatives posisble.
 
 summary(model4)
 
 preds4 <- predict(model4, se.fit = TRUE, type = "response")
-combined |>
+
+p4 <- combined |>
   mutate(fit = preds4$fit,
          se = preds4$se.fit,
          lower = fit - 1.96 * se,
@@ -99,13 +107,55 @@ combined |>
   scale_x_continuous(label  = percent)  +
   labs(x = "Crude prevalence estimate of depression",
        y = "Percentage vote for Trump in 2024 election",
-       subtitle = "Lines are logistic regression with random state-level intercept effect",
+       subtitle = "Lines are logistic regression with state-level random intercept effect (confidence intervals are too narrow)",
        title = "Counties with more depression voted more for Trump",
        caption = the_caption)
 
+svg_png(p4, "../img/0286-glmer", w = 9, h = 6)
 
-#--------------allowing for spatial autocorrelation--------------
-# each county isn't really an independent data point, 
+#--------------state random effect with mgcv::gam--------------
+# gam lets us have a random effect and a wider range of families
+# see https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/
+
+# must be a factor to use as a random effect in gam():
+combined <- mutate(combined, state_name = as.factor(state_name))
+
+model5 <- gam(per_gop ~ cpe + s(state_name, bs = 're') , 
+              family = quasibinomial, weights = total_votes,
+              data = combined)
+summary(model5)
+# note standard error for cpe is much higher 0.6224, compared to 0 .0107
+
+preds5 <- predict(model5, se.fit = TRUE, type = "response")
+
+p5 <- combined |>
+  mutate(fit = preds5$fit,
+         se = preds5$se.fit,
+         lower = fit - 1.96 * se,
+         upper = fit + 1.96 * se) |>
+  ggplot(aes(x = cpe, group = state_name)) +
+  geom_point(aes(y = per_gop, colour = state_name), alpha = 0.5) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "black", alpha = 0.5) +
+  geom_line(aes(y = fit, colour = state_name)) +
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(0, 1), label = percent) +
+  scale_x_continuous(label  = percent)  +
+  labs(x = "Crude prevalence estimate of depression",
+       y = "Percentage vote for Trump in 2024 election",
+       subtitle = "Lines are quasibinomial generalized additive model with state-level random intercept",
+       title = "Counties with more depression voted more for Trump",
+       caption = the_caption)
+
+svg_png(p5, "../img/0286-gam", w = 9, h = 6)
+
+#-----------gam, spatial, state effect--------------
+# each county isn't really an independent data point, as counties next to eachother
+# probably have lots in common. A great thing about gam is that not only can we
+# have a quasibinomial family, we can do gam core business of adding in splines,
+# including a two dimensional "rubber mat" that effectively knocks out our 
+# spatial correlation problem for us.
+#
+# but first we need to know the centroids of all the counties:
 
 fn <- "cb_2023_us_county_500k.zip"
 if(!file.exists(fn)){
@@ -123,65 +173,42 @@ sc <- st_coordinates(county_cent)
 county_cent <- county_cent |>
   mutate(x = sc[, 1],
          y = sc[, 2],
+         # combine the two digit state code with the 3 digit county code:
          county_fips = paste0(STATEFP, COUNTYFP))
 
-# check that we have successfully re-created the country_fips
+# check that we have successfully re-created the country_fips on same basis
+# as our voting and depression data:
 combined |>
   left_join(county_cent, by = "county_fips") |>
   select(county_name, NAME)
 
 combined2 <- combined |>
-  left_join(county_cent, by = "county_fips") |>
-  # must be a factor to use as a random effect in gam():
-  mutate(state_name = factor(state_name))
+  left_join(county_cent, by = "county_fips")
 
 # check the county centres are where we expect. Note Alaska still missing
 # (because voting data is not by country so lost on the first join)
-ggplot(combined2, aes(x = x, y = y)) + geom_point()
-
-
-
-
-
-
-model5 <- gam(per_gop ~ cpe + s(state_name, bs = 're') , 
-              family = quasibinomial, weights = total_votes,
-              data = combined2)
-summary(model5)
-# note standard error for cpe is much higher
-
-preds5 <- predict(model5, se.fit = TRUE, type = "response")
-
-combined2 |>
-  mutate(fit = preds5$fit,
-         se = preds5$se.fit,
-         lower = fit - 1.96 * se,
-         upper = fit + 1.96 * se) |>
-  ggplot(aes(x = cpe, group = state_name)) +
-  geom_point(aes(y = per_gop, colour = state_name), alpha = 0.5) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "black", alpha = 0.5) +
-  geom_line(aes(y = fit, colour = state_name)) +
+p6a <- ggplot(combined2, aes(x = x, y = y, colour = state_name)) + 
+  geom_point() +
   theme(legend.position = "none") +
-  scale_y_continuous(limits = c(0, 1), label = percent) +
-  scale_x_continuous(label  = percent)  +
-  labs(x = "Crude prevalence estimate of depression",
-       y = "Percentage vote for Trump in 2024 election",
-       subtitle = "Lines are quasibinomial generalized additive model with random state-level intercept effect",
-       title = "Counties with more depression voted more for Trump",
-       caption = the_caption)
+  coord_map() +
+  labs(title = "Centres of counties after merging data")
 
-#-----------gam, spatial, state effect--------------
+svg_png(p6a, "../img/0286-counties-map", w = 9, h = 6)
+
+
 model6 <- gam(per_gop ~ cpe + s(x, y) + s(state_name, bs = 're') , 
               family = quasibinomial, weights = total_votes,
               data = combined2)
 
-# the spatial rubber mat that is correcting for spatial correlation for us:
-plot(model6, select = 1)
-
+# the spatial rubber mat that is correcting for spatial correlation for us;
+# scheme=1 is what makes it draw a perspective plot rather than contour or
+# heatmap):
+p6b <- function(){plot(model6, select = 1, scheme = 1, main = "Higher vote for GOP")}
+svg_png(p6b, "../img/0286-rubber-sheet", w = 9, h = 6)
 
 preds6 <- predict(model6, se.fit = TRUE, type = "response")
 
-combined2 |>
+p6c <- combined2 |>
   mutate(fit = preds6$fit,
          se = preds6$se.fit,
          lower = fit - 1.96 * se,
@@ -194,7 +221,9 @@ combined2 |>
   scale_x_continuous(label  = percent)  +
   labs(x = "Crude prevalence estimate of depression",
        y = "Percentage vote for Trump in 2024 election",
-       subtitle = "Lines are quasibinomial generalized additive model with spatial effect and random state-level intercept effect",
+       subtitle = "Grey ribbons are 95% confidence intervals from quasibinomial generalized additive model with spatial effect and state-level random intercept effect",
        title = "Counties with more depression voted more for Trump",
        caption = the_caption) +
   facet_wrap(~state_name)
+
+svg_png(p6c, "../img/0286-gam-spatial", w = 11, h = 8)

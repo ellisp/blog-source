@@ -101,4 +101,5 @@ _working/data/*
 *.xml
 *.geojson
 *.tif
+*.shx
 *.gdb
