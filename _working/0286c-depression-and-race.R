@@ -1,6 +1,27 @@
 library(GGally)
+library(ggdag)
+
 # you need to have run 0286-voting-and-depression.R first
 
+
+#-----------diagram--------------
+dag <- dagify(
+  Vote ~ Race + Depression + 'Other factors',
+  Depression ~ Race + 'Other factors'
+)
+
+set.seed(125)
+p1 <- ggdag(dag, edge_type = "link", node = FALSE) +
+  theme_dag_blank()  +
+  geom_dag_node(colour = "lightgreen", shape = c(19, 19, 19, 17)) +
+  geom_dag_edges(edge_colour = rep(c("lightblue", "lightblue", "grey", "black", "black"), each = 100),
+                 edge_width = rep(c(1.5, 3, 0.8, 1.5, 3), each = 100),
+                 edge_linetype = rep(c(1,1, 3, 1, 1), each = 100)) +
+  geom_dag_text(colour = "steelblue")
+
+svg_png(p1, "../img/0286c-dag", w = 8, h = 6)
+
+#---------------------data on 'race'-------------
 
 # county characteristis from US Census Bureau
 # see https://www2.census.gov/programs-surveys/popest/technical-documentation/file-layouts/2020-2023/CC-EST2023-ALLDATA.pdf

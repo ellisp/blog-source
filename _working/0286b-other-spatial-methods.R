@@ -131,6 +131,7 @@ summary(model12$gam)
 # as an argument random = list(~ 1 | state_name), and then
 # the correlation could have that grouping too (might speed things up)
 
+# So this is actually the full, best model
 model14 <- gamm(per_gop ~ cpe + white_alone + hispanic + hispanic_multi + 
                   s(x, y), 
                 random = list(state_name = ~1),
@@ -188,6 +189,9 @@ model17 <- gamm(per_gop ~ cpe + white_alone + hispanic + hispanic_multi,
 # it's still quite different, but the significance tests come out the same
 summary(model17$lme)$coefficients$fixed
 summary(model11)$coefficients$fixed
+
+
+
 #------------based on contiguous counties--------------
 
 
