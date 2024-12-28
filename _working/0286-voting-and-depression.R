@@ -3,6 +3,8 @@ library(readxl)
 library(mgcv)
 library(lme4)
 library(sf)
+library(GGally)
+
 
 # county level prevalence of depression at (have to hit the 'download' button)
 # https://stacks.cdc.gov/view/cdc/129404
