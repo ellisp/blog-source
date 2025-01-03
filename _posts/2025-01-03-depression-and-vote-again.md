@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Revisiting depression incidence by county and vote for Trump
-date: 2025-01-02
+date: 2025-01-03
 tag: 
    - VotingBehaviour
    - ModellingStrategy
@@ -23,7 +23,7 @@ I'm coming back to the issue because on reflection, I have three bits of unfinis
 3. An alert reader, Jonathan Spring, pointed out that in the USA there are [very marked racial differences between depression diagnoses](https://disq.us/url?url=https%3A%2F%2Fpmc.ncbi.nlm.nih.gov%2Farticles%2FPMC6390869%2F%23%3A%7E%3Atext%3DStudies%2520that%2520have%2520explored%2520the%2Copposed%2520to%2520African%2520Americans%252C%2520whose%3AIlHBLjpwdFZl-Dn9J9CLQ5OH2gc&cuid=3714645) and suggested that perhaps in my model the depression incidence was standing in as a proxy for "whiteness".
 
 Of these, the first two felt like bits of probably-immaterial-to-the-question methodological details that I should polish up, whereas number 3 seemed likely to be the explanation of the whole phenomenon. In other words, race is likely a [confounder](/blog/2023/06/04/causality-sims) of the depression-voting relationship, as per this directed acyclic graph:
-conc
+
 <object type="image/svg+xml" data='/img/0286c-dag.svg' width='100%'><img src='/img/0286c-dag.png' width='100%'></object>
 
 Which means that if we want to actually understand the causal relationship of depression on voting we would need to control for race in the regression. Now, there are other things we'd need to do too; in particular to identify and control for the various "other factors". I'm not up for that right now - this is someone else's job - but I'm interested enough to go part-way into things to at least check out the degree to which race makes the depression relationship go away.
@@ -286,7 +286,7 @@ I don't know why spatial statistics doesn't just use a good-ole correlation coef
 # let's roll our own on a similar concept to see what's happening
 counties <- select(combined2, county_fips, x, y)
 
-# find the three counties shortest distance from each country
+# find the counties' distance from each other country
 county_pairs <- expand_grid(from = counties$county_fips,
                             to = counties$county_fips) |>
   filter(from > to) |>
@@ -321,7 +321,7 @@ That gives me this chart, which is more like the sort of thing we use in time se
 
 <object type="image/svg+xml" data='/img/0286c-spatial-correlation.svg' width='100%'><img src='/img/0286c-spatial-correlation.png' width='100%'></object>
 
-I'm pleased it tells a similar story to the variogram (which is more of a black box to me) - the correlation between pairs of counties' residuals is above zero for counties that are within 10 degrees/units of eachother, and stablises at a small negative number from about 20 units apart onwards. 
+I'm pleased it tells a similar story to the variogram (which is more of a black box to me) - the correlation between pairs of counties' residuals is above zero for counties that are within 6 degrees/units of eachother, and stablises at a small negative number from about 20 units apart onwards. 
 
 My conclusion from this is that yes, there is still some spatial autocorrelation that should be taken into account. Particularly for those counties very close together (around 2 degree/units apart or less).
 

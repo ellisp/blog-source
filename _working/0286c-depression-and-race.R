@@ -80,7 +80,7 @@ plot(Variogram(model7$lme, form = ~ x + y, resType = "normalized"), grid = TRUE)
 # let's roll our own on a similar concept to see what's happening
 counties <- select(combined2, county_fips, x, y)
 
-# find the three counties shortest distance from each country
+# find the counties' distance from each other country
 county_pairs <- expand_grid(from = counties$county_fips,
                             to = counties$county_fips) |>
   filter(from > to) |>
