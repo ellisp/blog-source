@@ -77,6 +77,21 @@ filter(weo2025, is.na(value)) |> count(OBS_VALUE)
 # just -- and n/a, so OK
 
 
+weo2024 <- d2024 |> 
+  left_join(concept, by = "CONCEPT") |> 
+  left_join(unit, by = "UNIT") |> 
+  left_join(ref_areas, by = "REF_AREA") |> 
+  mutate(year = as.numeric(TIME_PERIOD),
+         value = as.numeric(OBS_VALUE)) |> 
+  select(concept:value, everything()) |> 
+  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Actual", "Forecast"),
+         type = fct_relevel(type, "Forecast"),
+         edition = "WEO October 2024")
+
+weo_both <- rbind(weo2024, weo2025)
+
+
+
 regions <- c(
   "World",
   "Advanced Economies",
@@ -111,6 +126,8 @@ stopifnot(all(pacific %in% ref_areas$country))
 stopifnot(all(regions %in% ref_areas$country))
 
 
+
+
 #----------------charts----------------------------
 
 weo2025 |> 
@@ -136,6 +153,22 @@ weo2025 |>
   scale_y_continuous(label = dollar)
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
+
+
+weo_both |> 
+  filter(CONCEPT == "NGDPRPPPPC") |> 
+  filter(country %in% pacific) |> 
+  mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
+  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
+  geom_line() +
+  facet_grid(edition~country) +
+  theme(legend.position = "none") +
+  labs(title = "Gross domestic product per capita in the Pacific",
+       subtitle = "Purchasing power parity, constant prices; 2021 international dollar") +
+  scale_y_continuous(label = dollar)
+# interesting here that many of the countries did not have the big covid-related
+# dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
+
 
 weo2025 |> 
   filter(CONCEPT == "NGDP") |> 
