@@ -1,51 +1,55 @@
 library(readxl)
 library(tidyverse)
 
-download.file("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2025/april/WEOApr2025all.ashx",
-              destfile = "weo-2025.txt", mode = "wb")
-
-d <- read_tsv("weo-2025.txt", n_max =5,  locale = locale('se', encoding = 'ISO8859-1'))
-d <- read.delim("weo-2025.txt", encoding="Windows-1252")
-glimpse(d)
-dim(d)
-
-library(data.table)
-?fread
-# thanks to Robert Krzanowski for how to deal with the encoding problem
-# https://stackoverflow.com/questions/22643372/embedded-nul-in-string-error-when-importing-csv-with-fread
-
-d <- fread("weo-2025.txt", sep = "\t", skip = 1894)
-d <- fread("sed 's/\\0//g' weo-2025.txt", sep = "\t")
-
-d <- read_tsv("weo-2025.txt", locale = readr::locale(encoding = "latin1"))
-dim(d)
-readLines("weo-2025.txt", n = 2)
-glimpse(d)
-names(d) <- as.character(d[1, ])
-
-# for some reasons zeroes went missing in titles
-names(d)[10:60] <- 1980:2030
+# newsarticles like this compare the forecasts for growth made in April to those
+# made in June:
+# https://www.bbc.com/news/articles/czx415erwkwo
+# eg US 1.8% v 2.7%; Canada 1.4% v 2.0%; France 0.6% v 0.8%
+# Q1 - Are these current or constant prices or PPP; and per capita or not?
+# Q2 - how is the Pacific going
 
 
+#----------------download sdmx version-------------------------
+options(timeout=600)
 
-#----------------sdmx-------------------------
 # couldn't get the tab delimited version to work - encoding problems - so went
 # with the SDMX version
 download.file("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2025/april/WEOAPR2025-SDMXData.ashx",
-              destfile = "weo2025.zip", mode = "wb")
+              destfile = "weo2025-apr.zip", mode = "wb")
 
-unzip("weo2025.zip")
+# this update only seems to be available for selected countries:
+download.file("https://www.imf.org/-/media/Files/Publications/WEO/2025/update/january/english/data/weo-update-january-2025.ashx",
+              destfile = "weo2025-jan.xlsx", mode = "wb")
+# to see the outlooks where the whole database is available, all countries, see
+# https://www.imf.org/en/Publications/SPROLLS/world-economic-outlook-databases#sort=%40imfdate%20descending
+
+download.file("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2024/October/WEOOCT2024-SDMXData.ashx",
+              destfile = "weo2024-oct.zip", mode = "wb")
+
+unzip("weo2025-apr.zip")
+unzip("weo2024-oct.zip")
+
+read_excel("weo2025-jan.xlsx")
+
+#---------------processing---------------
 
 library(rsdmx)
 d <- readSDMX("WEOAPR2025/xmlfile_APR2025.xml", isURL = FALSE) |> 
   # this parsing takes a long time:
   as_tibble()
 
+d2024 <- readSDMX("WEOOCT2024/WEO_PUB_OCT2024.xml", isURL = FALSE) |> 
+  # this parsing takes a long time:
+  as_tibble()
+
 count(d, SCALE)    # 1, 1000000 and 1000000000
 count(d, CONCEPT)  # BCA, BCA_NGDP, BF, BFD, etc
 count(d, UNIT)     # B to U
+count(d2024, UNIT)     # B to U
 count(d, REF_AREA)     # 001, 110, etc
-
+count(d, FREQ)                # everying is A (annual)
+count(d2024, FREQ)            # same
+count(d, LASTACTUALDATE)      # varies, from 2003 and higher
 
 concept <- read_xlsx("WEOAPR2025/WEOPUB_DSD_APR2025.xlsx", sheet = "CONCEPT", skip = 7)[, 1:2] |> 
   rename(CONCEPT = Code,
@@ -64,7 +68,10 @@ weo2025 <- d |>
   left_join(ref_areas, by = "REF_AREA") |> 
   mutate(year = as.numeric(TIME_PERIOD),
          value = as.numeric(OBS_VALUE)) |> 
-  select(concept:value, everything())
+  select(concept:value, everything()) |> 
+  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Actual", "Forecast"),
+         type = fct_relevel(type, "Forecast"),
+         edition = "WEO April 2025")
 
 filter(weo2025, is.na(value)) |> count(OBS_VALUE)
 # just -- and n/a, so OK
@@ -86,21 +93,54 @@ regions <- c(
   "European Union"
 )
 
+pacific <- c(
+  "Solomon Islands",
+  "Fiji",
+  "Kiribati",
+  "Nauru",
+  "Vanuatu",
+  "Papua New Guinea",
+  "Samoa",
+  "Tonga",
+  "Marshall Islands",
+  "Micronesia",
+  "Tuvalu"
+)
+
+stopifnot(all(pacific %in% ref_areas$country))
 stopifnot(all(regions %in% ref_areas$country))
+
+
+#----------------charts----------------------------
 
 weo2025 |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
-  ggplot(aes(x = year, y = value, colour = country)) +
+  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
   geom_line() +
   theme(legend.position = "none") +
   labs(title = "Gross domestic product per capita, constant prices",
        subtitle = "Purchasing power parity; 2021 international dollar")
 
 
+
+weo2025 |> 
+  filter(CONCEPT == "NGDPRPPPPC") |> 
+  filter(country %in% pacific) |> 
+  mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
+  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
+  geom_line() +
+  facet_wrap(~country) +
+  theme(legend.position = "none") +
+  labs(title = "Gross domestic product per capita in the Pacific",
+       subtitle = "Purchasing power parity, constant prices; 2021 international dollar") +
+  scale_y_continuous(label = dollar)
+# interesting here that many of the countries did not have the big covid-related
+# dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
+
 weo2025 |> 
   filter(CONCEPT == "NGDP") |> 
   filter(!country %in% regions) |> 
-  ggplot(aes(x = year, y = value, colour = country)) +
+  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
   geom_line() +
   theme(legend.position = "none") +
   labs(title = "Gross domestic product, current prices",
@@ -126,7 +166,7 @@ weo2025 |>
   filter(concept == txt) |> 
   filter(unit == utxt) |> 
   filter(!country %in% regions) |> 
-  ggplot(aes(x = year, y = value, colour = country)) +
+  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
   geom_line() +
   theme(legend.position = "none") +
   labs(title = txt,
