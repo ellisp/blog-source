@@ -60,7 +60,7 @@ ref_areas <-   read_xlsx("WEOAPR2025/WEOPUB_DSD_APR2025.xlsx", sheet = "REF_AREA
   rename(REF_AREA = Code,
          country = Description)
 
-weo2025 <- d |> 
+weo2025 <- d2025 |> 
   left_join(concept, by = "CONCEPT") |> 
   left_join(unit, by = "UNIT") |> 
   left_join(ref_areas, by = "REF_AREA") |> 
@@ -162,11 +162,28 @@ weo_both |>
   facet_grid(edition~country) +
   theme(legend.position = "none") +
   labs(title = "Gross domestic product per capita in the Pacific",
-       subtitle = "Purchasing power parity, constant prices; 2021 international dollar") +
+       subtitle = "Purchasing power parity, constant prices; 2021 international dollars") +
   scale_y_continuous(label = dollar)
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
+
+weo_both |> 
+  filter(CONCEPT == "NGDPRPPPPC") |> 
+  filter(country %in% pacific) |> 
+  select(country, year, edition, value) |> 
+  spread(edition, value) |> 
+  mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
+  mutate(country = fct_reorder(country, ratio, .fun = last, .na_rm = TRUE)) |> 
+  ggplot(aes(x = year, y = ratio)) +
+  facet_wrap(~country) + 
+  geom_line(size = 1.2, colour = "steelblue") +
+  labs(title = "Revisions in economic expectations in the Pacific",
+       subtitle = "GDP per capita, PPP constant prices, 2021 international dollars
+Ratio of IMF estimates in April 2025 to those October 2024 (higher than 1.0 means the estimate was revised upwards)",
+       x = "",
+       y = "Ratio")
+  
 
 weo2025 |> 
   filter(CONCEPT == "NGDP") |> 
@@ -194,13 +211,13 @@ ctxt <- "Gross domestic product per capita, current prices"
 utxt <- "U.S. dollars"
 
 weo2025 |> 
-  filter(concept == txt) |> 
+  filter(concept == ctxt) |> 
   filter(unit == utxt) |> 
   filter(!country %in% regions) |> 
   ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
   geom_line() +
   theme(legend.position = "none") +
-  labs(title = txt,
+  labs(title = ctxt,
        subtitle = utxt)
 
 
