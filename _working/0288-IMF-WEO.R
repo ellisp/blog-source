@@ -321,7 +321,7 @@ selected <- c(
 
 bgcol <- "grey90"
 
-growth_comps |> 
+p0 <- growth_comps |> 
   filter(country %in% selected) |> 
   mutate(country = factor(country, levels = selected[length(selected):1])) |> 
   mutate(text_col = ifelse(growth < 0, "negative", "positive")) |> 
@@ -329,7 +329,7 @@ growth_comps |>
   geom_col(position = "dodge", width = 0.75, colour = bgcol) +
   geom_text(aes(label = percent(growth, accuracy = 0.1), colour = text_col), 
             position = position_dodge(width = 0.7), hjust = 1, vjust = 0.5,
-            fontface = "bold") +
+            fontface = "bold", size = 3) +
   scale_fill_manual(values = c("darkblue", "steelblue"), guide = guide_legend(reverse = TRUE)) +
   scale_colour_manual(values = c("positive" = "white", "negative" = "black")) +
   scale_x_continuous(label = percent) +
@@ -345,12 +345,13 @@ growth_comps |>
        x = "",
        y = "",
        title = "Projected real GDP growth in 2025 for selected nations",
-       subtitle = "Forecasts made in October 2024 and April 2025 in the IMF World Economic Outlook.
-The update for some, but not all, countries in January 2025 is not considered here.")
+       subtitle = "Forecasts for 2025, made in October 2024 and April 2025 in the IMF World Economic Outlook.
+The update for some, but not all, countries in January 2025 is not considered here.",
+       caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
 
 
-growth_comps |> 
+p1 <- growth_comps |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, -growth, .fun = mean)) |> 
   mutate(text_col = ifelse(growth < 0, "negative", "positive")) |> 
@@ -358,7 +359,7 @@ growth_comps |>
   geom_col(position = "dodge", width = 0.75, colour = bgcol) +
   geom_text(aes(label = percent(growth, accuracy = 0.1), colour = text_col), 
             position = position_dodge(width = 0.7), hjust = 1, vjust = 0.4,
-            fontface = "bold") +
+            fontface = "bold", size = 3) +
   scale_fill_manual(values = c("darkblue", "steelblue"), guide = guide_legend(reverse = TRUE)) +
   scale_colour_manual(values = c("positive" = "white", "negative" = "black")) +
   scale_x_continuous(label = percent) +
@@ -374,4 +375,39 @@ growth_comps |>
        x = "",
        y = "",
        title = "Projected real GDP growth in 2025 for Pacific IMF members",
-       subtitle = "Forecasts made in October 2024 and April 2025 in the IMF World Economic Outlook")
+       subtitle = "Forecasts for 2025, made in October 2024 and April 2025 in the IMF World Economic Outlook.",
+       caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
+
+svg_png(p0, "../img/00288-selected-growth", w = 8, h = 7)
+
+svg_png(p1, "../img/00288-pict-growth", w = 8, h = 7)
+
+
+gcw <- growth_comps |> 
+  spread(edition, growth) |> 
+  mutate(is_pict = ifelse(country %in% pacific, "Pacific", "Other"))
+  
+
+gcw |> 
+  ggplot(aes(x = `WEO October 2024`, y = `WEO April 2025`, colour = is_pict)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point() +
+  geom_text_repel(data = filter(gcw,
+                                `WEO April 2025` > 0.10 |
+                                 `WEO October 2024` < 0 |
+                                  `WEO October 2024` > 0.08 | 
+                                  is_pict == "Pacific"),
+                  aes(label = country)) +
+  theme(legend.position = "none") +
+  coord_equal() +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = percent) +
+  annotate("text", x = 0.2, y = 0.04, label = "Forecast worsened", fontface = "italic") +
+  annotate("text", x = 0, y = 0.12, label = "Forecast improved", fontface = "italic") +
+  labs(x = "Forecast as at October 2024",
+       y = "Forecast as at April 2025",
+       title = "Changes in IMF forecasts of real GDP growth for 2025, by country",
+       caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
+
+
+# note tried transform_modulus but it seems not to work?
