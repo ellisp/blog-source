@@ -255,8 +255,8 @@ pac4 <- weo_both |>
        y = "Revision ratio",
        caption = "Ratio of IMF estimates in April 2025 to those October 2024 (higher than 1.0 means the estimate was revised upwards)")
 
-p2 <- pac1 + pac2 + pac3 + pac4 + plot_layout(ncol = 2)
-svg_png(p2, "../img/0288-pac-ratios", w = 16, h = 9.5)
+p7 <- pac1 + pac2 + pac3 + pac4 + plot_layout(ncol = 2)
+svg_png(p7, "../img/0288-pac-ratios", w = 16, h = 9.5)
 
 
 weo2025 |> 
@@ -294,7 +294,7 @@ weo2025 |>
   labs(title = ctxt,
        subtitle = utxt)
 
-#-------------headline growth rates
+#-------------headline growth rates------------
 
 # from trial and error on which series ("CONCEPT") to use, we see the figures
 # used for headline is real GDP growth so constant prices, but not per capita
@@ -388,26 +388,32 @@ gcw <- growth_comps |>
   mutate(is_pict = ifelse(country %in% pacific, "Pacific", "Other"))
   
 
-gcw |> 
+p2 <- gcw |> 
   ggplot(aes(x = `WEO October 2024`, y = `WEO April 2025`, colour = is_pict)) +
-  geom_abline(slope = 1, intercept = 0) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey75") +
   geom_point() +
   geom_text_repel(data = filter(gcw,
                                 `WEO April 2025` > 0.10 |
                                  `WEO October 2024` < 0 |
                                   `WEO October 2024` > 0.08 | 
                                   is_pict == "Pacific"),
-                  aes(label = country)) +
+                  aes(label = country),
+                  seed = 123) +
   theme(legend.position = "none") +
   coord_equal() +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent) +
-  annotate("text", x = 0.2, y = 0.04, label = "Forecast worsened", fontface = "italic") +
-  annotate("text", x = 0, y = 0.12, label = "Forecast improved", fontface = "italic") +
+  scale_colour_manual(values = c("Pacific" = "blue", "Other" = "grey60")) +
+  annotate("text", x = 0.2, y = 0.04, label = "Forecast lower in April 2025", fontface = "italic") +
+  annotate("text", x = 0, y = 0.12, label = "Forecast higher in April 2025", fontface = "italic") +
   labs(x = "Forecast as at October 2024",
        y = "Forecast as at April 2025",
        title = "Changes in IMF forecasts of real GDP growth for 2025, by country",
+       subtitle = "Pacific island countries highlighted. Diagonal line shows the same forecast in both 2024 and 2025.",
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
 
 # note tried transform_modulus but it seems not to work?
+
+svg_png(p2, "../img/00288-pict-growth-scatter", w = 8, h = 6)
+
