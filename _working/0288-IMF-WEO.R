@@ -1,5 +1,7 @@
 library(readxl)
 library(tidyverse)
+library(rsdmx)
+library(patchwork)
 
 # newsarticles like this compare the forecasts for growth made in April to those
 # made in June:
@@ -31,7 +33,6 @@ dluz("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2024/Octob
 
 #---------------processing---------------
 
-library(rsdmx)
 d2025 <- readSDMX("WEOAPR2025/xmlfile_APR2025.xml", isURL = FALSE) |> 
   # this parsing takes a long time:
   as_tibble()
@@ -117,7 +118,8 @@ pacific <- c(
   "Tonga",
   "Marshall Islands",
   "Micronesia",
-  "Tuvalu"
+  "Tuvalu",
+  "Palau"
 )
 
 stopifnot(all(pacific %in% ref_areas$country))
@@ -168,22 +170,94 @@ weo_both |>
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
 
-weo_both |> 
+pac_revisions <- weo_both |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   select(country, year, edition, value) |> 
   spread(edition, value) |> 
   mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
-  mutate(country = fct_reorder(country, ratio, .fun = last, .na_rm = TRUE)) |> 
+  mutate(country = fct_reorder(country, ratio, .fun = last, .na_rm = TRUE)) 
+
+pac1 <- pac_revisions |> 
   ggplot(aes(x = year, y = ratio)) +
   facet_wrap(~country) + 
   geom_line(size = 1.2, colour = "steelblue") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Revisions in economic expectations in the Pacific",
-       subtitle = "GDP per capita, PPP constant prices, 2021 international dollars
-Ratio of IMF estimates in April 2025 to those October 2024 (higher than 1.0 means the estimate was revised upwards)",
+       subtitle = "GDP per capita, PPP constant prices, 2021 international dollars",
        x = "",
-       y = "Ratio")
-  
+       y = "Revision atio")
+
+pac2 <- weo_both |> 
+  filter(CONCEPT == "LP") |> 
+  filter(country %in% pacific) |> 
+  select(country, year, edition, value) |> 
+  spread(edition, value) |> 
+  mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
+  mutate(country = factor(country, levels = levels(pac_revisions$country))) |> 
+  ggplot(aes(x = year, y = ratio)) +
+  facet_wrap(~country) + 
+  geom_line(size = 1.2, colour = "steelblue") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = " ",
+       subtitle = "Population",
+       x = "",
+       y = "Revision ratio")
+
+
+pac3 <- weo_both |> 
+  filter(CONCEPT == "NGDP" & unit == "National currency") |> 
+  filter(country %in% pacific) |> 
+  select(country, year, edition, value) |> 
+  spread(edition, value) |> 
+  mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
+  mutate(country = factor(country, levels = levels(pac_revisions$country))) |> 
+  ggplot(aes(x = year, y = ratio)) +
+  facet_wrap(~country) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_line(size = 1.2, colour = "steelblue") +
+  labs(title = "  ",
+       subtitle = "GDP in local currency, current prices",
+       x = "",
+       y = "Revision ratio")
+
+pac5 <- weo_both |> 
+  filter(CONCEPT == "NGDPD" & unit == "U.S. dollars") |> 
+  filter(country %in% pacific) |> 
+  select(country, year, edition, value) |> 
+  spread(edition, value) |> 
+  mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
+  mutate(country = factor(country, levels = levels(pac_revisions$country))) |> 
+  ggplot(aes(x = year, y = ratio)) +
+  facet_wrap(~country) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_line(size = 1.2, colour = "steelblue") +
+  labs(title = "  ",
+       subtitle = "GDP in US dollars, current prices",
+       x = "",
+       y = "Revision ratio")
+
+
+pac4 <- weo_both |> 
+  filter(CONCEPT == "PPPEX") |> 
+  filter(country %in% pacific) |> 
+  select(country, year, edition, value) |> 
+  spread(edition, value) |> 
+  mutate(ratio = `WEO April 2025` / `WEO October 2024`) |> 
+  mutate(country = factor(country, levels = levels(pac_revisions$country))) |> 
+  ggplot(aes(x = year, y = ratio)) +
+  facet_wrap(~country) + 
+  geom_line(size = 1.2, colour = "steelblue") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "  ",
+       subtitle = "Implied purchasing power parity conversion rate",
+       x = "",
+       y = "Revision ratio",
+       caption = "Ratio of IMF estimates in April 2025 to those October 2024 (higher than 1.0 means the estimate was revised upwards)")
+
+p2 <- pac1 + pac2 + pac3 + pac4 + plot_layout(ncol = 2)
+svg_png(p2, "../img/0288-pac-ratios", w = 16, h = 9.5)
+
 
 weo2025 |> 
   filter(CONCEPT == "NGDP") |> 
@@ -220,4 +294,84 @@ weo2025 |>
   labs(title = ctxt,
        subtitle = utxt)
 
+#-------------headline growth rates
 
+# from trial and error on which series ("CONCEPT") to use, we see the figures
+# used for headline is real GDP growth so constant prices, but not per capita
+growth_comps <- weo_both |> 
+  filter(CONCEPT == "NGDP_R") |> 
+  filter(year %in% 2024:2025) |> 
+  group_by(country, edition) |> 
+  summarise(growth = value[year == 2025] / value[year == 2024] - 1) |> 
+  ungroup()
+
+selected <- c(
+  "United States",
+  "Canada",
+  "Japan",
+  "United Kingdom",
+  "Germany",
+  "Italy",
+  "France",
+  "China",
+  "India",
+  "Russia",
+  "Brazil"
+)
+
+bgcol <- "grey90"
+
+growth_comps |> 
+  filter(country %in% selected) |> 
+  mutate(country = factor(country, levels = selected[length(selected):1])) |> 
+  mutate(text_col = ifelse(growth < 0, "negative", "positive")) |> 
+  ggplot(aes(x = growth, y = country, fill = edition)) +
+  geom_col(position = "dodge", width = 0.75, colour = bgcol) +
+  geom_text(aes(label = percent(growth, accuracy = 0.1), colour = text_col), 
+            position = position_dodge(width = 0.7), hjust = 1, vjust = 0.5,
+            fontface = "bold") +
+  scale_fill_manual(values = c("darkblue", "steelblue"), guide = guide_legend(reverse = TRUE)) +
+  scale_colour_manual(values = c("positive" = "white", "negative" = "black")) +
+  scale_x_continuous(label = percent) +
+  geom_vline(xintercept = 0) +
+  guides(colour = "none") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        plot.background = element_rect(fill = bgcol, colour = NA),
+        axis.line.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = c(0.8, 0.8)) +
+  labs(fill = "",
+       x = "",
+       y = "",
+       title = "Projected real GDP growth in 2025 for selected nations",
+       subtitle = "Forecasts made in October 2024 and April 2025 in the IMF World Economic Outlook.
+The update for some, but not all, countries in January 2025 is not considered here.")
+
+
+
+growth_comps |> 
+  filter(country %in% pacific) |> 
+  mutate(country = fct_reorder(country, -growth, .fun = mean)) |> 
+  mutate(text_col = ifelse(growth < 0, "negative", "positive")) |> 
+  ggplot(aes(x = growth, y = country, fill = edition)) +
+  geom_col(position = "dodge", width = 0.75, colour = bgcol) +
+  geom_text(aes(label = percent(growth, accuracy = 0.1), colour = text_col), 
+            position = position_dodge(width = 0.7), hjust = 1, vjust = 0.4,
+            fontface = "bold") +
+  scale_fill_manual(values = c("darkblue", "steelblue"), guide = guide_legend(reverse = TRUE)) +
+  scale_colour_manual(values = c("positive" = "white", "negative" = "black")) +
+  scale_x_continuous(label = percent) +
+  geom_vline(xintercept = 0) +
+  guides(colour = "none") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        plot.background = element_rect(fill = bgcol, colour = NA),
+        axis.line.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = c(0.8, 0.8)) +
+  labs(fill = "",
+       x = "",
+       y = "",
+       title = "Projected real GDP growth in 2025 for Pacific IMF members",
+       subtitle = "Forecasts made in October 2024 and April 2025 in the IMF World Economic Outlook")
