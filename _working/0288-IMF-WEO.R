@@ -4,7 +4,7 @@ library(rsdmx)
 library(patchwork)
 
 # newsarticles like this compare the forecasts for growth made in April to those
-# made in June:
+# made in January:
 # https://www.bbc.com/news/articles/czx415erwkwo
 # eg US 1.8% v 2.7%; Canada 1.4% v 2.0%; France 0.6% v 0.8%
 # Q1 - Are these current or constant prices or PPP; and per capita or not?
@@ -32,7 +32,7 @@ dluz("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2024/Octob
               destfile = "weo2024-oct.zip")
 
 #---------------processing---------------
-if(!(exists(d2025) & exists(d2024)){
+if(!(exists("d2025") & exists("d2024"))){
   d2025 <- readSDMX("WEOAPR2025/xmlfile_APR2025.xml", isURL = FALSE) |> 
     # this parsing takes a long time:
     as_tibble()
@@ -69,7 +69,7 @@ weo2025 <- d2025 |>
   mutate(year = as.numeric(TIME_PERIOD),
          value = as.numeric(OBS_VALUE)) |> 
   select(concept:value, everything()) |> 
-  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Actual", "Forecast"),
+  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Forecast", "Actual"),
          type = fct_relevel(type, "Forecast"),
          edition = "WEO April 2025")
 
@@ -84,7 +84,7 @@ weo2024 <- d2024 |>
   mutate(year = as.numeric(TIME_PERIOD),
          value = as.numeric(OBS_VALUE)) |> 
   select(concept:value, everything()) |> 
-  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Actual", "Forecast"),
+  mutate(type = if_else(year > as.numeric(LASTACTUALDATE), "Forecast", "Actual"),
          type = fct_relevel(type, "Forecast"),
          edition = "WEO October 2024")
 
@@ -215,9 +215,9 @@ p1 <- growth_comps |>
        subtitle = "Forecasts for 2025, made in October 2024 and April 2025 in the IMF World Economic Outlook.",
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
-svg_png(p0, "../img/00288-selected-growth", w = 8, h = 7)
+svg_png(p0, "../img/0288-selected-growth", w = 8, h = 7)
 
-svg_png(p1, "../img/00288-pict-growth", w = 8, h = 7)
+svg_png(p1, "../img/0288-pict-growth", w = 8, h = 7)
 
 
 gcw <- growth_comps |> 
@@ -255,25 +255,26 @@ p2 <- gcw |>
 
 # note tried transform_modulus but it isn't much help and complicates reading
 
-svg_png(p2, "../img/00288-pict-growth-scatter", w = 8, h = 6)
+svg_png(p2, "../img/0288-pict-growth-scatter", w = 8, h = 6)
 
 #--------------------growth time series--------------------------
 
 
 p3 <- weo2025 |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
-  ggplot(aes(x = year, y = value, linetype = type)) +
-  geom_line(aes(colour = country)) +
+  ggplot(aes(x = year, y = value)) +
+  geom_line(aes(colour = country, linewidth = type)) +
   geom_smooth(se = FALSE, colour = "black", method = "gam") +
   theme(legend.position = "none") +
   scale_y_log10(label = dollar) +
+  scale_linewidth_manual(values = c("Actual" = 0.9, "Forecast" = 0.6)) +
   labs(title = "Gross domestic product per capita, constant prices",
        subtitle = "Purchasing power parity; 2021 international dollar",
        x = "",
        y = "GDP per capita (logarithmic scale)",
        caption = "Source: IMF World Economic Outlook 'NGDPRPPPPC', April 2025")
   
-svg_png(p3, "../img/00288-all-growth-line", w = 8, h = 6)
+svg_png(p3, "../img/0288-all-growth-line", w = 8, h = 6)
 
 
 
@@ -281,7 +282,7 @@ p4 <- weo2025 |>
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
-  ggplot(aes(x = year, y = value, linewidth = type)) +
+  ggplot(aes(x = year, y = value, colour = type, linewidth = type)) +
   geom_line() +
   facet_wrap(~country) +
   theme(legend.position = "none") +
@@ -290,11 +291,15 @@ p4 <- weo2025 |>
        x = "", 
        y = "GDP per capita (original scale)",
        caption = "Source: IMF World Economic Outlook 'NGDPRPPPPC', April 2025") +
-  scale_y_continuous(label = dollar)
+  scale_y_continuous(label = dollar) +
+  scale_linewidth_manual(values = c("Actual" = 1.5, "Forecast" = 1)) +
+  scale_colour_manual(values = c("Actual" = "darkblue", "Forecast" = "lightblue"))
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
-svg_png(p4, "../img/00288-pict-growth-line", w = 8, h = 6)
+p4
+
+svg_png(p4, "../img/0288-pict-growth-line", w = 8, h = 6)
 
 
 # comparison of april 2025 and October 2024 forecasts
@@ -302,21 +307,22 @@ p5 <- weo_both |>
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
-  ggplot(aes(x = year, y = value, colour = edition, linetype = type)) +
-  geom_line(linewidth = 1.5) +
+  ggplot(aes(x = year, y = value, colour = edition, linewidth = type)) +
+  geom_line() +
   facet_wrap(~country) +
   theme(legend.position = "bottom") +
   labs(title = "Gross domestic product per capita in the Pacific",
        subtitle = "Purchasing power parity, constant prices; 2021 international dollars",
        x = "",
        y = "GDP per capita (logarithmic scale)",
-       linetype = "",
+       linewidth = "",
        colour = "") +
+  scale_linewidth_manual(values = c("Actual" = 1.5, "Forecast" = 1)) +
   scale_y_log10(label = dollar_format(accuracy = 1))
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
-svg_png(p5, "../img/00288-pict-growth-comp-line", w = 8, h = 6)
+svg_png(p5, "../img/0288-pict-growth-comp-line", w = 8, h = 6)
 
 #---------------digging in to what makes that change, particularly for Marshalls-------------
 
