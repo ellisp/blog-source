@@ -32,14 +32,15 @@ dluz("https://www.imf.org/-/media/Files/Publications/WEO/WEO-Database/2024/Octob
               destfile = "weo2024-oct.zip")
 
 #---------------processing---------------
-
-d2025 <- readSDMX("WEOAPR2025/xmlfile_APR2025.xml", isURL = FALSE) |> 
-  # this parsing takes a long time:
-  as_tibble()
-
-d2024 <- readSDMX("WEOOCT2024/WEO_PUB_OCT2024.xml", isURL = FALSE) |> 
-  # this parsing takes a long time:
-  as_tibble()
+if(!(exists(d2025) & exists(d2024)){
+  d2025 <- readSDMX("WEOAPR2025/xmlfile_APR2025.xml", isURL = FALSE) |> 
+    # this parsing takes a long time:
+    as_tibble()
+  
+  d2024 <- readSDMX("WEOOCT2024/WEO_PUB_OCT2024.xml", isURL = FALSE) |> 
+    # this parsing takes a long time:
+    as_tibble()
+}
 
 count(d2025, SCALE)    # 1, 1000000 and 1000000000
 count(d2025, CONCEPT)  # BCA, BCA_NGDP, BF, BFD, etc
@@ -180,7 +181,7 @@ p0 <- growth_comps |>
   labs(fill = "",
        x = "",
        y = "",
-       title = "Projected real GDP growth in 2025 for selected nations",
+       title = "Projected real annual GDP growth in 2025 for selected nations",
        subtitle = "Forecasts for 2025, made in October 2024 and April 2025 in the IMF World Economic Outlook.
 The update for some, but not all, countries in January 2025 is not considered here.",
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
@@ -210,7 +211,7 @@ p1 <- growth_comps |>
   labs(fill = "",
        x = "",
        y = "",
-       title = "Projected real GDP growth in 2025 for Pacific IMF members",
+       title = "Projected real annual GDP growth in 2025 for Pacific IMF members",
        subtitle = "Forecasts for 2025, made in October 2024 and April 2025 in the IMF World Economic Outlook.",
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
@@ -223,6 +224,7 @@ gcw <- growth_comps |>
   spread(edition, growth) |> 
   mutate(is_pict = ifelse(country %in% pacific, "Pacific", "Other"))
 
+annot_col <- "darkorange"
 
 p2 <- gcw |> 
   ggplot(aes(x = `WEO October 2024`, y = `WEO April 2025`, colour = is_pict)) +
@@ -240,11 +242,13 @@ p2 <- gcw |>
   scale_y_continuous(label = percent) +
   scale_colour_manual(values = c("Pacific" = "blue", "Other" = "grey60")) +
   coord_equal() +
-  annotate("text", x = 0.2, y = 0.04, label = "Forecast lower in April 2025", fontface = "italic") +
-  annotate("text", x = 0, y = 0.12, label = "Forecast higher in April 2025", fontface = "italic") +
+  annotate("text", x = 0.2, y = 0.04, label = "Forecast lower in April 2025", 
+           fontface = "italic", colour = annot_col) +
+  annotate("text", x = 0, y = 0.12, label = "Forecast higher in April 2025", 
+           fontface = "italic", colour = annot_col) +
   labs(x = "Forecast as at October 2024",
        y = "Forecast as at April 2025",
-       title = "Changes in IMF forecasts of real GDP growth for 2025, by country",
+       title = "Changes in IMF forecasts of real annual GDP growth for 2025, by country",
        subtitle = "Pacific island countries highlighted. Diagonal line shows the same forecast in both 2024 and 2025.",
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
@@ -277,8 +281,8 @@ p4 <- weo2025 |>
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
-  ggplot(aes(x = year, y = value, linetype = type)) +
-  geom_line(colour = "steelblue", linewidth = 1.5) +
+  ggplot(aes(x = year, y = value, linewidth = type)) +
+  geom_line() +
   facet_wrap(~country) +
   theme(legend.position = "none") +
   labs(title = "Gross domestic product per capita in the Pacific",
