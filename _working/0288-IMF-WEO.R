@@ -236,10 +236,10 @@ p2 <- gcw |>
                   aes(label = country),
                   seed = 123) +
   theme(legend.position = "none") +
-  coord_equal() +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent) +
   scale_colour_manual(values = c("Pacific" = "blue", "Other" = "grey60")) +
+  coord_equal() +
   annotate("text", x = 0.2, y = 0.04, label = "Forecast lower in April 2025", fontface = "italic") +
   annotate("text", x = 0, y = 0.12, label = "Forecast higher in April 2025", fontface = "italic") +
   labs(x = "Forecast as at October 2024",
@@ -249,52 +249,72 @@ p2 <- gcw |>
        caption = "Source: IMF World Economic Outlooks. Growth rates based on constant prices, but are not per capita.")
 
 
-# note tried transform_modulus but it seems not to work?
+# note tried transform_modulus but it isn't much help and complicates reading
 
 svg_png(p2, "../img/00288-pict-growth-scatter", w = 8, h = 6)
 
 #--------------------growth time series--------------------------
 
 
-weo2025 |> 
+p3 <- weo2025 |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
-  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
-  geom_line() +
+  ggplot(aes(x = year, y = value, linetype = type)) +
+  geom_line(aes(colour = country)) +
+  geom_smooth(se = FALSE, colour = "black", method = "gam") +
   theme(legend.position = "none") +
+  scale_y_log10(label = dollar) +
   labs(title = "Gross domestic product per capita, constant prices",
-       subtitle = "Purchasing power parity; 2021 international dollar")
+       subtitle = "Purchasing power parity; 2021 international dollar",
+       x = "",
+       y = "GDP per capita (logarithmic scale)",
+       caption = "Source: IMF World Economic Outlook 'NGDPRPPPPC', April 2025")
+  
+svg_png(p3, "../img/00288-all-growth-line", w = 8, h = 6)
 
 
 
-weo2025 |> 
+p4 <- weo2025 |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
-  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
-  geom_line() +
+  ggplot(aes(x = year, y = value, linetype = type)) +
+  geom_line(colour = "steelblue", linewidth = 1.5) +
   facet_wrap(~country) +
   theme(legend.position = "none") +
   labs(title = "Gross domestic product per capita in the Pacific",
-       subtitle = "Purchasing power parity, constant prices; 2021 international dollar") +
+       subtitle = "Purchasing power parity, constant prices; 2021 international dollar",
+       x = "", 
+       y = "GDP per capita (original scale)",
+       caption = "Source: IMF World Economic Outlook 'NGDPRPPPPC', April 2025") +
   scale_y_continuous(label = dollar)
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
+svg_png(p4, "../img/00288-pict-growth-line", w = 8, h = 6)
 
-weo_both |> 
+
+# comparison of april 2025 and October 2024 forecasts
+p5 <- weo_both |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
   filter(country %in% pacific) |> 
   mutate(country = fct_reorder(country, value, .na_rm = TRUE)) |> 
-  ggplot(aes(x = year, y = value, colour = country, linetype = type)) +
-  geom_line() +
-  facet_grid(edition~country) +
-  theme(legend.position = "none") +
+  ggplot(aes(x = year, y = value, colour = edition, linetype = type)) +
+  geom_line(linewidth = 1.5) +
+  facet_wrap(~country) +
+  theme(legend.position = "bottom") +
   labs(title = "Gross domestic product per capita in the Pacific",
-       subtitle = "Purchasing power parity, constant prices; 2021 international dollars") +
-  scale_y_continuous(label = dollar)
+       subtitle = "Purchasing power parity, constant prices; 2021 international dollars",
+       x = "",
+       y = "GDP per capita (logarithmic scale)",
+       linetype = "",
+       colour = "") +
+  scale_y_log10(label = dollar_format(accuracy = 1))
 # interesting here that many of the countries did not have the big covid-related
 # dip in GDP that Fiji did (or at least, it doesn't show up in their stats)
 
+svg_png(p5, "../img/00288-pict-growth-comp-line", w = 8, h = 6)
+
+#---------------digging in to what makes that change, particularly for Marshalls-------------
 
 pac_revisions <- weo_both |> 
   filter(CONCEPT == "NGDPRPPPPC") |> 
@@ -362,7 +382,7 @@ pac5 <- weo_both |>
        subtitle = "GDP in US dollars, current prices",
        x = "",
        y = "Revision ratio")
-
+# not used in blog
 
 pac4 <- weo_both |> 
   filter(CONCEPT == "PPPEX") |> 
@@ -384,7 +404,7 @@ pac4 <- weo_both |>
 p7 <- pac1 + pac2 + pac3 + pac4 + plot_layout(ncol = 2)
 svg_png(p7, "../img/0288-pac-ratios", w = 16, h = 9.5)
 
-
+#----------more playing around here, things you might turn into a Shiny app----------
 weo2025 |> 
   filter(CONCEPT == "NGDP") |> 
   filter(!country %in% regions) |> 
@@ -395,9 +415,9 @@ weo2025 |>
        subtitle = "local currency")
 
 # export price of manufacturers is the only thing as % change:
-weo2025 |> 
-  filter(unit == "U.S. dollars; annual percent change") |> 
-  count(concept)
+# weo2025 |> 
+#   filter(unit == "U.S. dollars; annual percent change") |> 
+#   count(concept)
 
 # lots of things in USD:
 # weo2025 |> 

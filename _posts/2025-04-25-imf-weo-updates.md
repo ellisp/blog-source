@@ -1,7 +1,7 @@
 ---
 layout: post
 title: World Economic Updates
-date: 2025-04-24
+date: 2025-04-25
 tag: 
    - Economics
    - DataFromTheWeb
