@@ -212,3 +212,31 @@ p3 <- ggplot(mass_shootings2, aes(xend = approx_date, x = approx_date)) +
           "Events in which at least 5 persons other than perpetrator died") 
 
 frs::svg_png(p3, "../img/0158-events-with-osmington")
+
+
+
+
+
+
+
+p4 <- ggplot(mass_shootings2, aes(xend = approx_date, x = approx_date)) +
+  geom_rect(xmin = as.Date("1996-07-15"), xmax = Inf, ymin = -Inf, ymax = Inf,
+            fill = "steelblue", alpha = 0.01) +
+  geom_rect(xmax = as.Date("1996-07-15"), xmin = -Inf, ymin = -Inf, ymax = Inf,
+            fill = "red", alpha = 0.01) +
+  geom_segment(y = -Inf, yend = Inf) +
+  scale_x_date(limits = c(min(mass_shootings$approx_date - 50), as.Date("2025-02-01"))) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(x = "Approximate date of mass shooting",
+       y = "") +
+  annotate("text", x = as.Date("2008-01-01"), y = 1, label = "After the gun buy-back",
+           colour = "steelblue") +
+  ggtitle("Firearm-related homicides in Australia, to February 2025", 
+          "Events in which at least 5 persons other than perpetrator died") 
+
+frs::svg_png(p4, "../img/0158-events-to-2025")
+
+
