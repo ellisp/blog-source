@@ -35,10 +35,14 @@ time_chores <- gender |>
   # preference for ages to use
   group_by(geo_area_name, time_period, age) |> 
   summarise(prop_male = value[sex == 'MALE'] / sum(value[sex == 'MALE'] + value[sex == 'FEMALE'])) |> 
-  group_by(geo_area_name) |> 
+  group_by(geo_area_name, time_period) |> 
+  # limit to just one, latest survey per country. If you don't do this, any
+  # modelling needs to include a country random effect for the multiple
+  # observations per country:
   filter(time_period == max(time_period)) |> 
+  # limit to just the best age group, closest to adults, for each country/time:
   mutate(age = factor(age, levels = c("15+", "16+", "18+", "12+", "10+", "6+", "5+", "3+"))) |> 
-  arrange(geo_area_name, age) |> 
+  arrange(geo_area_name, time_period, age) |> 
   slice(1) |> 
   ungroup() |> 
   mutate(iso3_code = countrycode(geo_area_name, origin = "country.name.en", destination = "iso3c"))
@@ -56,15 +60,15 @@ wpp <- read_csv("wpp2024.gz") |>
   clean_names() |> 
   select(iso3_code, time_period = time, tfr) |> 
   filter(!is.na(iso3_code))
-
-combined <- time_chores |> 
-  left_join(wpp, by = c("iso3_code", "time_period"))
-
-# overall, negative relationship. Expected because income highly correlated with both
-combined |> 
-  ggplot(aes(x = prop_male, y = tfr)) +
-  geom_smooth(method = "lm") +
-  geom_point()
+# 
+# combined <- time_chores |> 
+#   left_join(wpp, by = c("iso3_code", "time_period"))
+# 
+# # overall, negative relationship. Expected because income highly correlated with both
+# combined |> 
+#   ggplot(aes(x = prop_male, y = tfr)) +
+#   geom_smooth(method = "lm") +
+#   geom_point()
 
 # so income must be a confounder. We can use the IMF WEO data from last week
 # (see that blog for how to access it)
@@ -103,7 +107,7 @@ combined |>
 
 
 
-model <- lm(tfr ~ prop_male + log(gdprppppc), data = combined)
+model <- lm(tfr ~ log(prop_male) + log(gdprppppc), data = combined)
 summary(model)
 par(mfrow = c(2,2))
 plot(model)
@@ -111,4 +115,9 @@ plot(model)
 library(mgcv)
 model2 <- gam(tfr ~ log(prop_male) + s(log(gdprppppc)), data = combined)
 summary(model2)
-plot(model2)
+plot(model2, pages = TRUE)
+
+
+# note - no need to have only one observation per country - have multiple
+# observations in different years and its a more powerful model with mixed
+# effects of course
