@@ -1,4 +1,31 @@
+---
+layout: post
+title: Animated population pyramids for the Pacific
+date: 2025-05-17
+tag: 
+   - Demography
+   - DataFromTheWeb
+   - Pacific
+   - Animations
+   - OpenData
+   - WorkRelated
+description: How to produce an animation of demographic patterns in Pacific island countries and territories from 1950 to 2050, in just a few lines of code.
+image: /img/0291-pac_pyramids.gif
+socialimage: https:/freerangestats.info/img/0291-pac_pyramids.gif
+category: R
+---
 
+A short blog post today which is just all about producing this animation, which I used for a work presentation yesterday:
+
+<img src="/img/0291-pac_pyramids.gif" width="100%" alt="Animated population pyramids of the Pacific islands from 1950 to 2050">
+
+It's super easy and it's worth putting out there how to do it, if only to encourage people to think more about demography in the Pacific. And animated population pyramids are cool.
+
+Regarding the substance, it's a familiar pattern for those in the field. The populations start at small, fast growing and heavy in young people; and over time become more evenly spread over age groups and indeed in some cases positively elderly. There are a few interesting quirks such as the very high number of males in Guam early in the period, reflecting the predominance of the US military in the population numbers at that time. Some smaller countries with read outwards immigration options, like Niue, have been shrinking right from the very beginning of the period.
+
+It's a simple three step process. First, we download the data from the [Pacific Data Hub "PDH.stat"](https://stats.pacificdata.org/), and do some formatting and reshaping to make it easy to draw the chart with the right country names and population totals in the facet labels:
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(rsdmx)
 library(scales)
@@ -71,8 +98,11 @@ pops <- proj_raw |>
          short_name = gsub("Mariana Islands", "Marianas", short_name)) |> 
   mutate(pict = glue("{short_name}: {format_num(total_pop)}")) |> 
   mutate(pict = fct_reorder(pict, total_pop_2024))
-  
+{% endhighlight %}
 
+Second, we draw 101 plots, one for each year, and save them as images in a temporary folder. I like to do this explicitly (saving each frame of the animation in a loop) as I find it generally easier to troubleshoot this way:
+
+{% highlight R lineanchors %}
 #-----------------------Draw plot--------------------
 # see https://blog.datawrapper.de/gendercolor/
 pal <- c("#D4855A", "#C5CB81")
@@ -115,55 +145,17 @@ for(y in 1950:2050){
   dev.off()
 
 }
+{% endhighlight %}
 
+Finally, we use [ImageMagick](https://imagemagick.org/index.php) to convert those 101 PNG images into a single GIF. This is a single line of code on the command line; if we want to do it without leaving R it is easy enough:
+
+{% highlight R lineanchors %}
 # next step requires imagemagick to be installed. Takes about 30 seconds.
 wd <- setwd("tmp_pyramids")
 system('magick -loop -50 -delay 10 *.png "0291-pac_pyramids.gif"')
-setwd(wd)
+setwd(wd) # go back to original working directory
+{% endhighlight %}
 
-# move to where the blog expects it
-file.rename("tmp_pyramids/0291-pac_pyramids.gif", 
-            "../img/0291-pac_pyramids.gif")
+And that's it! 
 
-
-#=============changes in population projections============
-# won't use this in the blog for now until can do one that is fully 
-# reproducible
-# these have been downloaded in previous blog posts
-indicators22  <- read_csv("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv")|> 
-  filter(Variant == "Medium") |> 
-  select(Location, Time, TPopulation1July) |> 
-  mutate(wpp_year = "2022")
-         
-indicators24 <- read_csv("wpp2024.csv") |> 
-  filter(Variant == "Medium") |> 
-  select(Location, Time, TPopulation1July) |> 
-  mutate(wpp_year = "2024")
-
-indicators_both <- bind_rows(indicators22, indicators24)
-
-picts <- c("Papua New Guinea", "Solomon Islands", "Vanuatu", "Fiji",
-               "Kiribati", "Samoa", "Tonga", "Marshall Islands",
-           "Micronesia (Fed. States of)")
-
-p2 <- indicators_both |> 
-  filter(Location %in% picts) |> 
-  mutate(Location = fct_reorder(Location, -TPopulation1July, .na_rm = TRUE)) |> 
-  ggplot(aes(x = Time, y = TPopulation1July, colour = wpp_year)) +
-  facet_wrap(~Location, scales = "free_y") +
-  annotate("rect", xmin = 2024, xmax = Inf, ymin = -Inf, ymax = Inf,
-           fill = "grey80", alpha = 0.2) +
-  geom_line() +
-  scale_y_continuous(label = comma) +
-  scale_colour_manual(values = spc_cols(1:2)) +
-  theme(legend.position = "right") +
-  labs(x = "",
-       colour = "Year of\nprojection",
-       y = "Population on 1 July ('000s)",
-       title = "UN World Population Prospects", 
-       subtitle = "Projection made in 2024 compared to that made in 2022")
-
-png("../img/0291-selected-picts-forecasts.png", width = 4500, height = 2300, 
-    res = 600, type = "cairo-png")
-print(p2)
-dev.off()
+The source for these population projections (at least right now) is the UN Population Prospects. It would be easy to adapt this code to work with any other combination of countries, of course. I've just used the version in PDH.stat because I wanted to highlight that for work, and it made it easier for me to get just the countries and age groups I needed for a presentation that was put together in a bit of a rush.
