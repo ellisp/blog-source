@@ -86,10 +86,15 @@ d2 |>
              next_node = severity_to,
              fill = severity_from,
              label = severity_from)) +
-  geom_sankey() +
+  geom_sankey(alpha = 0.8) +
   geom_sankey_label() +
   theme_sankey() +
-  scale_fill_manual(values = pallette)
+  scale_fill_manual(values = pallette) +
+  labs(title = "Severity of an unknown disease shown in a Sankey chart",
+       subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
+To achieve this, it's important that vertical sequencing and colour are both meaningfully mapped to severity.",
+       x = "") +
+  theme(legend.position = "none")
 
 
 
@@ -137,6 +142,7 @@ dev.off()
 
 
 # what's wrong with the original?
-# positions of nodes not in sequency of severity
-# colours don't show severity or direction of severity
-# horizontal positions don't reflect the increasing amount of time
+# - positions of nodes not in sequency of severity
+# - colours show severity ok but not colorblind-ok, and lack of vertical positioning 
+#   means you only notice the mapping of colour with careful attention
+# - horizontal positions don't reflect the increasing amount of time
