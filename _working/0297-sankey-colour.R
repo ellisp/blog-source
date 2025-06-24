@@ -10,40 +10,74 @@ d <- read_csv("../data/complicated-sankey-data.csv", col_types = "ccccd", na = "
   clean_names()
 
 #------------ggsankey approach---------------
-extras <- tibble(
-  week_from = 6,
-  week_to = NA, 
-  severity_from = c("NA", 1:7),
-  severity_to = NA,
-  value = 1
-)
+extras <- d2 |> 
+  filter(week_to == "6") |> 
+  mutate(
+    week_from = "6",
+    week_to = NA, 
+    severity_from = severity_to)
 
-scaling_totals <- d |> 
-  group_by(severity_to, week_to) |> 
-  summarise(incoming = sum(value)) |> 
-  ungroup()
-
-d |> 
-  rbind(extras) |> 
-  left_join(scaling_totals, by = c("severity_from" = "severity_to", "week_from" = "week_to")) |> 
-  group_by(severity_from, week_from) |> 
-  mutate(value = ifelse(is.na(incoming), value, value / sum(value) * sum(incoming))) |> 
-  ungroup() |>   
-  mutate(value = round(value * 100)) |> View()
-  uncount(weights = value) |> 
-  mutate(week_from = case_when(
-    week_from == 0 ~ "zero",
-    week_from == 1 ~ "one",
-    week_from == 3 ~ "three",
-    week_from == 6 ~ "six"
-  ),
-  week_to = case_when(
-    week_to == 0 ~ "zero",
-    week_to == 1 ~ "one",
-    week_to == 3 ~ "three",
-    week_to == 6 ~ "six"
+weekf <- function(x){
+  x <-  case_when(
+    x == 0 ~ "Week zero",
+    x == 1 ~ "Week one",
+    x == 3 ~ "Week three",
+    x == 6 ~ "Week six"
   )
-  ) |> 
+  x <- factor(x, levels = c("Week zero","Week one","Week three", "Week six"))
+}
+
+
+# we have some adjustments to deal with because of having made up data
+total_people <- 1
+
+# there should be the same total number of people each week
+d2 <- d |> 
+  rbind(extras)  |> 
+  mutate(week_from =  weekf(week_from),
+         week_to = weekf(week_to))
+  
+for(i in 1:5){
+  d2 <- d2 |> 
+    group_by(week_from) |> 
+    mutate(value = value / sum(value) * total_people) |> 
+    group_by(week_to) |> 
+    mutate(value = value / sum(value) * total_people) |> 
+    ungroup()   
+  
+  tot_arrived <- d2 |>  
+    group_by(week_from, severity_from) |> 
+    mutate(arrived_sev_from = sum(value)) |> 
+    group_by(week_to, severity_to) |> 
+    mutate(arrived_sev_to = sum(value)) |> 
+    ungroup() |>  
+    distinct(week_to, severity_to, arrived_sev_to)
+  
+  d2 <- d2 |> 
+    left_join(tot_arrived, by = c("week_from" = "week_to",
+                                  "severity_from" = "severity_to")) |> 
+    group_by(week_from, severity_from) |> 
+    mutate(value = if_else(is.na(arrived_sev_to), value, 
+                                 value / sum(value) * unique(arrived_sev_to)) ) |> 
+    select(-arrived_sev_to) |> 
+    ungroup()
+}
+d2
+
+# these should be  basically the same numbers
+filter(tot_arrived, week_to == "Week one" & severity_to == 4)
+filter(d2, week_to == "Week one" & severity_to == 4) |> summarise(sum(value))
+filter(d2, week_from == "Week one" & severity_from == 4) |> summarise(sum(value))
+
+
+
+
+pallette <-  c("grey", brewer.pal(7, "RdYlBu")[7:1])
+names(pallette) <- c("NA", 1:7)
+
+d2 |> 
+  mutate(value = round(value * 1000)) |> 
+  uncount(weights = value) |> 
   mutate(severity_from = factor(severity_from, levels = c("NA", 1:7)),
          severity_to = factor(severity_to, levels = c("NA", 1:7))) |> 
   ggplot(aes(x = week_from, 
@@ -54,7 +88,8 @@ d |>
              label = severity_from)) +
   geom_sankey() +
   geom_sankey_label() +
-  theme_sankey()
+  theme_sankey() +
+  scale_fill_manual(values = pallette)
 
 
 
