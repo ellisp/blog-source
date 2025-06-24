@@ -10,7 +10,7 @@ d <- read_csv("../data/complicated-sankey-data.csv", col_types = "ccccd", na = "
   clean_names()
 
 #------------ggsankey approach---------------
-extras <- d2 |> 
+extras <- d |> 
   filter(week_to == "6") |> 
   mutate(
     week_from = "6",
