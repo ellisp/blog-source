@@ -1,15 +1,24 @@
 library(tidyverse)
-library(PantaRhei) # one approach to flow diagrams
 library(janitor)
 library(glue)
 library(RColorBrewer)
 remotes::install_github("davidsjoberg/ggsankey")
-library(ggsankey) # another approach to sankey charts / flow diagrams
+library(ggsankey) # one fairly straightforward approach to sankey charts / flow diagrams
 
-d <- read_csv("../data/complicated-sankey-data.csv", col_types = "ccccd", na = "missing") |> 
+# read in some data. This was very crudely hand-entered with some
+# rough visual judgements based from a chart that I don't know the
+# origin of I saw on the internet. So treat as made-up example data:
+d <- read_csv("https://raw.githubusercontent.com/ellisp/blog-source/refs/heads/master/data/complicated-sankey-data.csv", 
+              col_types = "ccccd",
+              # we want the NAs in the original to be characters, not actual NA:
+              na = "missing") |> 
   clean_names()
 
-#------------ggsankey approach---------------
+#------------tidying up data---------------
+# we have some adjustments to deal with because of having made up data
+
+# An extra bunch of rows of data that are needed by the Sankey function to
+# to make the week 6 nodes show up:
 extras <- d |> 
   filter(week_to == "6") |> 
   mutate(
@@ -17,6 +26,7 @@ extras <- d |>
     week_to = NA, 
     severity_from = severity_to)
 
+#' Convenience relabelling function for turning week numbers into a factor:
 weekf <- function(x){
   x <-  case_when(
     x == 0 ~ "Week zero",
@@ -27,17 +37,25 @@ weekf <- function(x){
   x <- factor(x, levels = c("Week zero","Week one","Week three", "Week six"))
 }
 
-
-# we have some adjustments to deal with because of having made up data
+# going to start by treating all flow widths as proportions 
 total_people <- 1
 
-# there should be the same total number of people each week
+# add in the extra data rows to show the final week of nodes,
+# and relabel the weeks:
 d2 <- d |> 
   rbind(extras)  |> 
   mutate(week_from =  weekf(week_from),
          week_to = weekf(week_to))
-  
+
+# there should be the same total number of people each week,
+# and the same number of people leaving each "node" (a severity-week
+# combination) as arrived at it on the flow from the last week.
+# we have a little iterative process to clean this up. If we had
+# real data, none of this would be necessary; this is basically
+# because I made up data with some rough visual judgements:
 for(i in 1:5){
+  # scale the data so the population stays the same week by week
+  # (adds up to total_people, which is 1, so are proportions)
   d2 <- d2 |> 
     group_by(week_from) |> 
     mutate(value = value / sum(value) * total_people) |> 
@@ -45,6 +63,7 @@ for(i in 1:5){
     mutate(value = value / sum(value) * total_people) |> 
     ungroup()   
   
+  # how many people arrived at each node (week-severity combination)?
   tot_arrived <- d2 |>  
     group_by(week_from, severity_from) |> 
     mutate(arrived_sev_from = sum(value)) |> 
@@ -53,6 +72,7 @@ for(i in 1:5){
     ungroup() |>  
     distinct(week_to, severity_to, arrived_sev_to)
   
+  # scale the data leaving the node to match what came in:
   d2 <- d2 |> 
     left_join(tot_arrived, by = c("week_from" = "week_to",
                                   "severity_from" = "severity_to")) |> 
@@ -62,20 +82,23 @@ for(i in 1:5){
     select(-arrived_sev_to) |> 
     ungroup()
 }
-d2
 
-# these should be  basically the same numbers
+# manual check - these should all be  basically the same numbers
 filter(tot_arrived, week_to == "Week one" & severity_to == 4)
 filter(d2, week_to == "Week one" & severity_to == 4) |> summarise(sum(value))
 filter(d2, week_from == "Week one" & severity_from == 4) |> summarise(sum(value))
 
 
+#--------------draw plot-------------
 
+# palette that is colourblined-ok and shows sequence. This
+# actually wasn't too bad in the original, but it got lost
+# in the vertical shuffling of all the severity nodes:
+pal <-  c("grey", brewer.pal(7, "RdYlBu")[7:1])
+names(pal) <- c("NA", 1:7)
 
-pallette <-  c("grey", brewer.pal(7, "RdYlBu")[7:1])
-names(pallette) <- c("NA", 1:7)
-
-d2 |> 
+# draw the actual chart:
+p <- d2 |> 
   mutate(value = round(value * 1000)) |> 
   uncount(weights = value) |> 
   mutate(severity_from = factor(severity_from, levels = c("NA", 1:7)),
@@ -88,57 +111,62 @@ d2 |>
              label = severity_from)) +
   geom_sankey(alpha = 0.8) +
   geom_sankey_label() +
-  theme_sankey() +
-  scale_fill_manual(values = pallette) +
+  theme_sankey(base_family = "Roboto") +
+  scale_fill_manual(values = pal) +
   labs(title = "Severity of an unknown disease shown in a Sankey chart",
        subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
 To achieve this, it's important that vertical sequencing and colour are both meaningfully mapped to severity.",
        x = "") +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        plot.title = element_text(family = "Sarala"))
 
-
+svg_png(p, "../img/0297-polished-sankey", w= 10, h = 6)
 
 #------------PantaRhei approach--------------
-d1 <- select(d, week = week_from, severity = severity_from, value)
-d2 <- select(d, week = week_to, severity = severity_to, value)
-
-aspect <- 30
-sc <- 1
-
-sizes <- rbind(d1, d2) |> 
-  group_by(week, severity) |> 
-  summarise(value = sum(value)) |> 
-  ungroup() |> 
-  mutate(ID = paste(week, severity)) |> 
-  arrange(week, severity) |> 
-  mutate(y = cumsum(value)) |> 
-  select(ID, y)
-
-nodes <-  d1 |> 
-  rbind(d2) |> 
-  distinct(week, severity) |> 
-  # note that sankey() does not work with characters of class glue
-  mutate(label = as.character(glue("Severity: {severity}   ")),
-         ID = paste(week, severity),
-         x = as.numeric(week) * aspect * sc) |> 
-  select(ID, label, x) |> 
-  left_join(sizes,by = "ID") |> 
-  mutate(label_pos = "left")
-
-flows <- d |> 
-  mutate(from = paste(week_from, severity_from),
-         to = paste(week_to, severity_to)) |> 
-  mutate(substance = severity_from) |> 
-  select(from, to, substance, quantity = value) 
-  
-colors <-  tibble(
-  substance = c("NA", 1:7),
-  color = c("grey", brewer.pal(7, "RdYlBu"))
-)
-
-png("../img/0297-better-sankey.png", width = 8000, height = 5000, res = 600, type = "cairo-png")
-sankey(nodes, flows, colors, max_width = 0.5, legend = TRUE)
-dev.off()
+# I didn't get this to work with necessary degree of polish,
+# but it looks more powerful and effective
+# library(PantaRhei) # one approach to flow diagrams
+# 
+# d1 <- select(d, week = week_from, severity = severity_from, value)
+# d2 <- select(d, week = week_to, severity = severity_to, value)
+# 
+# aspect <- 30
+# sc <- 1
+# 
+# sizes <- rbind(d1, d2) |> 
+#   group_by(week, severity) |> 
+#   summarise(value = sum(value)) |> 
+#   ungroup() |> 
+#   mutate(ID = paste(week, severity)) |> 
+#   arrange(week, severity) |> 
+#   mutate(y = cumsum(value)) |> 
+#   select(ID, y)
+# 
+# nodes <-  d1 |> 
+#   rbind(d2) |> 
+#   distinct(week, severity) |> 
+#   # note that sankey() does not work with characters of class glue
+#   mutate(label = as.character(glue("Severity: {severity}   ")),
+#          ID = paste(week, severity),
+#          x = as.numeric(week) * aspect * sc) |> 
+#   select(ID, label, x) |> 
+#   left_join(sizes,by = "ID") |> 
+#   mutate(label_pos = "left")
+# 
+# flows <- d |> 
+#   mutate(from = paste(week_from, severity_from),
+#          to = paste(week_to, severity_to)) |> 
+#   mutate(substance = severity_from) |> 
+#   select(from, to, substance, quantity = value) 
+#   
+# colors <-  tibble(
+#   substance = c("NA", 1:7),
+#   color = c("grey", brewer.pal(7, "RdYlBu"))
+# )
+# 
+# png("../img/0297-better-sankey.png", width = 8000, height = 5000, res = 600, type = "cairo-png")
+# sankey(nodes, flows, colors, max_width = 0.5, legend = TRUE)
+# dev.off()
 
 
 # what's wrong with the original?
