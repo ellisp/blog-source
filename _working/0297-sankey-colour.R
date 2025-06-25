@@ -97,8 +97,8 @@ filter(d2, week_from == "Week one" & severity_from == 4) |> summarise(sum(value)
 pal <-  c("grey", brewer.pal(7, "RdYlBu")[7:1])
 names(pal) <- c("NA", 1:7)
 
-# draw the actual chart:
-p <- d2 |> 
+# Draw the actual chart. First, the base of chart, common to both:
+p0 <- d2 |> 
   mutate(value = round(value * 1000)) |> 
   uncount(weights = value) |> 
   mutate(severity_from = factor(severity_from, levels = c("NA", 1:7)),
@@ -109,18 +109,37 @@ p <- d2 |>
              next_node = severity_to,
              fill = severity_from,
              label = severity_from)) +
+  # default has a lot of white space between y axis and the data
+  # so reduce the expansion of x axis to reduce that
+  scale_x_discrete(expand = c(0,0)) +
+  scale_fill_manual(values = pal) +
+  labs(subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
+To achieve this, vertical sequencing is mapped to severity, and repetitive labels have been moved into the axis guides.",
+       x = "",
+       caption = "Data has been hand-synthesised to be close to an original plot of unknown provenance.") 
+
+# Sankey plot:
+p1 <- p0 +
   geom_sankey(alpha = 0.8) +
   geom_sankey_label() +
   theme_sankey(base_family = "Roboto") +
-  scale_fill_manual(values = pal) +
-  labs(title = "Severity of an unknown disease shown in a Sankey chart",
-       subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
-To achieve this, it's important that vertical sequencing and colour are both meaningfully mapped to severity.",
-       x = "") +
   theme(legend.position = "none",
-        plot.title = element_text(family = "Sarala"))
+        plot.title = element_text(family = "Sarala")) +
+  labs(title = "Severity of an unknown disease shown in a Sankey chart")
 
-svg_png(p, "../img/0297-polished-sankey", w= 10, h = 6)
+# Alluvial plot:
+p2 <- p0 +
+  # we need white stroke or the ribbons all merge too much into eachother:
+  geom_alluvial(alpha = 0.8, colour = "white") +
+  geom_alluvial_label() +
+  theme_alluvial(base_family = "Roboto") +
+  theme(legend.position = "none",
+        plot.title = element_text(family = "Sarala")) +
+  labs(title = "Severity of an unknown disease shown in an alluvial chart",
+       y = "Number of people")
+
+svg_png(p1, "../img/0297-polished-sankey", w= 9, h = 5)
+svg_png(p2, "../img/0297-polished-alluvial", w= 9, h = 5)
 
 #------------PantaRhei approach--------------
 # I didn't get this to work with necessary degree of polish,
