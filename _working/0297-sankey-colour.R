@@ -111,7 +111,7 @@ p0 <- d2 |>
              label = severity_from)) +
   # default has a lot of white space between y axis and the data
   # so reduce the expansion of x axis to reduce that
-  scale_x_discrete(expand = c(0,0)) +
+  scale_x_discrete(expand = c(0.05,0)) +
   scale_fill_manual(values = pal) +
   labs(subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
 To achieve this, vertical sequencing is mapped to severity, and repetitive labels have been moved into the axis guides.",
@@ -129,8 +129,7 @@ p1 <- p0 +
 
 # Alluvial plot:
 p2 <- p0 +
-  # we need white stroke or the ribbons all merge too much into eachother:
-  geom_alluvial(alpha = 0.8, colour = "white") +
+  geom_alluvial(alpha = 0.8) +
   geom_alluvial_label() +
   theme_alluvial(base_family = "Roboto") +
   theme(legend.position = "none",

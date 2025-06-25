@@ -4,9 +4,9 @@ title: Sankey plots can work, but need polishing like any other graphic
 date: 2025-06-25
 tag: 
    - DataVisualisation
-description: I set out to improve a Sankey plot that had been shared as an example of how bad they are, and hopefully show that some careful design decisisons and polish can make these plot useful for purposes like seeing cohorts' progress (up, down, same) over time.
-image: /img/0297-polished-alluvial.svg
-socialimage: https:/freerangestats.info/img/0297-polished-alluvial.png
+description: I set out to improve a Sankey plot that had been shared as an example of how bad they are, and hopefully show that some careful design decisions and polish can make these plot useful for purposes like seeing cohorts' progress (up, down, same) over time.
+image: /img/0297-polished-sankey.svg
+socialimage: https:/freerangestats.info/img/0297-polished-sankey.png
 category: R
 ---
 
@@ -27,14 +27,14 @@ I had a go at improving this and came up with a couple of alternatives, using [D
 
 <object type="image/svg+xml" data='/img/0297-polished-sankey.svg' width='100%'><img src='/img/0297-polished-sankey.png' width='100%'></object>
 
-... and here's an alluvial plot version. Alluvial plots are similar to Sankey plots but have no spaces between the nodes, which means in this case you can read the nodes vertically at each week similarly to a stacked bar chart. I prefer this plot for that reason:
+... and here's an alluvial plot version. Alluvial plots are similar to Sankey plots but have no spaces between the nodes, which means in this case you can read the nodes vertically at each week similarly to a stacked bar chart:
 <object type="image/svg+xml" data='/img/0297-polished-alluvial.svg' width='100%'><img src='/img/0297-polished-alluvial.png' width='100%'></object>
 
 Here's the original graphic for comparison:
 
 <img src='/img/0297-severity-sankey.jpg' width='100%'>
 
-So I think I've addressed the main points here:
+I'm pretty confident that either the Sankey or alluvial plot are definite improvements and give a better sense of the average severity in each week, and the overall trend (which is more blue, low severity cases). While still giving a sense of people moving in multiple directions (sometimes upwards) from each severity-week combination. So I think I've addressed the main points here:
 * Decluttered the labels by having axis labels for "Week zero", "Week one", etc; meaning we don't need to repeat this in each node. And the node label is now just the single number of the severity. 
 * Avoided the cognitive load of week and severity both being numerals, partly by the simplified labels above and partly by spelling out weeks in English words (one, three, etc) rather than numerals.
 * Chosen a more colour-blind friendly palette based on the Brewer Red-Yellow-Blue scheme rather than Red-Green-Blue
@@ -157,7 +157,7 @@ p0 <- d2 |>
              label = severity_from)) +
   # default has a lot of white space between y axis and the data
   # so reduce the expansion of x axis to reduce that
-  scale_x_discrete(expand = c(0,0)) +
+  scale_x_discrete(expand = c(0.05, 0)) +
   scale_fill_manual(values = pal) +
   labs(subtitle = "Chart is still cluttered, but decreasing severity over time is apparent.
 To achieve this, vertical sequencing is mapped to severity, and repetitive labels have been moved into the axis guides.",
@@ -175,8 +175,7 @@ p1 <- p0 +
 
 # Alluvial plot:
 p2 <- p0 +
-  # we need white stroke or the ribbons all merge too much into eachother:
-  geom_alluvial(alpha = 0.8, colour = "white") +
+  geom_alluvial(alpha = 0.8) +
   geom_alluvial_label() +
   theme_alluvial(base_family = "Roboto") +
   theme(legend.position = "none",
