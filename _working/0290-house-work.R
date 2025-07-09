@@ -4,14 +4,15 @@ remotes::install_github("hrbrmstr/curlconverter")
 library(curlconverter)
 library(janitor)
 library(countrycode)
-library(rsdmx)
+library(rsdmx)   # for reading the World Economic Outlook data
+library(WDI)     # for gettting literacy data from the World Development Indicators
 library(readxl)
 library(glue)
 library(ggrepel)
 library(GGally) # for ggpairs
 library(mgcv)   # for gam
-library(daggity)
 library(ggdag)
+
 
 conflicts_prefer(dplyr::lag)
 
@@ -221,18 +222,43 @@ combined |>
        subtitle = "Selected countries labelled.")
 
 
+#-------------female education----------------------
+# higher income is only the most obvious confounder. There's also the general
+# sense of female economic opportunities and empowerment. A fair proxy of this
+# is probably female literacy as a proportion of male literacy
+
+# WDIsearch("litera") |> View()
+# Literacy rate, youth (ages 15-24), gender parity index (GPI)
+# Literacy rate, youth female (% of females ages 15-24)
+literacy <- WDI(indicator = c(literacy_parity = "SE.ADT.1524.LT.FM.ZS",
+                              female_literacy = "SE.ADT.1524.LT.FE.ZS")) |> 
+  as_tibble() |> 
+  drop_na() |> 
+  mutate(time_period = as.numeric(year)) |> 
+  select(iso3_code = iso3c,
+         time_period,
+         literacy_parity,
+         female_literacy)
+
+combined <- combined |> 
+  select(geo_area_name:gdp_cut) |> 
+  left_join(literacy, by = c("iso3_code", "time_period"))
+
+length(unique(combined$geo_area_name))
 #-------------modelling--------------------
 combined |> 
   mutate(lgdp = log(gdprppppc),
-         ltfr = log(tfr)) |> 
-  select( prop_male, lgdp, ltfr) |> 
+         ltfr = log(tfr),
+         lfl  = log(female_literacy)) |> 
+  select( prop_male, lgdp, ltfr, literacy_parity, female_literacy) |> 
   ggpairs()
 
 
 # Here's the simplest thing we should consider. Note that this treats each
 # data point as IID, even though many are repeated measures of the same country.
 # So still not a great model.
-model <- lm(log(tfr) ~ prop_male + log(gdprppppc), data = combined)
+model <- lm(log(tfr) ~ prop_male + log(gdprppppc) + literacy_parity + female_literacy, 
+            data = combined)
 
 # the diagnostics are ok:
 par(mfrow = c(2,2))
@@ -241,7 +267,7 @@ plot(model)
 # and the result is straightforward: gdp per capita predicts fertility, domestic chores doesn't:
 summary(model)
 
-# note that if we exclude GDP per capita we get a very strong relationship of
+# note that if we just look at the male housework we get a very strong relationship of
 # time use
 bad_model <- lm(log(tfr) ~ log(prop_male), data = combined)
 summary(bad_model)
@@ -253,14 +279,16 @@ summary(bad_model)
 # a better model would be one that takes into account that we have repeated measures
 # for each country
 combined$country_fac <- as.factor(combined$geo_area_name)
-model2 <- gamm(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+model2 <- gamm(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
+                 female_literacy + literacy_parity, 
               data = combined, family = quasipoisson)
 summary(model2$lme)
 summary(model2$gam)
 plot(model2$gam, pages = TRUE)
 
 
-model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
+                female_literacy + literacy_parity, 
                data = combined, family = quasipoisson)
 summary(model3)
 plot(model3, pages = TRUE)
