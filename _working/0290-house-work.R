@@ -47,6 +47,11 @@ d1 <- dg |>
   geom_dag_label_repel(aes(label = label), col = "peru", fill = "transparent") +
   theme_dag(base_family = "Roboto")
 
+# "men doing housework" is in two roles here. It is an indicator of gender
+# equality, which would be expected to be negatively related to TFR. And it is a
+# factor in its own right which is expected to be positively related to TFR.
+
+
 set.seed(123)
 d2 <- dg |> 
   ggdag_paths(text = FALSE, use_labels = "label", shadow = TRUE) +
@@ -104,7 +109,7 @@ time_chores <- gender |>
   mutate(iso3_code = countrycode(geo_area_name, origin = "country.name.en", destination = "iso3c"))
 
 
-#--------combine time use with fertility data and simple scatter plot----------
+#--------combine time use with fertility data --------------------------
 
 # total fertility rate, from the UN Population Projections
 if(!file.exists("wpp2024.csv")){
