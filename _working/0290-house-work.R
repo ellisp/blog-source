@@ -10,9 +10,50 @@ library(glue)
 library(ggrepel)
 library(GGally) # for ggpairs
 library(mgcv)   # for gam
+library(daggity)
+library(ggdag)
 
 conflicts_prefer(dplyr::lag)
 
+#-----------drawing a DAG (or at least a DG)------------------
+
+dg <- dagify(tfr ~ opp + hw ,
+             ge ~ opp + advoc, 
+             opp ~ ge + advoc,
+             hw ~ ge,
+             opp ~ gdp,
+             gdp ~ opp,
+             
+             labels = c(
+               "tfr" = "Total fertility rate",
+               "hw" = "Men doing housework",
+               "opp" = "Opportunities for\nwomen and girls",
+               "ge" = "Culture of\ngender equality",
+               "gdp" = "Economic growth",
+               "advoc" = "Feminist advocacy"
+             ),
+             outcome = "tfr",
+             latent = "ge",
+             exposure = "hw"
+)
+
+set.seed(124)
+d1 <- dg |> 
+  #  ggdag(text = FALSE, node = FALSE)  +
+  ggplot(aes(x = x, y = y, xend = xend, yend =yend)) +
+  geom_dag_node(colour = "grey") +
+  geom_dag_edges(edge_colour = "steelblue") +
+  geom_dag_label_repel(aes(label = label), col = "peru", fill = "transparent") +
+  theme_dag(base_family = "Roboto")
+
+set.seed(123)
+d2 <- dg |> 
+  ggdag_paths(text = FALSE, use_labels = "label", shadow = TRUE) +
+  theme_dag(base_family = "Roboto")
+
+
+svg_png(d1, "../img/0290-dg", w = 9, h = 6)
+svg_png(d2, "../img/0290-paths", w = 12, h = 7)
 
 #-----------downloading some SDG time use data from the UN database-------------
 # Note sure this is the best way to do this, it was clunky to work out,

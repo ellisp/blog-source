@@ -103,3 +103,9 @@ _working/data/*
 *.tif
 *.shx
 *.gdb
+*.kmz
+
+# various misc data files
+*.xsl
+*/WEO*
+
