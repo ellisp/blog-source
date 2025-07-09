@@ -122,24 +122,6 @@ wpp <- read_csv("wpp2024.csv") |>
   select(iso3_code, time_period = time, tfr) |> 
   filter(!is.na(iso3_code))
  
-p1 <- time_chores |>
-  left_join(wpp, by = c("iso3_code", "time_period")) |> 
-  ggplot(aes(x = prop_male, y = tfr)) +
-  geom_smooth(method = "lm", colour = "white") +
-  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
-  geom_path(aes(group = geo_area_name), colour = "grey50") +
-  scale_shape_manual(values = c(1, 19)) +
-  scale_colour_viridis_c(breaks = c(2000, 2020)) +
-  scale_x_continuous(label = percent) +
-  scale_y_continuous() +
-  labs(x = "Proportion of domestic and care work done by males",
-       y ="Total fertility rate",
-       colour = "Observation date:",
-       shape = "Observation type:",
-       title = "Gender share of domestic work and fertility rate",
-       subtitle = "Looking at all countries, relationship between male share of domestic and care work and fertility is actually negative",
-       caption = "Time use data from the UN SDGs database; total fertility rate from the UN population projections. Analysis by freerangestats.info.")
-
 #-----------------add income and do a four facet plot-----------------
 
 # so income must be a confounder. We can use the IMF WEO data from last week
@@ -200,32 +182,6 @@ select(combined, geo_area_name, time_period, gdprppppc, latest_gdp, gdp_cut)
 filter(combined, geo_area_name == "China") |> select(gdp_cut)
 
 
-# some interesting countries to highlight
-hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
-         "Brazil", "Oman", "Hungary", "Qatar", "Canada",
-         "Australia", "Switzerland")
-
-combined |> 
-  ggplot(aes(x = prop_male, y = tfr))+
-  facet_wrap(~gdp_cut, scales = "free") +
-  geom_smooth(method = "lm", colour = "white") +
-  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
-  geom_path(aes(group = geo_area_name), colour = "grey50") +
-  #geom_text(aes(label = geo_area_name)) +
-  geom_text_repel(data = filter(combined, geo_area_name %in% hlc & is_latest == "Most recent"),
-                  aes(label = glue("{geo_area_name}, {time_period}"),
-                      colour = time_period)) +
-  scale_shape_manual(values = c(1, 19)) +
-  scale_colour_viridis_c(breaks = c(2000, 2020), option = "A", direction = -1) +
-  scale_x_continuous(label = percent) +
-  scale_y_continuous() +
-  labs(x = "Proportion of domestic and care work done by males",
-       y ="Total fertility rate",
-       colour = "Observation date:",
-       shape = "Observation type:",
-       title = "Share of domestic work and fertility rate",
-       subtitle = "Selected countries labelled.")
-
 
 #-------------female education----------------------
 # higher income is only the most obvious confounder. There's also the general
@@ -250,6 +206,64 @@ combined <- combined |>
   left_join(literacy, by = c("iso3_code", "time_period"))
 
 length(unique(combined$geo_area_name))
+
+#================Exploratory charts==============
+
+# some interesting countries to highlight
+hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
+         "Brazil", "Oman", "Hungary", "Qatar", "Canada",
+         "Australia", "Switzerland")
+
+
+
+#-------------simple scatter plot of housework and fertility rate-------------
+
+# First by itself:
+p1 <- time_chores |>
+  left_join(wpp, by = c("iso3_code", "time_period")) |> 
+  ggplot(aes(x = prop_male, y = tfr)) +
+  geom_smooth(method = "lm", colour = "white") +
+  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
+  geom_path(aes(group = geo_area_name), colour = "grey50") +
+  scale_shape_manual(values = c(1, 19)) +
+  scale_colour_viridis_c(breaks = c(2000, 2020)) +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous() +
+  labs(x = "Proportion of domestic and care work done by males",
+       y ="Total fertility rate",
+       colour = "Observation date:",
+       shape = "Observation type:",
+       title = "Gender share of domestic work and fertility rate",
+       subtitle = "Looking at all countries, relationship between male share of domestic and care work and fertility is actually negative",
+       caption = "Time use data from the UN SDGs database; total fertility rate from the UN population projections. Analysis by freerangestats.info.")
+
+
+# Second time, faceted by income group:
+
+combined |> 
+  ggplot(aes(x = prop_male, y = tfr))+
+  facet_wrap(~gdp_cut, scales = "free") +
+  geom_smooth(method = "lm", colour = "white") +
+  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
+  geom_path(aes(group = geo_area_name), colour = "grey50") +
+  #geom_text(aes(label = geo_area_name)) +
+  geom_text_repel(data = filter(combined, geo_area_name %in% hlc & is_latest == "Most recent"),
+                  aes(label = glue("{geo_area_name}, {time_period}"),
+                      colour = time_period)) +
+  scale_shape_manual(values = c(1, 19)) +
+  scale_colour_viridis_c(breaks = c(2000, 2020), option = "A", direction = -1) +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous() +
+  labs(x = "Proportion of domestic and care work done by males",
+       y ="Total fertility rate",
+       colour = "Observation date:",
+       shape = "Observation type:",
+       title = "Share of domestic work and fertility rate",
+       subtitle = "Selected countries labelled.")
+
+
+
+
 #-------------modelling--------------------
 combined |> 
   mutate(lgdp = log(gdprppppc),
