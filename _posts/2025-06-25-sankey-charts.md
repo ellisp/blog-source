@@ -170,7 +170,8 @@ p1 <- p0 +
   geom_sankey_label() +
   theme_sankey(base_family = "Roboto") +
   theme(legend.position = "none",
-        plot.title = element_text(family = "Sarala")) +
+        plot.title = element_text(family = "Sarala"),
+        panel.background = element_rect(fill = "black")) +
   labs(title = "Severity of an unknown disease shown in a Sankey chart")
 
 # Alluvial plot:
@@ -179,7 +180,8 @@ p2 <- p0 +
   geom_alluvial_label() +
   theme_alluvial(base_family = "Roboto") +
   theme(legend.position = "none",
-        plot.title = element_text(family = "Sarala")) +
+        plot.title = element_text(family = "Sarala"),
+        panel.background = element_rect(fill = "black")) +
   labs(title = "Severity of an unknown disease shown in an alluvial chart",
        y = "Number of people")
 
@@ -187,4 +189,4 @@ print(p1) # Sankey plot
 print(p2) # alluvial plot
 {% endhighlight %}
 
-
+[Edited 8 July 2025 for black panel backgrounds for the Sankey and alluvial charts.]
