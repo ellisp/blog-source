@@ -12,12 +12,15 @@ library(ggrepel)
 library(GGally) # for ggpairs
 library(mgcv)   # for gam
 library(ggdag)
-
+library(MASS)   # for rlm
+library(RColorBrewer)
 
 conflicts_prefer(dplyr::lag)
+conflicts_prefer(dplyr::select)
 
 #-----------drawing a DAG (or at least a DG)------------------
 
+# Full version with all the variables
 dg <- dagify(tfr ~ opp + hw ,
              ge ~ opp + advoc, 
              opp ~ ge + advoc,
@@ -36,25 +39,55 @@ dg <- dagify(tfr ~ opp + hw ,
              outcome = "tfr",
              latent = "ge",
              exposure = "hw"
-)
+) |> 
+  # explicitly call this usually hidden function so we can colour the edges:
+  ggdag::tidy_dagitty(seed = 124) |> 
+  # colour the edges. Need to specify identity of colour here, not use scale_
+  mutate(edge_type = ifelse(to == "tfr" & name == "opp", "darkred", "steelblue"))
 
+lab_col <- "black"
+
+# Draw the full chart
 set.seed(124)
 d1 <- dg |> 
-  #  ggdag(text = FALSE, node = FALSE)  +
   ggplot(aes(x = x, y = y, xend = xend, yend =yend)) +
   geom_dag_node(colour = "grey") +
-  geom_dag_edges(edge_colour = "steelblue") +
-  geom_dag_label_repel(aes(label = label), col = "peru", fill = "transparent") +
+  geom_dag_text_repel(aes(label = label), col = lab_col) +
+  geom_dag_edges(aes(edge_colour = edge_type),
+                 arrow_directed = grid::arrow(length = unit(12, "pt"), type = "closed")) +
   theme_dag(base_family = "Roboto")
-
-set.seed(123)
-d2 <- dg |> 
-  ggdag_paths(text = FALSE, use_labels = "label", shadow = TRUE) +
-  theme_dag(base_family = "Roboto")
-
 
 svg_png(d1, "../img/0290-dg", w = 9, h = 6)
-svg_png(d2, "../img/0290-paths", w = 12, h = 7)
+
+# Simplified DAG, just with 3 nodes
+dg2 <- dagify(tfr ~ opp + hw ,
+             hw ~ opp,
+
+             labels = c(
+               "tfr" = "Total fertility rate",
+               "hw" = "Men doing housework",
+               "opp" = "Opportunities for\nwomen and girls"
+             ),
+             outcome = "tfr",
+             exposure = "hw"
+)  |> 
+  # explicitly call this usually hidden function so we can colour the edges:
+  ggdag::tidy_dagitty(seed = 124) |> 
+  # colour the edges. Need to specify identity of colour here, not use scale_
+  mutate(edge_type = ifelse(to == "tfr" & name == "opp", "darkred", "steelblue"))
+
+
+# Draw the simplified causal graph
+set.seed(124)
+d2 <- dg2 |> 
+  ggplot(aes(x = x, y = y, xend = xend, yend =yend)) +
+  geom_dag_node(colour = "grey") +
+  geom_dag_edges(aes(edge_colour = edge_type), 
+                 arrow_directed = grid::arrow(length = unit(12, "pt"), type = "closed")) +
+  geom_dag_text_repel(aes(label = label), col = lab_col) +
+  theme_dag(base_family = "Roboto")
+svg_png(d2, "../img/0290-dg-simplified", w = 9, h = 6)
+
 
 #-----------downloading some SDG time use data from the UN database-------------
 # Note sure this is the best way to do this, it was clunky to work out,
@@ -122,18 +155,22 @@ p1 <- time_chores |>
   ggplot(aes(x = prop_male, y = tfr)) +
   geom_smooth(method = "lm", colour = "white") +
   geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
-  geom_path(aes(group = geo_area_name), colour = "grey50") +
+  geom_path(aes(group = geo_area_name), colour = "grey75") +
   scale_shape_manual(values = c(1, 19)) +
-  scale_colour_viridis_c(breaks = c(2000, 2020)) +
   scale_x_continuous(label = percent) +
   scale_y_continuous() +
+  guides(colour =  guide_colorbar(display = "rectangles")) +
+  theme(legend.key.width = unit(10, "mm")) +
   labs(x = "Proportion of domestic and care work done by males",
        y ="Total fertility rate",
        colour = "Observation date:",
        shape = "Observation type:",
        title = "Gender share of domestic work and fertility rate",
-       subtitle = "Looking at all countries, relationship between male share of domestic and care work and fertility is actually negative",
-       caption = "Time use data from the UN SDGs database; total fertility rate from the UN population projections. Analysis by freerangestats.info.")
+       subtitle = "When including all countries, relationship between male share of domestic and care work and fertility is negative.
+Confounding effect of economic and educational opportunities for women and girls has not been controlled for.",
+       caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects. Analysis by freerangestats.info.")
+
+svg_png(p1, "../img/0290-simple-scatter", w = 9, h = 7)
 
 #-----------------add income and do a four facet plot-----------------
 
@@ -188,10 +225,11 @@ combined <- time_chores |>
   mutate(gdp_cut = if_else(geo_area_name != lag(geo_area_name) | is.na(lag(geo_area_name)), gdp_cut, lag(gdp_cut))) |> 
   ungroup()
 
-# check:
+# check we got the right categories for "gdp_cut":
 select(combined, geo_area_name, time_period, gdprppppc, latest_gdp, gdp_cut)
   
-# check:
+# check a country like China is in the same category each time, despite
+# their income changing:
 filter(combined, geo_area_name == "China") |> select(gdp_cut)
 
 
@@ -200,20 +238,20 @@ hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt",
          "Brazil", "Oman", "Hungary", "Qatar", "Canada",
          "Australia", "Switzerland")
 
-combined |> 
+p2 <- combined |> 
   ggplot(aes(x = prop_male, y = tfr))+
-  facet_wrap(~gdp_cut, scales = "free") +
-  geom_smooth(method = "lm", colour = "white") +
+  facet_wrap(~gdp_cut, scales = "fixed") +
+  geom_smooth(method = "rlm", colour = "white") +
   geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
   geom_path(aes(group = geo_area_name), colour = "grey50") +
-  #geom_text(aes(label = geo_area_name)) +
   geom_text_repel(data = filter(combined, geo_area_name %in% hlc & is_latest == "Most recent"),
                   aes(label = glue("{geo_area_name}, {time_period}"),
-                      colour = time_period)) +
+                      colour = time_period), colour = "black") +
   scale_shape_manual(values = c(1, 19)) +
-  scale_colour_viridis_c(breaks = c(2000, 2020), option = "A", direction = -1) +
   scale_x_continuous(label = percent) +
-  scale_y_continuous() +
+  scale_y_log10() +
+  guides(colour =  guide_colorbar(display = "rectangles")) +
+  theme(legend.key.width = unit(10, "mm")) +
   labs(x = "Proportion of domestic and care work done by males",
        y ="Total fertility rate",
        colour = "Observation date:",
@@ -221,6 +259,7 @@ combined |>
        title = "Share of domestic work and fertility rate",
        subtitle = "Selected countries labelled.")
 
+svg_png(p2, "../img/0290-facet-scatter", w = 11, h = 7)
 
 #-------------female education----------------------
 # higher income is only the most obvious confounder. There's also the general
