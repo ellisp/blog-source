@@ -9,7 +9,6 @@ library(WDI)     # for gettting literacy data from the World Development Indicat
 library(readxl)
 library(glue)
 library(ggrepel)
-library(GGally) # for ggpairs
 library(mgcv)   # for gam
 library(ggdag)
 library(MASS)   # for rlm
@@ -223,7 +222,9 @@ combined <- time_chores |>
   # note that if you used ifelse instead of if_else, it loses the levels of gdp_cut.
   # but this method works:
   mutate(gdp_cut = if_else(geo_area_name != lag(geo_area_name) | is.na(lag(geo_area_name)), gdp_cut, lag(gdp_cut))) |> 
-  ungroup()
+  ungroup() |> 
+  # factor version of country, needed for some later modelling:
+  mutate(country_fac = as.factor(geo_area_name))
 
 # check we got the right categories for "gdp_cut":
 select(combined, geo_area_name, time_period, gdprppppc, latest_gdp, gdp_cut)
@@ -236,7 +237,7 @@ filter(combined, geo_area_name == "China") |> select(gdp_cut)
 # some interesting countries to highlight
 hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
          "Brazil", "Oman", "Hungary", "Qatar", "Canada",
-         "Australia", "Switzerland")
+         "Australia")
 
 p2 <- combined |> 
   ggplot(aes(x = prop_male, y = tfr))+
@@ -245,8 +246,7 @@ p2 <- combined |>
   geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
   geom_path(aes(group = geo_area_name), colour = "grey50") +
   geom_text_repel(data = filter(combined, geo_area_name %in% hlc & is_latest == "Most recent"),
-                  aes(label = glue("{geo_area_name}, {time_period}"),
-                      colour = time_period), colour = "black") +
+                  aes(label = glue("{geo_area_name}, {time_period}")), colour = "black") +
   scale_shape_manual(values = c(1, 19)) +
   scale_x_continuous(label = percent) +
   scale_y_log10() +
@@ -256,60 +256,92 @@ p2 <- combined |>
        y ="Total fertility rate",
        colour = "Observation date:",
        shape = "Observation type:",
-       title = "Share of domestic work and fertility rate",
-       subtitle = "Selected countries labelled.")
+       title = "Share of domestic work and fertility rate, for countries in different income categories",
+       subtitle = "Countries classified into custom groups based on purchasing power parity GDP at the time of first time-use survey. Selected countries labelled.",
+       caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
 
 svg_png(p2, "../img/0290-facet-scatter", w = 11, h = 7)
 
-#-------------female education----------------------
-# higher income is only the most obvious confounder. There's also the general
-# sense of female economic opportunities and empowerment. A fair proxy of this
-# is probably female literacy as a proportion of male literacy
-
-# WDIsearch("litera") |> View()
-# Literacy rate, youth (ages 15-24), gender parity index (GPI)
-# Literacy rate, youth female (% of females ages 15-24)
-literacy <- WDI(indicator = c(literacy_parity = "SE.ADT.1524.LT.FM.ZS",
-                              female_literacy = "SE.ADT.1524.LT.FE.ZS")) |> 
-  as_tibble() |> 
-  drop_na() |> 
-  mutate(time_period = as.numeric(year)) |> 
-  select(iso3_code = iso3c,
-         time_period,
-         literacy_parity,
-         female_literacy)
-
-combined <- combined |> 
-  select(geo_area_name:gdp_cut) |> 
-  left_join(literacy, by = c("iso3_code", "time_period"))
-
-length(unique(combined$geo_area_name))
 #-------------modelling--------------------
-combined |> 
-  mutate(lgdp = log(gdprppppc),
-         ltfr = log(tfr),
-         lfl  = log(female_literacy)) |> 
-  select( prop_male, lgdp, ltfr, literacy_parity, female_literacy) |> 
-  ggpairs()
-
+library(lme4)
+library(marginaleffects)
+library(patchwork)
 
 # Here's the simplest thing we should consider. Note that this treats each
 # data point as IID, even though many are repeated measures of the same country.
 # So still not a great model.
-model <- lm(log(tfr) ~ prop_male + log(gdprppppc) + literacy_parity + female_literacy, 
+model0 <- lmer(log(tfr) ~ log(gdprppppc) + (1 | country_fac), data = combined)
+
+model1 <- lmer(log(tfr) ~ log(gdprppppc) + prop_male + (1 | country_fac), 
             data = combined)
 
-# the diagnostics are ok:
-par(mfrow = c(2,2))
-plot(model)
+model2 <- lmer(log(tfr) ~ log(gdprppppc) * prop_male + (1 | country_fac), 
+               data = combined)
+
+post_fit <- combined |> 
+  mutate(res0 = residuals(model0, type = "pearson"),
+         fit0 = exp(fitted(model0)),
+         res1  = residuals(model1, type = "pearson"),
+         fit1 = exp(fitted(model1)),
+         res2  = residuals(model2, type = "pearson"),
+         fit2 = exp(fitted(model2))) |> 
+  mutate(res0st = res0 / sd(res0))
+
+refsd <- 0.745
+
+post_fit |> 
+  ggplot(aes(x = res0st)) +
+  geom_density() +
+  geom_rug() +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = refsd), 
+                colour = "red") +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1), 
+                colour = "darkblue") +
+  labs(x = "Standardised residual",
+       y = "Density") +
+
+post_fit |> 
+  ggplot(aes(sample = res0st)) +
+  stat_qq() +
+  geom_abline(slope = 1, intercept = 0, colour = "darkblue") +
+  geom_abline(slope = refsd, intercept = 0, colour = "red") +
+  labs(x = "Residual expected if normally distributed",
+       y = "Actual residual") +
+  
+  
+post_fit |>
+  ggplot(aes(x = fit0, y = res0st)) +
+  geom_hline(yintercept = 0, colour = "red") +
+  geom_point() +
+  geom_smooth(colour = "white") +
+  scale_x_log10() +
+  labs(x = "Fitted value of total fertility rate",
+       y = "Standardised residual") +
+  
+post_fit |> 
+  ggplot(aes(x = prop_male, y = res0)) +
+  geom_point() +
+  geom_smooth(method = "loess", colour = "white") +
+  scale_x_continuous(label = percent) +
+  labs(subtitle = "This plot identifies any residual fertility rate to be explained by housework",
+       x = "Proportion of housework done by males",
+       y = "Total fertility rate (on log scale) 
+*not* explained by GDP model") +
+  
+  theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+  
+  plot_layout(nrow = 2) +
+  
+  plot_annotation(title = "Diagnostic plots for model of total fertility rate on countries' GDP per capita",
+                  subtitle = "Male share of housework not explictly included in the model")
+
+  
+anova(model0, model2)
+anova(model0, model1, model2)
 
 # and the result is straightforward: gdp per capita predicts fertility, domestic chores doesn't:
-summary(model)
+summary(model2)
 
-# note that if we just look at the male housework we get a very strong relationship of
-# time use
-bad_model <- lm(log(tfr) ~ log(prop_male), data = combined)
-summary(bad_model)
 # we can be confident that gdp per capita should be kept in as it's clearly not
 # a mediator of domestic chores (domestic chores do not act on fertility via GDP),
 # nor a collider (fertility impacts on GDP and domestic chores impact on GDP)
@@ -317,21 +349,24 @@ summary(bad_model)
 
 # a better model would be one that takes into account that we have repeated measures
 # for each country
-combined$country_fac <- as.factor(combined$geo_area_name)
-model2 <- gamm(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
-                 female_literacy + literacy_parity, 
-              data = combined, family = quasipoisson)
-summary(model2$lme)
-summary(model2$gam)
-plot(model2$gam, pages = TRUE)
 
-
-model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
-                female_literacy + literacy_parity, 
+model3 <- gamm(tfr ~ s(log(gdprppppc)) + s(country_fac, bs = 're'), 
                data = combined, family = quasipoisson)
-summary(model3)
-plot(model3, pages = TRUE)
 
+model4 <- gamm(tfr ~ s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+              data = combined, family = quasipoisson)
+
+model5 <- gam(tfr ~ s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+               data = combined, family = quasipoisson)
+
+
+summary(model4$lme)
+summary(model4$gam)
+summary(model5)
+plot(model4$gam, pages = TRUE)
+plot(model5, pages = TRUE)
+
+anova(model3$lme, model4$lme)
 
 # note that if you let prop_male be non-linear you get different results from gam and gamm,
 # it's basically unstable. If prop_male is linear you get similar point estimates,
