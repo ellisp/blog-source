@@ -149,9 +149,7 @@ wpp <- read_csv("wpp2024.csv") |>
   select(iso3_code, time_period = time, tfr) |> 
   filter(!is.na(iso3_code))
  
-<<<<<<< HEAD
 #-----------------add income and divide countries into groups-----------------
-=======
 p1 <- time_chores |>
   left_join(wpp, by = c("iso3_code", "time_period")) |> 
   ggplot(aes(x = prop_male, y = tfr)) +
@@ -173,7 +171,7 @@ Confounding effect of economic and educational opportunities for women and girls
        caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects. Analysis by freerangestats.info.")
 
 svg_png(p1, "../img/0290-simple-scatter", w = 9, h = 7)
->>>>>>> 7d9e94d7eea8db6071beeae5d207854ce546d689
+
 
 # so income is almost certainly a confounder. We can use the IMF WEO data from last week
 # (see that blog for how to access it, or run 0288-IMF-WEO.R script in this
@@ -333,37 +331,7 @@ hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt",
          "Brazil", "Oman", "Hungary", "Qatar", "Canada",
          "Australia")
 
-<<<<<<< HEAD
-
-
-#-------------simple scatter plot of housework and fertility rate-------------
-
-# First by itself:
-p1 <- time_chores |>
-  left_join(wpp, by = c("iso3_code", "time_period")) |> 
-  ggplot(aes(x = prop_male, y = tfr)) +
-  geom_smooth(method = "lm", colour = "white") +
-  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
-  geom_path(aes(group = geo_area_name), colour = "grey50") +
-  scale_shape_manual(values = c(1, 19)) +
-  scale_colour_viridis_c(breaks = c(2000, 2020)) +
-  scale_x_continuous(label = percent) +
-  scale_y_continuous() +
-  labs(x = "Proportion of domestic and care work done by males",
-       y ="Total fertility rate",
-       colour = "Observation date:",
-       shape = "Observation type:",
-       title = "Gender share of domestic work and fertility rate",
-       subtitle = "Looking at all countries, relationship between male share of domestic and care work and fertility is actually negative",
-       caption = "Time use data from the UN SDGs database; total fertility rate from the UN population projections. Analysis by freerangestats.info.")
-
-
-# Second time, faceted by income group:
-
-combined |> 
-=======
 p2 <- combined |> 
->>>>>>> 7d9e94d7eea8db6071beeae5d207854ce546d689
   ggplot(aes(x = prop_male, y = tfr))+
   facet_wrap(~gdp_cut, scales = "fixed") +
   geom_smooth(method = "rlm", colour = "white") +
@@ -386,33 +354,23 @@ p2 <- combined |>
 
 svg_png(p2, "../img/0290-facet-scatter", w = 11, h = 7)
 
-<<<<<<< HEAD
-
-
 #-------------modelling--------------------
+library(GGally)
+
 combined |> 
   mutate(lgdp = log(gdprppppc),
          ltfr = log(tfr)) |> 
   select( prop_male, lgdp, ltfr, gii) |> 
   ggpairs()
 
-=======
 #-------------modelling--------------------
 library(lme4)
-library(marginaleffects)
+#library(marginaleffects)
 library(patchwork)
->>>>>>> 7d9e94d7eea8db6071beeae5d207854ce546d689
 
-# Here's the simplest thing we should consider. Note that this treats each
-# data point as IID, even though many are repeated measures of the same country.
-# So still not a great model.
-<<<<<<< HEAD
-model <- lm(log(tfr) ~ prop_male + log(gdprppppc) + gii, 
-=======
 model0 <- lmer(log(tfr) ~ log(gdprppppc) + (1 | country_fac), data = combined)
 
 model1 <- lmer(log(tfr) ~ log(gdprppppc) + prop_male + (1 | country_fac), 
->>>>>>> 7d9e94d7eea8db6071beeae5d207854ce546d689
             data = combined)
 
 model2 <- lmer(log(tfr) ~ log(gdprppppc) * prop_male + (1 | country_fac), 
@@ -489,26 +447,14 @@ summary(model2)
 
 # a better model would be one that takes into account that we have repeated measures
 # for each country
-<<<<<<< HEAD
-
-model2 <- gamm(tfr ~ s(prop_male) + s(log(gdprppppc)) + s(country_fac, bs = 're') + s(gii), 
-              data = combined, family = quasipoisson)
-summary(model2$lme)
-summary(model2$gam)
-plot(model2$gam, pages = TRUE)
-
-
-model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') + gii, 
-=======
 
 model3 <- gamm(tfr ~ s(log(gdprppppc)) + s(country_fac, bs = 're'), 
->>>>>>> 7d9e94d7eea8db6071beeae5d207854ce546d689
                data = combined, family = quasipoisson)
 
 model4 <- gamm(tfr ~ s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
               data = combined, family = quasipoisson)
 
-model5 <- gam(tfr ~ s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+model5 <- gamm(tfr ~ s(log(gdprppppc)) +  s(gii) + s(prop_male) + s(country_fac, bs = 're'), 
                data = combined, family = quasipoisson)
 
 
@@ -516,11 +462,9 @@ summary(model4$lme)
 summary(model4$gam)
 summary(model5)
 plot(model4$gam, pages = TRUE)
-plot(model5, pages = TRUE)
+plot(model5$gam, pages = TRUE)
 
 anova(model3$lme, model4$lme)
 
-# note that if you let prop_male be non-linear you get different results from gam and gamm,
-# it's basically unstable. If prop_male is linear you get similar point estimates,
-# but the standard errors are different, so 'significance' can be seen as different.
 
+model5
