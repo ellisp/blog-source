@@ -123,6 +123,7 @@ p1 <- p0 +
   geom_sankey(alpha = 0.8) +
   geom_sankey_label() +
   theme_sankey(base_family = "Roboto") +
+  theme(panel.background = element_rect(fill = "black")) +
   theme(legend.position = "none",
         plot.title = element_text(family = "Sarala"),
         panel.background = element_rect(fill = "black")) +
@@ -139,8 +140,8 @@ p2 <- p0 +
   labs(title = "Severity of an unknown disease shown in an alluvial chart",
        y = "Number of people")
 
-svg_png(p1, "../img/0297-polished-sankey", w= 9, h = 5)
-svg_png(p2, "../img/0297-polished-alluvial", w= 9, h = 5)
+svg_png(p1, "../img/0297-polished-sankey-black", w= 9, h = 5)
+#svg_png(p2, "../img/0297-polished-alluvial", w= 9, h = 5)
 
 #------------PantaRhei approach--------------
 # I didn't get this to work with necessary degree of polish,
