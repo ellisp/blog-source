@@ -122,9 +122,9 @@ wpp <- read_csv("wpp2024.csv") |>
   select(iso3_code, time_period = time, tfr) |> 
   filter(!is.na(iso3_code))
  
-#-----------------add income and do a four facet plot-----------------
+#-----------------add income and divide countries into groups-----------------
 
-# so income must be a confounder. We can use the IMF WEO data from last week
+# so income is almost certainly a confounder. We can use the IMF WEO data from last week
 # (see that blog for how to access it, or run 0288-IMF-WEO.R script in this
 # same repository)
 if(!exists("d2025")){
@@ -188,26 +188,91 @@ filter(combined, geo_area_name == "China") |> select(gdp_cut)
 # sense of female economic opportunities and empowerment. A fair proxy of this
 # is probably female literacy as a proportion of male literacy
 
+# these didn't have enough data for each year
 # WDIsearch("litera") |> View()
 # Literacy rate, youth (ages 15-24), gender parity index (GPI)
 # Literacy rate, youth female (% of females ages 15-24)
-literacy <- WDI(indicator = c(literacy_parity = "SE.ADT.1524.LT.FM.ZS",
-                              female_literacy = "SE.ADT.1524.LT.FE.ZS")) |> 
-  as_tibble() |> 
-  drop_na() |> 
-  mutate(time_period = as.numeric(year)) |> 
-  select(iso3_code = iso3c,
-         time_period,
-         literacy_parity,
-         female_literacy)
+
+# this gender inequality index, composite index from UNDP taking into account
+# info on reproducive health, empowerment and the labour market.
+# see https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII
+
+# this download only has the latest year, so is no good
+# https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Statistical_Annex_GII_Table.xlsx
+#
+# Instead go to https://hdr.undp.org/data-center/documentation-and-downloads and choose GII
+# and then Excel download
+
+gii <- read_excel("hdr-data.xlsx", sheet = "Data") |> 
+  filter(indicatorCode == "gii") |> 
+  mutate(time_period = as.numeric(year),
+         value = as.numeric(value)) |> 
+  select(iso3_code = countryIsoCode,
+         gii =value,
+         time_period)
+
 
 combined <- combined |> 
   select(geo_area_name:gdp_cut) |> 
-  left_join(literacy, by = c("iso3_code", "time_period"))
+  left_join(gii, by = c("iso3_code", "time_period")) |> 
+  mutate(country_fac = fct_reorder(geo_area_name, prop_male, .fun = max))
 
 length(unique(combined$geo_area_name))
 
 #================Exploratory charts==============
+
+
+#-----------------some unidimensional ones---------
+combined |> 
+  ggplot(aes(y = country_fac, x = prop_male, fill = as.ordered(time_period))) +
+  geom_col(position = "dodge", width = 0.7) +
+  theme(legend.position = c(0.45, 0.75)) +
+  facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
+  scale_x_continuous(label = percent) +
+  labs(x = "Male time on domestic and care work as a proportion of total",
+       y = "",
+       fill = "Year",
+       title = "Male time on domestic and care work")
+
+
+combined |> 
+  ggplot(aes(y = country_fac, x = tfr, fill = as.ordered(time_period))) +
+  geom_col(position = "dodge", width = 0.7) +
+  theme(legend.position = c(0.45, 0.75)) +
+  facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
+  labs(x = "Total fertility rate (average number of children for a woman experiencing current age-specific fertility rates through her lifetime)",
+       y = "",
+       fill = "Year",
+       title = "Total fertility rate",
+       subtitle = "Showing all years where time use data is available")
+
+
+combined |> 
+  ggplot(aes(y = country_fac, x = gdprppppc, fill = as.ordered(time_period))) +
+  geom_col(position = "dodge", width = 0.7) +
+  theme(legend.position = c(0.45, 0.75)) +
+  facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
+  scale_x_continuous(label = dollar) +
+  labs(x = "GDP per capita, purchasing power parity",
+       y = "",
+       fill = "Year",
+       title = "GDP per capita, adjusted for spending power",
+       subtitle = "Showing all years where time use data is available")
+
+
+combined |> 
+  ggplot(aes(y = country_fac, x = gii, fill = as.ordered(time_period))) +
+  geom_col(position = "dodge", width = 0.7) +
+  theme(legend.position = c(0.45, 0.75)) +
+  facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
+  scale_x_continuous(label = comma) +
+  labs(x = "Gender Inequality Index",
+       y = "",
+       fill = "Year",
+       title = "Gender Inequality Index",
+       subtitle = "Showing all years where time use data is available")
+
+
 
 # some interesting countries to highlight
 hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
@@ -267,16 +332,15 @@ combined |>
 #-------------modelling--------------------
 combined |> 
   mutate(lgdp = log(gdprppppc),
-         ltfr = log(tfr),
-         lfl  = log(female_literacy)) |> 
-  select( prop_male, lgdp, ltfr, literacy_parity, female_literacy) |> 
+         ltfr = log(tfr)) |> 
+  select( prop_male, lgdp, ltfr, gii) |> 
   ggpairs()
 
 
 # Here's the simplest thing we should consider. Note that this treats each
 # data point as IID, even though many are repeated measures of the same country.
 # So still not a great model.
-model <- lm(log(tfr) ~ prop_male + log(gdprppppc) + literacy_parity + female_literacy, 
+model <- lm(log(tfr) ~ prop_male + log(gdprppppc) + gii, 
             data = combined)
 
 # the diagnostics are ok:
@@ -297,17 +361,15 @@ summary(bad_model)
 
 # a better model would be one that takes into account that we have repeated measures
 # for each country
-combined$country_fac <- as.factor(combined$geo_area_name)
-model2 <- gamm(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
-                 female_literacy + literacy_parity, 
+
+model2 <- gamm(tfr ~ s(prop_male) + s(log(gdprppppc)) + s(country_fac, bs = 're') + s(gii), 
               data = combined, family = quasipoisson)
 summary(model2$lme)
 summary(model2$gam)
 plot(model2$gam, pages = TRUE)
 
 
-model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') +
-                female_literacy + literacy_parity, 
+model3 <- gam(tfr ~ prop_male + s(log(gdprppppc)) + s(country_fac, bs = 're') + gii, 
                data = combined, family = quasipoisson)
 summary(model3)
 plot(model3, pages = TRUE)
