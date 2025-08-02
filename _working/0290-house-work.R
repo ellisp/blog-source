@@ -217,9 +217,7 @@ time_fert_gdp <- time_chores |>
   mutate(gdp_cut = cut(gdp_for_cut, breaks = quantile(unique(gdp_for_cut), na.rm = TRUE),
                        include.lowest = TRUE,
                        labels = c("Lowest income", "Low income", 
-                                  "Medium income", "High income"))) |> 
-  # factor version of country, needed for some later modelling:
-  mutate(country_fac = as.factor(country))
+                                  "Medium income", "High income")))
 
 dim(time_fert_gdp)
 
@@ -253,9 +251,11 @@ gii <- hdr |>
   mutate(time_period = as.numeric(time_period))
 
 combined <- time_fert_gdp |> 
-  left_join(gii, by = c("iso3_code", "time_period")) 
+  left_join(gii, by = c("iso3_code", "time_period"))  |> 
+  # factor version of country, needed for some later modelling:
+  mutate(country_fac = fct_reorder(country, -gdp_for_cut))
 
-# 191 countries:
+# 193 countries:
 length(unique(combined$country))
 
 # Only 79 have all the data we need
@@ -281,16 +281,21 @@ combined |>
   filter(is.na(gdprppppc)) |> 
   nrow()
 
-# 177 observations altogether (so will go down to 172 in modelling)
+# 172 observations altogether (so will go down to 172 in modelling)
 combined |> 
   filter(!is.na(gii) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
   nrow()
 
 #================Exploratory charts==============
 
+countries_ok_data <- combined |> 
+  filter(!is.na(gii) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
+  distinct(country)
 
 #-----------------some unidimensional ones---------
 combined |> 
+#  inner_join(countries_ok_data) |> 
+  filter(!is.na(prop_male)) |> 
   ggplot(aes(y = country_fac, x = prop_male, fill = as.ordered(time_period))) +
   geom_col(position = "dodge", width = 0.7) +
   theme(legend.position = c(0.45, 0.75)) +
@@ -304,6 +309,8 @@ combined |>
 st <- "Showing years where time use data is also available"
 
 combined |> 
+  inner_join(countries_ok_data) |> 
+  filter(time_period == 2025) |> 
   ggplot(aes(y = country_fac, x = tfr, fill = as.ordered(time_period))) +
   geom_col(position = "dodge", width = 0.7) +
   theme(legend.position = c(0.45, 0.75)) +
@@ -316,6 +323,8 @@ combined |>
 
 
 combined |> 
+  inner_join(countries_ok_data) |> 
+  filter(time_period == 2025) |> 
   ggplot(aes(y = country_fac, x = gdprppppc, fill = as.ordered(time_period))) +
   geom_col(position = "dodge", width = 0.7) +
   theme(legend.position = c(0.45, 0.75)) +
@@ -329,6 +338,8 @@ combined |>
 
 
 combined |> 
+  inner_join(countries_ok_data) |> 
+  filter(time_period == 2023) |> 
   ggplot(aes(y = country_fac, x = gii, fill = as.ordered(time_period))) +
   geom_col(position = "dodge", width = 0.7) +
   theme(legend.position = c(0.45, 0.75)) +
@@ -352,9 +363,9 @@ p2 <- combined |>
   facet_wrap(~gdp_cut, scales = "fixed") +
   geom_smooth(method = "rlm", colour = "white") +
   geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
-  geom_path(aes(group = geo_area_name), colour = "grey50") +
-  geom_text_repel(data = filter(combined, geo_area_name %in% hlc & is_latest == "Most recent"),
-                  aes(label = glue("{geo_area_name}, {time_period}")), colour = "black") +
+  geom_path(aes(group = country), colour = "grey50") +
+  geom_text_repel(data = filter(combined, country %in% hlc & is_latest == "Most recent"),
+                  aes(label = glue("{country}, {time_period}")), colour = "black") +
   scale_shape_manual(values = c(1, 19)) +
   scale_x_continuous(label = percent) +
   scale_y_log10() +
