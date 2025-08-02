@@ -13,6 +13,8 @@ library(mgcv)   # for gam
 library(ggdag)
 library(MASS)   # for rlm
 library(RColorBrewer)
+library(GGally)
+library(lme4)
 
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(dplyr::select)
@@ -199,43 +201,29 @@ gdp <- d2025 |>
   filter(!is.na(iso3_code)) |> 
   select(-REF_AREA)
 
-combined <- time_chores |> 
-  left_join(wpp, by = c("iso3_code", "time_period")) |> 
-  left_join(gdp, by = c("iso3_code", "time_period")) |> 
+time_fert_gdp <- time_chores |> 
+  select(-geo_area_name) |> 
+  full_join(wpp, by = c("iso3_code", "time_period")) |> 
+  full_join(gdp, by = c("iso3_code", "time_period")) |> 
   # missing data for GDP for Cuba and Reunion
-  filter(!is.na(gdprppppc)) |>
-  # get the latest gdp per capita for each country, for stable categorisation 
-  # based on just one number (I use latest instead of earliest because if
-  # we are going to use just one number, it will be the most recent):
-  group_by(geo_area_name) |> 
-  arrange(time_period) |> 
-  mutate(latest_gdp = gdprppppc[time_period == max(time_period)]) |> 
+  # filter(!is.na(gdprppppc)) |>
+  complete(iso3_code, time_period, fill = list(gdprpppc = NA)) |> 
+  group_by(iso3_code) |> 
+  mutate(latest_gdp = gdprppppc[time_period == max(time_period)],
+         gdp_2000 = unique(gdprppppc[time_period == 2000]),
+         gdp_min = min(gdprppppc, na.rm = TRUE),
+         gdp_for_cut = ifelse(is.na(gdp_2000), gdp_min, gdp_2000)) |> 
   ungroup() |> 
-  mutate(gdp_cut = cut(gdprppppc, breaks = quantile(unique(latest_gdp), na.rm = TRUE),
+  mutate(gdp_cut = cut(gdp_for_cut, breaks = quantile(unique(gdp_for_cut), na.rm = TRUE),
                        include.lowest = TRUE,
                        labels = c("Lowest income", "Low income", 
                                   "Medium income", "High income"))) |> 
-  # there's an annoying problem with some countries eg China being split
-  # and sometimes in "Lowest income", sometimes "low income" because they 
-  # are right on the cut's quantile. So we need to fix this:
-  group_by(geo_area_name) |> 
-  # note that if you used ifelse instead of if_else, it loses the levels of gdp_cut.
-  # but this method works:
-  mutate(gdp_cut = if_else(geo_area_name != lag(geo_area_name) | is.na(lag(geo_area_name)), gdp_cut, lag(gdp_cut))) |> 
-  ungroup() |> 
   # factor version of country, needed for some later modelling:
-  mutate(country_fac = as.factor(geo_area_name))
+  mutate(country_fac = as.factor(country))
 
-# check we got the right categories for "gdp_cut":
-select(combined, geo_area_name, time_period, gdprppppc, latest_gdp, gdp_cut)
-  
-# check a country like China is in the same category each time, despite
-# their income changing:
-filter(combined, geo_area_name == "China") |> select(gdp_cut)
+dim(time_fert_gdp)
 
-
-
-#-------------female education----------------------
+#-------------female empowerment?----------------------
 # higher income is only the most obvious confounder. There's also the general
 # sense of female economic opportunities and empowerment. A fair proxy of this
 # is probably female literacy as a proportion of male literacy
@@ -245,31 +233,58 @@ filter(combined, geo_area_name == "China") |> select(gdp_cut)
 # Literacy rate, youth (ages 15-24), gender parity index (GPI)
 # Literacy rate, youth female (% of females ages 15-24)
 
-# this gender inequality index, composite index from UNDP taking into account
-# info on reproducive health, empowerment and the labour market.
-# see https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII
+# this gender inequality index (GII), composite index from UNDP taking into
+# account info on reproducive health, empowerment and the labour market. see
+# https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII
 
-# this download only has the latest year, so is no good
-# https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Statistical_Annex_GII_Table.xlsx
-#
-# Instead go to https://hdr.undp.org/data-center/documentation-and-downloads and choose GII
-# and then Excel download
+# You can download all the HDR components (including GII):
+download.file("https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv",
+              destfile = "hdr25.csv")
 
-gii <- read_excel("hdr-data.xlsx", sheet = "Data") |> 
-  filter(indicatorCode == "gii") |> 
-  mutate(time_period = as.numeric(year),
-         value = as.numeric(value)) |> 
-  select(iso3_code = countryIsoCode,
-         gii =value,
-         time_period)
+hdr <- read_csv("hdr25.csv")
 
+gii <- hdr |> 
+  select(iso3_code = iso3, contains("gii")) |> 
+  select(-contains("rank")) |> 
+  gather(variable, gii, -iso3_code) |> 
+  drop_na() |> 
+  separate(variable, sep = "_", into = c("variable", "time_period")) |> 
+  select(-variable) |> 
+  mutate(time_period = as.numeric(time_period))
 
-combined <- combined |> 
-  select(geo_area_name:gdp_cut) |> 
-  left_join(gii, by = c("iso3_code", "time_period")) |> 
-  mutate(country_fac = fct_reorder(geo_area_name, prop_male, .fun = max))
+combined <- time_fert_gdp |> 
+  left_join(gii, by = c("iso3_code", "time_period")) 
 
-length(unique(combined$geo_area_name))
+# 191 countries:
+length(unique(combined$country))
+
+# Only 79 have all the data we need
+combined |> 
+  filter(!is.na(gii) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
+  distinct(country) |> 
+  nrow()
+
+# Used this to work out Oman is missing GII data in 2000 but it is ok in 2008
+# so only loses one row
+filter(combined, country == "Oman" &!is.na(prop_male)) |> t()
+
+# Only 5 rows of data lost altogether from GII:
+combined |> 
+  filter(!is.na(gdprppppc) & !is.na(prop_male)) |> 
+  filter(is.na(gii)) |> 
+  nrow()
+
+# and only one (Cuba) from having no gdp per capita in a year we otherwise
+# could include it:
+combined |> 
+  filter(!is.na(prop_male) & !is.na(gii)) |> 
+  filter(is.na(gdprppppc)) |> 
+  nrow()
+
+# 177 observations altogether (so will go down to 172 in modelling)
+combined |> 
+  filter(!is.na(gii) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
+  nrow()
 
 #================Exploratory charts==============
 
@@ -286,6 +301,7 @@ combined |>
        fill = "Year",
        title = "Male time on domestic and care work")
 
+st <- "Showing years where time use data is also available"
 
 combined |> 
   ggplot(aes(y = country_fac, x = tfr, fill = as.ordered(time_period))) +
@@ -296,7 +312,7 @@ combined |>
        y = "",
        fill = "Year",
        title = "Total fertility rate",
-       subtitle = "Showing all years where time use data is available")
+       subtitle = st)
 
 
 combined |> 
@@ -309,7 +325,7 @@ combined |>
        y = "",
        fill = "Year",
        title = "GDP per capita, adjusted for spending power",
-       subtitle = "Showing all years where time use data is available")
+       subtitle = st)
 
 
 combined |> 
@@ -322,7 +338,7 @@ combined |>
        y = "",
        fill = "Year",
        title = "Gender Inequality Index",
-       subtitle = "Showing all years where time use data is available")
+       subtitle = st)
 
 
 
@@ -355,8 +371,6 @@ p2 <- combined |>
 svg_png(p2, "../img/0290-facet-scatter", w = 11, h = 7)
 
 #-------------modelling--------------------
-library(GGally)
-
 combined |> 
   mutate(lgdp = log(gdprppppc),
          ltfr = log(tfr)) |> 
