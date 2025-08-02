@@ -15,6 +15,8 @@ library(MASS)   # for rlm
 library(RColorBrewer)
 library(GGally)
 library(lme4)
+library(patchwork)
+library(marginaleffects)
 
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(dplyr::select)
@@ -288,63 +290,64 @@ combined |>
 
 #================Exploratory charts==============
 
+# countries that have at least one observation of all four variables:
 countries_ok_data <- combined |> 
-  filter(!is.na(gii) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
+  filter(!is.na(gii) & !is.na(tfr) & !is.na(gdprppppc) & !is.na(prop_male)) |> 
   distinct(country)
 
 #-----------------some unidimensional ones---------
 combined |> 
-#  inner_join(countries_ok_data) |> 
+  inner_join(countries_ok_data, by = "country") |> 
   filter(!is.na(prop_male)) |> 
+  group_by(country_fac) |> 
+  arrange(desc(time_period)) |> 
+  slice(1) |> 
+  ungroup() |> 
+  mutate(country_fac = fct_reorder(country_fac, -prop_male, .fun = max)) |> 
   ggplot(aes(y = country_fac, x = prop_male, fill = as.ordered(time_period))) +
   geom_col(position = "dodge", width = 0.7) +
-  theme(legend.position = c(0.45, 0.75)) +
+  theme(panel.grid.major.y = element_blank()) +
   facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
-  scale_x_continuous(label = percent) +
-  labs(x = "Male time on domestic and care work as a proportion of total",
+  scale_x_continuous(label = percent, expand = c(0, 0)) +
+  guides(fill = guide_legend(ncol = 15)) +
+  labs(x = "Male share of domestic and care work as a proportion of total - most recent survey result",
        y = "",
        fill = "Year",
-       title = "Male time on domestic and care work")
+       title = "Male time on domestic and care work",
+       subtitle = "Countries' income categorised by purchasing power parity GDP per capita in 2000. Ordering within facet is by male time on domestic work.",
+       caption = "Source: UN Sustainable Development Goals database for time use; IMF World Economic Outlook for PPP GDP per capita")
 
-st <- "Showing years where time use data is also available"
+st <- "Selected countries where time use, GDP and gender inequality data is also available"
+
+lol_col <- "steelblue"
 
 combined |> 
-  inner_join(countries_ok_data) |> 
+  inner_join(countries_ok_data, by = "country") |> 
   filter(time_period == 2025) |> 
-  ggplot(aes(y = country_fac, x = tfr, fill = as.ordered(time_period))) +
-  geom_col(position = "dodge", width = 0.7) +
-  theme(legend.position = c(0.45, 0.75)) +
+  mutate(country_fac = fct_reorder(country_fac, tfr)) |> 
+  ggplot(aes(y = country_fac, x = tfr)) +
+  geom_segment(aes(xend =0, yend = country_fac), col = lol_col) +
+  geom_point(col = lol_col) +
+  theme(panel.grid.major.y = element_blank()) +
+  scale_x_continuous(expand = c(0,0)) +
   facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
-  labs(x = "Total fertility rate (average number of children for a woman experiencing current age-specific fertility rates through her lifetime)",
+  labs(x = "Total fertility rate (average number of children for a woman experiencing current age-specific fertility rates through a hypothetical lifetime)",
        y = "",
        fill = "Year",
-       title = "Total fertility rate",
-       subtitle = st)
-
-
-combined |> 
-  inner_join(countries_ok_data) |> 
-  filter(time_period == 2025) |> 
-  ggplot(aes(y = country_fac, x = gdprppppc, fill = as.ordered(time_period))) +
-  geom_col(position = "dodge", width = 0.7) +
-  theme(legend.position = c(0.45, 0.75)) +
-  facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
-  scale_x_continuous(label = dollar) +
-  labs(x = "GDP per capita, purchasing power parity",
-       y = "",
-       fill = "Year",
-       title = "GDP per capita, adjusted for spending power",
-       subtitle = st)
-
+       title = "Total fertility rate in 2025",
+       subtitle = st,
+       caption = "Source: UN Population Prospects for total fertility rate; IMF World Economic Outlookfor PPP GDP per capita")
 
 combined |> 
-  inner_join(countries_ok_data) |> 
+  inner_join(countries_ok_data, by = "country") |> 
   filter(time_period == 2023) |> 
-  ggplot(aes(y = country_fac, x = gii, fill = as.ordered(time_period))) +
-  geom_col(position = "dodge", width = 0.7) +
-  theme(legend.position = c(0.45, 0.75)) +
+  mutate(country_fac = fct_reorder(country_fac, gii)) |> 
+  ggplot(aes(y = country_fac, x = gii)) +
+  geom_segment(aes(xend =0, yend = country_fac), col = lol_col) +
+  geom_point(col = lol_col) +
+  theme(panel.grid.major.y = element_blank()) +
   facet_wrap(~gdp_cut, ncol = 2, scales = "free_y") +
-  scale_x_continuous(label = comma) +
+  scale_x_continuous(label = comma, expand = c(0,0)) +
   labs(x = "Gender Inequality Index",
        y = "",
        fill = "Year",
@@ -355,23 +358,27 @@ combined |>
 
 # some interesting countries to highlight
 hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
-         "Brazil", "Oman", "Hungary", "Qatar", "Canada",
-         "Australia")
+         "Brazil", "Oman", "Qatar", "Canada",
+         "Korea", "Lao P.D.R.", "Pakistan", "Estonia")
 
 p2 <- combined |> 
-  ggplot(aes(x = prop_male, y = tfr))+
+  inner_join(countries_ok_data, by = "country") |> 
+  filter(!is.na(time_period) & !is.na(prop_male)) |> 
+  ggplot(aes(x = prop_male, y = tfr)) +
   facet_wrap(~gdp_cut, scales = "fixed") +
   geom_smooth(method = "rlm", colour = "white") +
   geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
   geom_path(aes(group = country), colour = "grey50") +
   geom_text_repel(data = filter(combined, country %in% hlc & is_latest == "Most recent"),
-                  aes(label = glue("{country}, {time_period}")), colour = "black") +
+                  aes(label = glue("{country}, {time_period}")), colour = "black",
+                  seed = 123) +
+#  geom_text(aes(label = country)) +
   scale_shape_manual(values = c(1, 19)) +
   scale_x_continuous(label = percent) +
   scale_y_log10() +
   guides(colour =  guide_colorbar(display = "rectangles")) +
   theme(legend.key.width = unit(10, "mm")) +
-  labs(x = "Proportion of domestic and care work done by males",
+  labs(x = "Proportion of adult domestic and care work done by men",
        y ="Total fertility rate",
        colour = "Observation date:",
        shape = "Observation type:",
@@ -381,33 +388,34 @@ p2 <- combined |>
 
 svg_png(p2, "../img/0290-facet-scatter", w = 11, h = 7)
 
-#-------------modelling--------------------
-combined |> 
+model_ready <- combined |> 
   mutate(lgdp = log(gdprppppc),
          ltfr = log(tfr)) |> 
-  select( prop_male, lgdp, ltfr, gii) |> 
+  select( prop_male, lgdp, ltfr, gii, gdprppppc, country_fac, tfr) |> 
+  drop_na() 
+
+
+model_ready |> 
+  select(prop_male, lgdp, ltfr, gii) |> 
   ggpairs()
 
 #-------------modelling--------------------
 library(lme4)
-#library(marginaleffects)
+library(marginaleffects)
 library(patchwork)
 
-model0 <- lmer(log(tfr) ~ log(gdprppppc) + (1 | country_fac), data = combined)
+model0 <- lmer(ltfr ~ gii + log(gdprppppc)  + (1 | country_fac), 
+                data = model_ready)
 
-model1 <- lmer(log(tfr) ~ log(gdprppppc) + prop_male + (1 | country_fac), 
-            data = combined)
+model1 <- lmer(ltfr ~ gii + log(gdprppppc) + prop_male + (1 | country_fac), 
+            data = model_ready)
 
-model2 <- lmer(log(tfr) ~ log(gdprppppc) * prop_male + (1 | country_fac), 
-               data = combined)
+model2 <- lmer(ltfr ~ gii + log(gdprppppc) * prop_male + (1 | country_fac), 
+               data = model_ready)
 
-post_fit <- combined |> 
+post_fit <- model_ready |> 
   mutate(res0 = residuals(model0, type = "pearson"),
-         fit0 = exp(fitted(model0)),
-         res1  = residuals(model1, type = "pearson"),
-         fit1 = exp(fitted(model1)),
-         res2  = residuals(model2, type = "pearson"),
-         fit2 = exp(fitted(model2))) |> 
+         fit0 = exp(fitted(model0))) |> 
   mutate(res0st = res0 / sd(res0))
 
 refsd <- 0.745
@@ -442,11 +450,15 @@ post_fit |>
        y = "Standardised residual") +
   
 post_fit |> 
-  ggplot(aes(x = prop_male, y = res0)) +
-  geom_point() +
+  ggplot(aes(x = prop_male, y = res0, colour = gdprppppc)) +
+  geom_point(size = 2) +
   geom_smooth(method = "loess", colour = "white") +
+  scale_color_viridis_c(label = dollar, trans = log_trans()) +
   scale_x_continuous(label = percent) +
+  theme(legend.position = "right") +
   labs(subtitle = "This plot identifies any residual fertility rate to be explained by housework",
+       colour = "PPP GDP
+per capita",
        x = "Proportion of housework done by males",
        y = "Total fertility rate (on log scale) 
 *not* explained by GDP model") +
@@ -455,41 +467,98 @@ post_fit |>
   
   plot_layout(nrow = 2) +
   
-  plot_annotation(title = "Diagnostic plots for model of total fertility rate on countries' GDP per capita",
+  plot_annotation(title = "Diagnostic plots for model of log total fertility rate on countries' GDP per capita and Gender Inequality Index",
                   subtitle = "Male share of housework not explictly included in the model")
 
   
-anova(model0, model2)
+anova(model0, model1)
 anova(model0, model1, model2)
+anova(model0, model2)
 
-# and the result is straightforward: gdp per capita predicts fertility, domestic chores doesn't:
-summary(model2)
-
-# we can be confident that gdp per capita should be kept in as it's clearly not
-# a mediator of domestic chores (domestic chores do not act on fertility via GDP),
-# nor a collider (fertility impacts on GDP and domestic chores impact on GDP)
-# Instead it is a confounder - GDP impacts on both domestic chores and on fertility.
-
-# a better model would be one that takes into account that we have repeated measures
-# for each country
-
-model3 <- gamm(tfr ~ s(log(gdprppppc)) + s(country_fac, bs = 're'), 
-               data = combined, family = quasipoisson)
-
-model4 <- gamm(tfr ~ s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
-              data = combined, family = quasipoisson)
-
-model5 <- gamm(tfr ~ s(log(gdprppppc)) +  s(gii) + s(prop_male) + s(country_fac, bs = 're'), 
-               data = combined, family = quasipoisson)
+# prop_male about -8.5 so very negatively correlated; but some interaction with
+# GDP
+summary(model2, cor = FALSE)
 
 
-summary(model4$lme)
-summary(model4$gam)
-summary(model5)
-plot(model4$gam, pages = TRUE)
-plot(model5$gam, pages = TRUE)
+# Manual way of building a plot. Not even using predict()
+b <- fixef(model2)
 
-anova(model3$lme, model4$lme)
+#' Predict TFR given those coefficients
+calc_tfr <- function(prop_male, gdp, gii = mean(model_ready$gii)){
+  exp(b[1] + 
+      b[2] * gii + 
+      b[3] * log(gdp) + 
+      b[4] * prop_male + 
+      b[5] * prop_male * log(gdp))
+}
 
 
-model5
+tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
+       gdp = rep(c(3000, 10000, 80000), each = 50)) |> 
+  mutate(tfr = c(calc_tfr(prop_male, gdp)),
+         gdp = dollar(gdp),
+         gdp = fct_relevel(gdp, "$3,000")) |> 
+  ggplot(aes(x = prop_male, colour = gdp, y = tfr)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(data = model_ready, colour = "black") +
+  scale_x_continuous(label = percent) +
+  labs(x = "Proportion of adult housework done by men",
+       y = "Predicted total fertility rate",
+       colour = "PPP GDP per capita")
+
+
+
+plot_predictions(model2, points = 1, condition = list(
+  "prop_male",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(trans = transform_exp(),
+                     breaks = log(c(2, 4, 6)),
+                     label = comma,
+                     sec.axis = sec_axis(exp, name = "Total Fertility Rate")) +
+  scale_x_continuous(label = percent) +
+  labs(y = "log(total fertility rate)",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Proportion of adult housework done by men")
+
+
+
+# Check this one is really just like model2, just different estimation
+model7 <- gamm(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
+               data = model_ready, family = quasipoisson)
+
+
+summary(model7$lme)$tTable |> 
+  as.data.frame() |> 
+  mutate(`p-value` = round(`p-value`, 3)) |> 
+  mutate(mod2_coefs = fixef(model2)) |> 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+# what about with less linearity
+model4 <- gamm(tfr ~ s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+              data = model_ready, family = quasipoisson)
+
+model5 <- gamm(tfr ~ s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+               data = model_ready, family = quasipoisson)
+
+model6 <- gamm(tfr ~ s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+               data = model_ready, family = quasipoisson)
+
+
+
+plot(model6$gam, pages = TRUE)
+
+anova(model4$lme, model5$lme, model6$lme)
+anova(model4$lme, model6$lme)
+
+summary(model6$lme)$tTable |> 
+  as.data.frame() |> 
+  mutate(`p-value` = round(`p-value`, 3)) 
+
+summary(model4$lme)$tTable |> 
+  as.data.frame() |> 
+  mutate(`p-value` = round(`p-value`, 3)) 
+
+
+# Basically says if you let the GDP and GII effect be all curved there's no need
+# for a prop_male. Is the lesson one about vulnerability to some modelling choices.
