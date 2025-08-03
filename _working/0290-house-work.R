@@ -604,13 +604,16 @@ model6a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s
 
 # Then, using gam:
 model4b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
-                data = model_ready, family = quasipoisson)
+                data = model_ready, family = quasipoisson, method = "REML")
 
 model5b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
-                data = model_ready, family = quasipoisson)
+                data = model_ready, family = quasipoisson, method = "REML")
 
 model6b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
-                data = model_ready, family = quasipoisson)
+                data = model_ready, family = quasipoisson, method = "REML")
+
+
+
 
 # Gavin Simpson's blog at 
 # https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/
@@ -638,13 +641,15 @@ p11 <- function(){
 svg_png(p11, "../img/0290-gam", w = 13, h = 7)
 
 anova(model4a$lme, model5a$lme, model6a$lme)
-anova(model4a$lme, model6a$lme)
+anova(model4a$lme, model6a$lme) # suggests but very marginal better to have the full model
+anova(model6a$gam)
 
 # these tests might be ok so long as the models have the smae random effects struture
 # (which they do)
 anova(model4b, model5b, model6b)
-anova(model4b, model6b)
+anova(model4b, model6b) # suggests simpler model is probably better
 summary(model4b)
+summary(model6b)
 
 summary(model6a$lme)$tTable |> 
   as.data.frame() |> 
@@ -675,4 +680,39 @@ summary(model4a$lme)$tTable |>
 AIC(model6b) # NA - why?
 
 # Basically says if you let the GDP and GII effect be all curved there's no need
-# for a prop_male. Is the lesson one about vulnerability to some modelling choices.
+# for a prop_male. Is the lesson one about vulnerability to some modelling
+# choices.
+
+
+#---------------final presentation---------
+
+pred_grid <- expand_grid(
+  prop_male = seq(from = 0.05, to = 0.45, length.out = 50),
+  gii = c(0.1, 0.25, 0.4),
+  gdprppppc = c(3, 10, 80) * 1000,
+  time_period = 2023,
+  country_fac = unique(model_ready$country_fac)
+)
+
+pred6 <- predict(model6b, newdata = pred_grid, se.fit = TRUE) |> 
+  as_tibble()
+
+
+pred_grid |> 
+  mutate(fit = pred6$fit,
+         se.fit = pred6$se.fit) |> 
+  group_by(prop_male, gii, gdprppppc) |> 
+  summarise(fit = mean(fit),
+            se.fit = mean(se.fit)) |> 
+  ungroup() |> 
+  mutate(upper = fit + 1.96 * se.fit,
+         lower = fit - 1.96 * se.fit,
+         fit2 = exp(fit),
+         upper2 = exp(upper),
+         lower2 = exp(lower)) |> 
+  ggplot(aes(x = prop_male)) +
+  geom_ribbon(aes(ymin = lower2, ymax = upper2, fill = dollar(gdprppppc)), alpha = 0.5) +
+  geom_line(aes(y = fit2, colour = dollar(gdprppppc))) +
+  geom_point(data = mutate(model_ready, gii = 0.25, gdprppppc = 10000), aes(y = tfr), 
+             colour = "black") +
+  facet_grid(gdprppppc ~ gii)
