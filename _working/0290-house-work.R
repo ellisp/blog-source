@@ -165,11 +165,11 @@ p1 <- time_chores |>
   scale_y_continuous() +
   guides(colour =  guide_colorbar(display = "rectangles")) +
   theme(legend.key.width = unit(10, "mm")) +
-  labs(x = "Proportion of domestic and care work done by males",
+  labs(x = "Proportion of unpaid domestic and care work done by males",
        y ="Total fertility rate",
        colour = "Observation date:",
        shape = "Observation type:",
-       title = "Gender share of domestic work and fertility rate",
+       title = "Gender share of unpaid domestic work and fertility rate",
        subtitle = "When including all countries, relationship between male share of domestic and care work and fertility is negative.
 Confounding effect of economic and educational opportunities for women and girls has not been controlled for.",
        caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects. Analysis by freerangestats.info.")
@@ -177,7 +177,7 @@ Confounding effect of economic and educational opportunities for women and girls
 svg_png(p1, "../img/0290-simple-scatter", w = 9, h = 7)
 
 
-# so income is almost certainly a confounder. We can use the IMF WEO data from last week
+# Income is almost certainly a confounder. We can use the IMF WEO data from last week
 # (see that blog for how to access it, or run 0288-IMF-WEO.R script in this
 # same repository)
 if(!exists("d2025")){
@@ -210,6 +210,7 @@ time_fert_gdp <- time_chores |>
   # missing data for GDP for Cuba and Reunion
   # filter(!is.na(gdprppppc)) |>
   complete(iso3_code, time_period, fill = list(gdprpppc = NA)) |> 
+  # classify countries into four income categories based on income in 2000:
   group_by(iso3_code) |> 
   mutate(latest_gdp = gdprppppc[time_period == max(time_period)],
          gdp_2000 = unique(gdprppppc[time_period == 2000]),
@@ -322,7 +323,7 @@ svg_png(p2, "../img/0290-time-share-bar", w = 13, h = 7)
 
 
 # A couple of things we'll use a few times in the next few lollipops
-st <- "Selected countries where time use, GDP and gender inequality data is also available"
+st <- "Selected countries where time use, GDP and gender inequality data are all available"
 lol_col <- "steelblue"
 
 # Fertility rate
@@ -360,10 +361,14 @@ p4 <- combined |>
        y = "",
        fill = "Year",
        title = "Gender Inequality Index",
-       subtitle = st)
+       subtitle = st,
+       caption = "Source: UNDP for Gender Inequality Index; IMF World Economic Outlookfor PPP GDP per capita")
+
 
 svg_png(p4, "../img/0290-gii-lollipop", w = 13, h = 7)
 
+
+## Faceted scatter plot showing income, domestic work and fertility together:
 
 # some interesting countries to highlight
 hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt", 
@@ -381,7 +386,8 @@ p5 <- combined |>
   geom_text_repel(data = filter(combined, country %in% hlc & is_latest == "Most recent"),
                   aes(label = glue("{country}, {time_period}")), colour = "black",
                   seed = 123, size = 2.8) +
-#  geom_text(aes(label = country)) +
+  #  uncomment next line to see every point labelled, useful for deciding which are 'interesting':
+  #  geom_text(aes(label = country)) +
   scale_shape_manual(values = c(1, 19)) +
   scale_x_continuous(label = percent) +
   scale_y_log10() +
@@ -392,15 +398,16 @@ p5 <- combined |>
        colour = "Observation date:",
        shape = "Observation type:",
        title = "Share of domestic work and fertility rate, for countries in different income categories",
-       subtitle = "Countries classified into custom groups based on purchasing power parity GDP at the time of first time-use survey. Selected countries labelled.",
+       subtitle = "Countries classified into custom groups based on purchasing power parity GDP in 2000. Selected countries labelled.",
        caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
 
 svg_png(p5, "../img/0290-facet-scatter", w = 11, h = 7)
 
+# Data set that we will use in the modelling:
 model_ready <- combined |> 
   mutate(lgdp = log(gdprppppc),
          ltfr = log(tfr)) |> 
-  select( prop_male, lgdp, ltfr, gii, gdprppppc, country_fac, tfr) |> 
+  select( prop_male, lgdp, ltfr, gii, gdprppppc, country_fac, tfr, time_period) |> 
   drop_na() 
 
 
@@ -415,15 +422,9 @@ svg_png(p6, "../img/0290-pairs", w = 10, h = 6)
 
 
 #-------------modelling--------------------
-
+# A basic null model:
 model0 <- lmer(ltfr ~ gii + log(gdprppppc)  + (1 | country_fac), 
                 data = model_ready)
-
-model1 <- lmer(ltfr ~ gii + log(gdprppppc) + prop_male + (1 | country_fac), 
-            data = model_ready)
-
-model2 <- lmer(ltfr ~ gii + log(gdprppppc) * prop_male + (1 | country_fac), 
-               data = model_ready)
 
 post_fit <- model_ready |> 
   mutate(res0 = residuals(model0, type = "pearson"),
@@ -491,6 +492,13 @@ per capita",
 svg_png(p7, "../img/0290-diagnose-0", w = 13, h = 7)
 
   
+model1 <- lmer(ltfr ~ gii + log(gdprppppc) + prop_male + (1 | country_fac), 
+               data = model_ready)
+
+model2 <- lmer(ltfr ~ gii + log(gdprppppc) * prop_male + (1 | country_fac), 
+               data = model_ready)
+
+
 anova(model0, model1)
 anova(model0, model1, model2)
 anova(model0, model2)
@@ -513,6 +521,7 @@ calc_tfr <- function(prop_male, gdp, gii = mean(model_ready$gii)){
 }
 
 
+# Home-made prediction plot to show the interaction effect:
 p8 <- tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
        gdp = rep(c(3000, 10000, 80000), each = 50)) |> 
   mutate(tfr = c(calc_tfr(prop_male, gdp)),
@@ -528,7 +537,8 @@ p8 <- tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
 
 svg_png(p8, "../img/0290-home-made-preds", w = 10, h = 6)
 
-
+# marginaleffects package effort (much easier, including with 
+# confidence intervals):
 p9 <- plot_predictions(model2, points = 1, condition = list(
   "prop_male",
   "gdprppppc" = c(3000, 10000, 80000))) +
@@ -544,48 +554,125 @@ p9 <- plot_predictions(model2, points = 1, condition = list(
 
 svg_png(p9, "../img/0290-margeff-preds", w = 10, h = 6)
 
-
+#------------------mgcv--------------
 # Check this one is really just like model2, just different estimation
-model7 <- gamm(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
+model7a <- gamm(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
 
-summary(model7$lme)$tTable |> 
+model7b <- gamm(tfr ~ gii + log(gdprppppc) * prop_male,
+               random = list(country_fac = ~ 1),
+               data = model_ready, family = quasipoisson)
+
+model7c <- gam(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson)
+
+# a and b are identical; c has different results because of the implementation
+# or estimation method? And this includes only gii is 'significant' in 7c,
+
+# These three basically identical:
+summary(model7a$lme)
+summary(model7b$lme)
+summary(model2, cor = FALSE)
+
+# This one very different. Coefficients are closer to zero and t stats / p
+# values are not significant.
+summary(model7c)
+
+summary(model7a$lme)$tTable |> 
   as.data.frame() |> 
   mutate(`p-value` = round(`p-value`, 3)) |> 
   mutate(mod2_coefs = fixef(model2)) |> 
   mutate(across(where(is.numeric), round, digits = 2))
 
-# what about with less linearity
-model4 <- gamm(tfr ~ s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+summary(model7a$gam)
+
+# see https://stats.stackexchange.com/questions/485936/nonlinear-multilevel-modeling-with-gamms-which-model-to-choose
+# for some good discussion by Gavin simpson on gam v gamm
+
+# what about with less linearity, and allowing a general 'time' effect
+
+# First, using gamm:
+model4a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
               data = model_ready, family = quasipoisson)
 
-model5 <- gamm(tfr ~ s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+model5a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
-model6 <- gamm(tfr ~ s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+model6a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
+# Then, using gam:
+model4b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson)
+
+model5b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson)
+
+model6b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson)
+
+# Gavin Simpson's blog at 
+# https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/
+# seems to imply it might be better using gam() here rather than gamm(), because
+# of the non-Gaussian response
+
+summary(model6a$gam)
+summary(model6a$lme)
+summary(model6b)
+summary(model5b)
+summary(model4b)
 
 
 p10 <- function(){
-  plot(model6$gam, pages = TRUE)
+  plot(model6a$gam, pages = TRUE)
 }
 
-svg_png(p10, "../img/0290-gam", w = 13, h = 7)
+svg_png(p10, "../img/0290-gamm", w = 13, h = 7)
 
 
-anova(model4$lme, model5$lme, model6$lme)
-anova(model4$lme, model6$lme)
+p11 <- function(){
+  plot(model6b, pages = TRUE)
+}
 
-summary(model6$lme)$tTable |> 
+svg_png(p11, "../img/0290-gam", w = 13, h = 7)
+
+anova(model4a$lme, model5a$lme, model6a$lme)
+anova(model4a$lme, model6a$lme)
+
+# these tests might be ok so long as the models have the smae random effects struture
+# (which they do)
+anova(model4b, model5b, model6b)
+anova(model4b, model6b)
+summary(model4b)
+
+summary(model6a$lme)$tTable |> 
   as.data.frame() |> 
   mutate(`p-value` = round(`p-value`, 3)) 
 
-summary(model4$lme)$tTable |> 
+# what does it mean that the 'approximate significance of smooth terms' is
+# very low p values in the gam, but the p values in the lme are not?
+summary(model6a$gam)
+summary(model6a$lme)
+
+# Gavin simpson writes: 
+# "my understanding is that a GAMM is required" well yes, but that doesn't mean
+# you need to go to gamm(). gam() is perfectly content fitting simple random
+# effects via s(f, bs = "re"). The $gam component of the model you fitted is
+# conditional upon the random effects, it's just that it doesn't report info
+# about them. But good luck interpreting the output of the $lme component if you
+# want to look at the smooths. There's a duality between penalized smooths and
+# random effects; they are two views on the same thing, & we can represent GAMs
+# as mixed models & vice versa.
+
+# See https://stats.stackexchange.com/questions/632523/significance-testing-on-generalized-additive-mixed-models-gamms-mgcvgam
+# and all the discussion there is useful
+
+summary(model4a$lme)$tTable |> 
   as.data.frame() |> 
   mutate(`p-value` = round(`p-value`, 3)) 
 
+AIC(model6b) # NA - why?
 
 # Basically says if you let the GDP and GII effect be all curved there's no need
 # for a prop_male. Is the lesson one about vulnerability to some modelling choices.
