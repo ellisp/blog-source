@@ -17,6 +17,7 @@ library(GGally)
 library(lme4)
 library(patchwork)
 library(marginaleffects)
+library(gratia) # for extracting the random effects from s(group, bs = "re")
 
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(dplyr::select)
@@ -239,10 +240,13 @@ dim(time_fert_gdp)
 # https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII
 
 # You can download all the HDR components (including GII):
-download.file("https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv",
-              destfile = "hdr25.csv")
+df <- "hdr25.csv"
 
-hdr <- read_csv("hdr25.csv")
+if(!file.exists(df)){
+  download.file("https://hdr.undp.org/sites/default/files/2025_HDR/HDR25_Composite_indices_complete_time_series.csv",
+                destfile = df)
+}
+hdr <- read_csv(df)
 
 gii <- hdr |> 
   select(iso3_code = iso3, contains("gii")) |> 
@@ -533,6 +537,8 @@ p8 <- tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
   scale_x_continuous(label = percent) +
   labs(x = "Proportion of adult housework done by men",
        y = "Predicted total fertility rate",
+       title = "Interaction of income, housework done by men on fertility rate",
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index",
        colour = "PPP GDP per capita")
 
 svg_png(p8, "../img/0290-home-made-preds", w = 10, h = 6)
@@ -550,12 +556,17 @@ p9 <- plot_predictions(model2, points = 1, condition = list(
   labs(y = "log(total fertility rate)",
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
-       x = "Proportion of adult housework done by men")
+       x = "Proportion of adult housework done by men",
+       title = "Interaction of income, housework done by men on fertility rate",
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index")
+# note the warning that this only takes into account the uncertainty of
+# fixed-effect parameters. This is probably ok if we ar einterested in the causality.
 
 svg_png(p9, "../img/0290-margeff-preds", w = 10, h = 6)
 
 #------------------mgcv--------------
 # Check this one is really just like model2, just different estimation
+# Note that gamm generalized family response (non-Gaussian) use method=gammPQL
 model7a <- gamm(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
@@ -565,7 +576,7 @@ model7b <- gamm(tfr ~ gii + log(gdprppppc) * prop_male,
                data = model_ready, family = quasipoisson)
 
 model7c <- gam(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
-                data = model_ready, family = quasipoisson)
+                data = model_ready, family = quasipoisson, method = "REML")
 
 # a and b are identical; c has different results because of the implementation
 # or estimation method? And this includes only gii is 'significant' in 7c,
@@ -647,7 +658,7 @@ anova(model6a$gam)
 # these tests might be ok so long as the models have the smae random effects struture
 # (which they do)
 anova(model4b, model5b, model6b)
-anova(model4b, model6b) # suggests simpler model is probably better
+anova(model4b, model6b) # suggests simpler model is probably better, or at least not sure the more complex one is needed
 summary(model4b)
 summary(model6b)
 
@@ -673,6 +684,8 @@ summary(model6a$lme)
 # See https://stats.stackexchange.com/questions/632523/significance-testing-on-generalized-additive-mixed-models-gamms-mgcvgam
 # and all the discussion there is useful
 
+# Probably best not to think much about t statistics of these coefficients
+
 summary(model4a$lme)$tTable |> 
   as.data.frame() |> 
   mutate(`p-value` = round(`p-value`, 3)) 
@@ -685,34 +698,75 @@ AIC(model6b) # NA - why?
 
 
 #---------------final presentation---------
+# compare this with our final model, model6b, to what we get from model2 or
+# model7c (essentially identical) which show a strong interaction
+plot_predictions(model6b, points = 1, condition = list(
+  "prop_male",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(label = comma) +
+  scale_x_continuous(label = percent) +
+  labs(y = "Total fertility rate",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Proportion of adult housework done by men",
+       title = "Interaction of income, housework done by men on fertility rate",
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index")
 
-pred_grid <- expand_grid(
-  prop_male = seq(from = 0.05, to = 0.45, length.out = 50),
-  gii = c(0.1, 0.25, 0.4),
-  gdprppppc = c(3, 10, 80) * 1000,
-  time_period = 2023,
-  country_fac = unique(model_ready$country_fac)
-)
+# The difference between 6b  and the simpler models is the addition of the
+# various curves, but particularly the smoothed interaction between log(GDP)
+# and prop male rather than forcing it to be linear. The smoothed GII effect
+# and the addition of the smoothed time trend also contribute but not as 
+# much
 
-pred6 <- predict(model6b, newdata = pred_grid, se.fit = TRUE) |> 
-  as_tibble()
+# Really these lines are basically horizontal, and model 4b is probably best
 
 
-pred_grid |> 
-  mutate(fit = pred6$fit,
-         se.fit = pred6$se.fit) |> 
-  group_by(prop_male, gii, gdprppppc) |> 
-  summarise(fit = mean(fit),
-            se.fit = mean(se.fit)) |> 
-  ungroup() |> 
-  mutate(upper = fit + 1.96 * se.fit,
-         lower = fit - 1.96 * se.fit,
-         fit2 = exp(fit),
-         upper2 = exp(upper),
-         lower2 = exp(lower)) |> 
-  ggplot(aes(x = prop_male)) +
-  geom_ribbon(aes(ymin = lower2, ymax = upper2, fill = dollar(gdprppppc)), alpha = 0.5) +
-  geom_line(aes(y = fit2, colour = dollar(gdprppppc))) +
-  geom_point(data = mutate(model_ready, gii = 0.25, gdprppppc = 10000), aes(y = tfr), 
-             colour = "black") +
-  facet_grid(gdprppppc ~ gii)
+plot_predictions(model4b, points = 1, condition = list(
+  "gii",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(label = comma) +
+  scale_x_continuous(label = comma) +
+  labs(y = "Total fertility rate",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Gender Inequality Index (higher numbers are more unequal)",
+       title = "Relation of income, and gender inequality on fertility rate",
+       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
+# note that this chart is essentially identical if you use model6b or model4b
+
+
+plot_predictions(model4b, points = 1, condition = list(
+  "time_period",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(label = comma) +
+  labs(y = "Total fertility rate",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Year of time use survey",
+       title = "Relation of income, and gender inequality on fertility rate",
+       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
+# note that this doesn't look particulary 'significant' but the numbers suggest
+# it is. Possibly it's particularly strong for the countries with repeated measures.
+
+#----------------understanding the country level effects--------
+# remember models 2, 7a, 7b, 7c are all meant to be basically the same
+# but just fit with different methods by lme, gamm and gamm (differnet way of
+# specifying formula) and gam
+
+# so this bit here is to check that we are getting basically the same country-level
+# random effects for these four near-identical models
+
+
+tibble(
+  rf2 = ranef(model2)[[1]][, 1],
+  rf7a = smooth_coefs(model7a, "s(country_fac)"),
+  rf7b = ranef(model7b$lme)[, 1],
+  rf7c = smooth_coefs(model7c, "s(country_fac)")
+) |> 
+  ggpairs()
+
+# We do! but also note that if we fit the gam with anything ohter than 
+# method=REML we get more different result. Should we always use REML
+# when we have random effects in s()? I suspect so, but need to check?
+
+length(rf6a[[4]])
