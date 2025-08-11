@@ -379,7 +379,7 @@ hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt",
          "Brazil", "Oman", "Qatar", "Canada",
          "Korea", "Lao P.D.R.", "Pakistan", "Estonia")
 
-p5 <- combined |> 
+p5a <- combined |> 
   inner_join(countries_ok_data, by = "country") |> 
   filter(!is.na(time_period) & !is.na(prop_male)) |> 
   ggplot(aes(x = prop_male, y = tfr)) +
@@ -405,7 +405,38 @@ p5 <- combined |>
        subtitle = "Countries classified into custom groups based on purchasing power parity GDP in 2000. Selected countries labelled.",
        caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
 
-svg_png(p5, "../img/0290-facet-scatter", w = 11, h = 7)
+svg_png(p5a, "../img/0290-facet-scatter", w = 11, h = 7)
+
+#------------Just the high income group------------------
+
+p5b <- combined |> 
+  inner_join(countries_ok_data, by = "country") |> 
+  filter(!is.na(time_period) & !is.na(prop_male)) |> 
+  filter(gdp_cut == "High income") |> 
+  ggplot(aes(x = prop_male, y = tfr)) +
+  geom_smooth(method = "rlm", colour = "white") +
+  geom_point(aes(shape = is_latest, colour = time_period), size = 2) +
+  geom_path(aes(group = country), colour = "grey50") +
+  geom_text_repel(data = filter(combined, country %in% hlc & is_latest == "Most recent" & gdp_cut == "High income"),
+                  aes(label = glue("{country}, {time_period}")), colour = "black",
+                  seed = 123, size = 2.8) +
+  scale_shape_manual(values = c(1, 19)) +
+  scale_x_continuous(label = percent) +
+  scale_y_log10() +
+  guides(colour =  guide_colorbar(display = "rectangles")) +
+  theme(legend.key.width = unit(10, "mm")) +
+  labs(x = "Proportion of adult domestic and care work done by men",
+       y ="Total fertility rate",
+       colour = "Observation date:",
+       shape = "Observation type:",
+       title = "Share of domestic work and fertility rate, for countries in different income categories",
+       subtitle = "High income countries only",
+       caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
+
+svg_png(p5b, "../img/0290-highinc-scatter", w = 9, h = 5.5)
+
+
+
 
 # Data set that we will use in the modelling:
 model_ready <- combined |> 
@@ -417,12 +448,16 @@ model_ready <- combined |>
 
 p6 <- function(){
 model_ready |> 
-  select(prop_male, lgdp, ltfr, gii) |> 
+  select(Time = time_period, 
+         `Gender inequality` = gii, 
+         `Male housework` = prop_male, 
+         `Log GDP per capita` = lgdp, 
+         `Log fertility` = ltfr) |> 
   ggpairs() |> 
     print()
 }
 
-svg_png(p6, "../img/0290-pairs", w = 10, h = 6)
+svg_png(p6, "../img/0290-pairs", w = 10, h = 7.5)
 
 
 #-------------modelling--------------------
@@ -623,7 +658,10 @@ model5b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) 
 model6b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
+model8b <- gam(tfr ~ s(time_period) + gii + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson, method = "REML")
 
+anova(model8b, model6b)
 
 
 # Gavin Simpson's blog at 
@@ -700,7 +738,7 @@ AIC(model6b) # NA - why?
 #---------------final presentation---------
 # compare this with our final model, model6b, to what we get from model2 or
 # model7c (essentially identical) which show a strong interaction
-plot_predictions(model6b, points = 1, condition = list(
+p12 <- plot_predictions(model6b, points = 1, condition = list(
   "prop_male",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -721,7 +759,7 @@ plot_predictions(model6b, points = 1, condition = list(
 # Really these lines are basically horizontal, and model 4b is probably best
 
 
-plot_predictions(model4b, points = 1, condition = list(
+p13 <- plot_predictions(model4b, points = 1, condition = list(
   "gii",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -735,7 +773,7 @@ plot_predictions(model4b, points = 1, condition = list(
 # note that this chart is essentially identical if you use model6b or model4b
 
 
-plot_predictions(model4b, points = 1, condition = list(
+p14 <- plot_predictions(model4b, points = 1, condition = list(
   "time_period",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -757,16 +795,23 @@ plot_predictions(model4b, points = 1, condition = list(
 # random effects for these four near-identical models
 
 
-tibble(
-  rf2 = ranef(model2)[[1]][, 1],
-  rf7a = smooth_coefs(model7a, "s(country_fac)"),
-  rf7b = ranef(model7b$lme)[, 1],
-  rf7c = smooth_coefs(model7c, "s(country_fac)")
-) |> 
-  ggpairs()
+p15 <- function(){
+  tibble(
+    rf2 = ranef(model2)[[1]][, 1],
+    rf7a = smooth_coefs(model7a, "s(country_fac)"),
+    rf7b = ranef(model7b$lme)[, 1],
+    rf7c = smooth_coefs(model7c, "s(country_fac)")
+  ) |> 
+    ggpairs() |> 
+    print()
+}
+
 
 # We do! but also note that if we fit the gam with anything ohter than 
 # method=REML we get more different result. Should we always use REML
 # when we have random effects in s()? I suspect so, but need to check?
 
-length(rf6a[[4]])
+svg_png(p12, "../img/0290-final-preds-propmale", w = 11, h = 6)
+svg_png(p13, "../img/0290-final-preds-gii", w = 11, h = 6)
+svg_png(p14, "../img/0290-final-preds-gdp", w = 11, h = 6)
+svg_png(p15, "../img/0290-country-effects-pairs", w = 11, h = 8)
