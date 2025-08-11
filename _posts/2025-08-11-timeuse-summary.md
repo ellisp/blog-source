@@ -97,3 +97,9 @@ To start with, here is a straightforward pairs plot of the main variables, most 
 
 <object type="image/svg+xml" data='/img/0290-final-preds-propmale.svg' width='100%'><img src='/img/0290-final-preds-propmale.png' width='100%'></object>
 
+<object type="image/svg+xml" data='/img/0290-final-preds-gii.svg' width='100%'><img src='/img/0290-final-preds-gii.png' width='100%'></object>
+
+<object type="image/svg+xml" data='/img/0290-final-preds-time.svg' width='100%'><img src='/img/0290-final-preds-time.png' width='100%'></object>
+
+
+<object type="image/svg+xml" data='/img/0290-final-preds-gdp.svg' width='100%'><img src='/img/0290-final-preds-gdp.png' width='100%'></object>
