@@ -430,7 +430,7 @@ p5b <- combined |>
        colour = "Observation date:",
        shape = "Observation type:",
        title = "Share of domestic work and fertility rate, for countries in different income categories",
-       subtitle = "High income countries only",
+       subtitle = "High income countries only. Only selected countries labelled.",
        caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
 
 svg_png(p5b, "../img/0290-highinc-scatter", w = 9, h = 5.5)
@@ -639,29 +639,25 @@ summary(model7a$gam)
 # what about with less linearity, and allowing a general 'time' effect
 
 # First, using gamm:
-model4a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+model4a <- gamm(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
               data = model_ready, family = quasipoisson)
 
-model5a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+model5a <- gamm(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
-model6a <- gamm(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+model6a <- gamm(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
 # Then, using gam:
-model4b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
+model4b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
-model5b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
+model5b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(prop_male) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
-model6b <- gam(tfr ~ s(time_period) + s(gii) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
+model6b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
-model8b <- gam(tfr ~ s(time_period) + gii + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
-                data = model_ready, family = quasipoisson, method = "REML")
-
-anova(model8b, model6b)
 
 
 # Gavin Simpson's blog at 
@@ -747,7 +743,7 @@ p12 <- plot_predictions(model6b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Proportion of adult housework done by men",
-       title = "Interaction of income, housework done by men on fertility rate",
+       title = "Relation of income and housework done by men to fertility rate",
        subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index")
 
 # The difference between 6b  and the simpler models is the addition of the
@@ -756,10 +752,12 @@ p12 <- plot_predictions(model6b, points = 1, condition = list(
 # and the addition of the smoothed time trend also contribute but not as 
 # much
 
-# Really these lines are basically horizontal, and model 4b is probably best
+# Really these lines are basically horizontal, and model 4b is probably best.
+# But because I'd used up degrees of freedom in the full model 6b, I'll use
+# that for these prediction plots
 
 
-p13 <- plot_predictions(model4b, points = 1, condition = list(
+p13 <- plot_predictions(model6b, points = 1, condition = list(
   "gii",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -768,12 +766,12 @@ p13 <- plot_predictions(model4b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Gender Inequality Index (higher numbers are more unequal)",
-       title = "Relation of income, and gender inequality on fertility rate",
+       title = "Relation of gender inequality and income to fertility rate",
        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
 # note that this chart is essentially identical if you use model6b or model4b
 
 
-p14 <- plot_predictions(model4b, points = 1, condition = list(
+p14 <- plot_predictions(model6b, points = 1, condition = list(
   "time_period",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -781,21 +779,36 @@ p14 <- plot_predictions(model4b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Year of time use survey",
-       title = "Relation of income, and gender inequality on fertility rate",
+       title = "Relation of time and income to fertility rate",
        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
 # note that this doesn't look particulary 'significant' but the numbers suggest
 # it is. Possibly it's particularly strong for the countries with repeated measures.
 
+
+
+p15 <- plot_predictions(model6b, points = 1, condition = list(
+  "gdprppppc",
+  "gii" = c(0.2, 0.5))) +
+  scale_y_continuous(label = comma) +
+  scale_x_log10(label = dollar) +
+  labs(y = "Total fertility rate",
+       colour = "Gender Inequality Index (higher numbers are more unequal)",
+       fill = "Gender Inequality Index (higher numbers are more unequal)",
+       x = "PPP GDP per capita",
+       title = "Relation of income and gender inequality to fertility rate",
+       subtitle = "Poorer countris have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
+
+
 #----------------understanding the country level effects--------
 # remember models 2, 7a, 7b, 7c are all meant to be basically the same
-# but just fit with different methods by lme, gamm and gamm (differnet way of
+# but just fit with different methods by lme, gamm and gamm (different way of
 # specifying formula) and gam
 
 # so this bit here is to check that we are getting basically the same country-level
 # random effects for these four near-identical models
 
 
-p15 <- function(){
+p16 <- function(){
   tibble(
     rf2 = ranef(model2)[[1]][, 1],
     rf7a = smooth_coefs(model7a, "s(country_fac)"),
@@ -813,5 +826,8 @@ p15 <- function(){
 
 svg_png(p12, "../img/0290-final-preds-propmale", w = 11, h = 6)
 svg_png(p13, "../img/0290-final-preds-gii", w = 11, h = 6)
-svg_png(p14, "../img/0290-final-preds-gdp", w = 11, h = 6)
-svg_png(p15, "../img/0290-country-effects-pairs", w = 11, h = 8)
+svg_png(p14, "../img/0290-final-preds-time", w = 11, h = 6)
+svg_png(p15, "../img/0290-final-preds-gdp", w = 11, h = 6)
+
+
+svg_png(p16, "../img/0290-country-effects-pairs", w = 11, h = 8)
