@@ -156,8 +156,15 @@ Contrast that to comparable model for for gender inequality, and income per capi
 
 <object type="image/svg+xml" data='/img/0290-final-preds-gdp.svg' width='100%'><img src='/img/0290-final-preds-gdp.png' width='100%'></object>
 
-
+The time relationship is an interesting one. It looks from the plot below that there is no material relationship, but the statistical evidence is pretty strong that it is worth keeping this variable in the model.
 
 <object type="image/svg+xml" data='/img/0290-final-preds-time.svg' width='100%'><img src='/img/0290-final-preds-time.png' width='100%'></object>
 
+My intuitive explanation for this is that time is more important in explaining trends in fertility rate in the countries that have multiple observations in this sample; and this is not easy to pick up visually in a chart of this sort. Anyway, it doesn't matter, as I'm not interested in the time trend in its own right, just in controlling for it as a possible spoiler of our more important statistical conclusions.
 
+## Conclusions
+
+* If you look at just high income countries, there's an apparent positive relationship between the amount of unpaid domestic chores done by men and total fertility rate, at the country level.
+* However, this impact is *reversed* if you look at the full range of countries for which data is available.
+* Most importantly, the relationship *vanishes altogether* when we include it in a statistical model that controls for purchasing power parity GDP per capita and for gender inequality more broadly
+* We can conclude that the apparent effect of male housework on total fertility is just a statistical artefact standing in for these two, broader factors
