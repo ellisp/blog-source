@@ -109,3 +109,11 @@ _working/data/*
 *.xsl
 */WEO*
 
+# misc junk
+*_rels
+*.emf
+*.bin
+*.gz
+
+# made by jekyll
+site/*
