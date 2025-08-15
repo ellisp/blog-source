@@ -20,11 +20,9 @@ This post grew out of a rambling, sporadically multi-month play with a bunch of 
 * <i>Men's domestic chores and fertility rates - behind the scenes (coming within the next week or so) - discussion of technical issues such as how to draw directed graphs with different coloured edges, how to access the UN SDG indicators database, and the equivalence or not of different ways of fitting mixed effects models. Contains key extracts of code. The main audience is future-me wanting to remember these things, but also anyone else with similar technical interest.</i>
 * <i>[The code that produces all the analysis and results](https://github.com/ellisp/blog-source/blob/master/_working/0290-house-work.R) in the two blog posts.</i>
 
-<i>
-Also, all em-dashes in this post were defiantly typed, by me, in HTML, by hand.
+<i>Also, all em-dashes in this post were defiantly typed, by me, in HTML, by hand.</i>
 
-OK, onto the blog post.
-</i>
+<i>OK, onto the blog post.</i>
 
 <hr>
 

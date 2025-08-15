@@ -380,6 +380,10 @@ hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt",
          "Brazil", "Oman", "Qatar", "Canada",
          "Korea", "Lao P.D.R.", "Pakistan", "Estonia")
 
+nogii_caption <- "Time-use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info."
+full_caption <- "Gender inequality from the UNDP; time-use from UN SDGs; total fertility rate from UN World Population Prospects; GDP from IMF World Economic Outlook. Analysis by freerangestats.info."
+
+
 p5a <- combined |> 
   inner_join(countries_ok_data, by = "country") |> 
   filter(!is.na(time_period) & !is.na(prop_male)) |> 
@@ -404,12 +408,11 @@ p5a <- combined |>
        shape = "Observation type:",
        title = "Share of domestic work and fertility rate, for countries in different income categories",
        subtitle = "Countries classified into custom groups based on purchasing power parity GDP in 2000. Selected countries labelled.",
-       caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
+       caption = nogii_caption)
 
 svg_png(p5a, "../img/0290-facet-scatter", w = 11, h = 7)
 
 #------------Just the high income group------------------
-full_caption <- "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info."
 p5b <- combined |> 
   inner_join(countries_ok_data, by = "country") |> 
   filter(!is.na(time_period) & !is.na(prop_male)) |> 
@@ -433,7 +436,7 @@ p5b <- combined |>
        title = "Share of domestic work and fertility rate, for countries in different income categories",
        subtitle = "High income countries only. Only selected countries labelled.",
        # smaller size final image for this plot so we need a line break in the caption:
-       caption = str_wrap(full_caption, 100))
+       caption = str_wrap(nogii_caption, 100))
 
 svg_png(p5b, "../img/0290-highinc-scatter", w = 9, h = 5.5)
 
@@ -528,7 +531,8 @@ per capita",
   plot_layout(nrow = 2) +
   
   plot_annotation(title = "Diagnostic plots for model of log total fertility rate on countries' GDP per capita and Gender Inequality Index",
-                  subtitle = "Male share of housework not explictly included in the model")
+                  subtitle = "Male share of housework not explictly included in the model",
+                   caption = full_caption)
 
 svg_png(p7, "../img/0290-diagnose-0", w = 13, h = 7)
 
@@ -773,7 +777,7 @@ p13 <- plot_predictions(model6b, points = 1, condition = list(
        fill = "PPP GDP per capita",
        x = "Gender Inequality Index (higher numbers are more unequal)",
        title = "Relation of gender inequality and income to fertility rate",
-       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality",
+       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality (top right of plot)",
        caption = full_caption)
 # note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
 
