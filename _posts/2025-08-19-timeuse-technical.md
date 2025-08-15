@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Time use and fertility rates - modelling problems
-date: 2025-08-16
+date: 2025-08-19
 tag: 
    - ModellingStrategy
    - DataFromTheWeb
@@ -152,7 +152,7 @@ dg2 |>
                  arrow_directed = grid::arrow(length = unit(12, "pt"), type = "closed")) +
   geom_dag_text_repel(aes(label = label), col = lab_col) +
   theme_dag(base_family = "Roboto")
-{% endhighlight %}
+c
 
 
 ## ... All others must bring data

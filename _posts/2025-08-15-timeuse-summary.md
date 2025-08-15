@@ -5,7 +5,7 @@ date: 2025-08-15
 tag: 
    - ModellingStrategy
    - DataFromTheWeb
-description: The time that men spend on domestic chores is positively related to total fertility rate. But only in if you are looking at countries selected because they are rich. Overall, it's negatively related. And if you model it with both GDP per capita and gender inequality (generally, more country-level gender inequality means more children), the effect goes away altogether. At the country level, it's a statistical artefact. To look into this properly, you need individual and household-level data.
+description: The time that men spend on domestic chores is positively related to total fertility rate. But only if you are looking at countries selected because they are rich. Overall, it's negatively related. And if you model it with both GDP per capita and gender inequality (generally, more country-level gender inequality means more children), the effect goes away altogether. At the country level, it's a statistical artefact. To look into this properly, you need individual and household-level data.
 image: /img/0290-dg.svg
 socialimage: https:/freerangestats.info/img/0290-dg.png
 category: R

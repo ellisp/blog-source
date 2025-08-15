@@ -656,7 +656,7 @@ model5a <- gamm(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(pro
 model6a <- gamm(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                data = model_ready, family = quasipoisson)
 
-# Then, using gam:
+# Then, using gam and s():
 model4b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
@@ -666,7 +666,24 @@ model5b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc)) + s(prop
 model6b <- gam(tfr ~ s(time_period) + s(gii, k = 3) + s(log(gdprppppc), prop_male) + s(country_fac, bs = 're'), 
                 data = model_ready, family = quasipoisson, method = "REML")
 
+# with gam, and tensor products for GDP
+model4c <- model6c <- gam(tfr ~ s(time_period) + s(gii, k = 3) + ti(log(gdprppppc)) + 
+                    s(country_fac, bs = 're'),
+                data = model_ready, family = quasipoisson, method = "REML")
 
+
+model5c <- model6c <- gam(tfr ~ s(time_period) + s(gii, k = 3) + ti(log(gdprppppc)) + ti(prop_male) + 
+                    s(country_fac, bs = 're'),
+                data = model_ready, family = quasipoisson, method = "REML")
+
+
+model6c <- gam(tfr ~ s(time_period) + s(gii, k = 3) + 
+                   ti(log(gdprppppc)) + ti(prop_male) + ti(log(gdprppppc), prop_male) + 
+                   s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson, method = "REML")
+
+
+anova(model6c, model4c)
 
 # Gavin Simpson's blog at 
 # https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/
@@ -740,9 +757,12 @@ AIC(model6b) # NA - why?
 
 
 #---------------final presentation---------
+final_model <- model6b
+# model6b is what was used in the blog but now I wonder if model6c (with ti()) is better
+
 # compare this with our final model, model6b, to what we get from model2 or
 # model7c (essentially identical) which show a strong interaction
-p12 <- plot_predictions(model6b, points = 1, condition = list(
+p12 <- plot_predictions(final_model, points = 1, condition = list(
   "prop_male",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -767,7 +787,7 @@ There's no relationship between housework done by men and fertility, when other 
 # that for these prediction plots
 
 
-p13 <- plot_predictions(model6b, points = 1, condition = list(
+p13 <- plot_predictions(final_model, points = 1, condition = list(
   "gii",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
@@ -785,7 +805,7 @@ p13 <- plot_predictions(model6b, points = 1, condition = list(
 
 
 
-p14 <- plot_predictions(model6b, points = 1, condition = list(
+p14 <- plot_predictions(final_model, points = 1, condition = list(
   "gdprppppc",
   "gii" = c(0.2, 0.5))) +
   scale_y_continuous(label = comma) +
@@ -799,7 +819,7 @@ p14 <- plot_predictions(model6b, points = 1, condition = list(
        caption = full_caption)
 
 
-p15 <- plot_predictions(model6b, points = 1, condition = list(
+p15 <- plot_predictions(final_model, points = 1, condition = list(
   "time_period",
   "gdprppppc" = c(3000, 10000, 80000))) +
   scale_y_continuous(label = comma) +
