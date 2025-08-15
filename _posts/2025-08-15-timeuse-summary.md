@@ -21,6 +21,8 @@ This post grew out of a rambling, sporadically multi-month play with a bunch of 
 * <i>[The code that produces all the analysis and results](https://github.com/ellisp/blog-source/blob/master/_working/0290-house-work.R) in the two blog posts.</i>
 
 <i>
+Also, all em-dashes in this post were defiantly typed, by me, in HTML, by hand.
+
 OK, onto the blog post.
 </i>
 
@@ -67,7 +69,7 @@ The simplified diagram *does* help us think through what to expect if we ignore 
 * But if you could get a better indicator of that confounding opportunities variable and control for it, and if there really is an impact from male share of housework on higher fertility decisions, you *might* get a positive effect of male share of domestic work on fertility.
 
 
-## ... All others must bring data
+## "... all others must bring data"
 
 ### Who measures this stuff?
 OK then, let's look at some data. 
@@ -78,7 +80,7 @@ Data won't be available for all countries, and certainly not for all years in al
 
 For the vertical axis of our first plot, we can get total fertility rate from various sources, but one convenient one that gives an estimate for each country for each year on a standardised, comparable basis is the UN's World Population Prospects.
 
-We have several challenges in using this data:
+We have several challenges in using all that data:
 * The official SDG indicators don't actually include an obvious single dimensional summary of gender share of housework, so we will need to construct it with something like `male_share = male / (male + female)`. Where `male` is the proportion of men's time spent on dometic chres and carework, `female` the equivalent for women. We can make a composite indicator like this because the denominator (total time in the day) for both `male` and `female` is the same.
 * Some countries have multiple observations (more than one year with a time use survey) and we'd like to incorporate them somehow. When we get to statistical modelling, this implies the need for some kind of multilevel model with a country-level random effect as well as residual randomness at the country-year level. On a chart, we can show these multiple observations by connecting points with segments, and visually differentiating the most recent observation from those in earlier surveys. This is much better than just picking one survey per country.
 * The years of time use surveys vary significantly over a 20+ year time period, so we should expect a possible time effect to complicate any inference we do. We need to take this into account both in our statistical modelling and our visualisations.
@@ -98,11 +100,11 @@ What I'm after here is drawing some charts like this which will get us started i
 
 <object type="image/svg+xml" data='/img/0290-facet-scatter.svg' width='100%'><img src='/img/0290-facet-scatter.png' width='100%'></object>
 
-Here we do see, for example, a very interesting result that within the three lower income categories of countries there is a negative relationship between male share of domestic chores and fertility. But in the highest income category, that relationship is reversed. In fact, the (lost) scatter plot that started me on this whole journey was basically the bottom right facet of this diagram.
+Here we do see, for example, a very interesting result that within the three lower income categories of countries there is a negative relationship between male share of domestic chores and fertility. But in the highest income category, that relationship is reversed. In fact, the scatter plot that started me on this whole journey was basically the bottom right facet of this diagram.
 
 ### Measuring gender inequality
 
-We need to do more though - we can get a measure of female economic empowerment (and hence choices between motherhood and employment). The best data I could find for my purpose on this was the [Gender Inequality Index](https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII) produced by the UNDP as part of their annual Human Development Report process. Here's what that number looks like for the countries that we have enough data for this overall blog:
+We need to do more though&mdash;we can get a measure of female economic empowerment (and hence choices between motherhood and employment). The best data I could find for my purpose on this was the [Gender Inequality Index](https://hdr.undp.org/data-center/thematic-composite-indices/gender-inequality-index#/indicies/GII) produced by the UNDP as part of their annual Human Development Report process. Here's what that number looks like for the countries that we have enough data for this overall blog:
 
 <object type="image/svg+xml" data='/img/0290-gii-lollipop.svg' width='100%'><img src='/img/0290-gii-lollipop.png' width='100%'></object>
 
@@ -116,7 +118,7 @@ There's a lot packed in to plots like these, but what we see here is that:
 * Gender inequality is strongly positively correlated with fertility rate (unequal countries have more children).
 * Male housework is moderately positively correlated with GDP per capita (rich countries have more male housework).
 * Male housework is weakly to moderately negatively correlated with fertility (more male housework countries have less children).
-* Each variable has a weak trend over time - downwards for fertility rate and gender inequality, upwards for GDP per capita and male housework. You can actually see in the left column of the plots the chains of dots representing countries like the USA that have the luxury of multiple time-use surveys and a lovely continuous series of comparable observations.
+* Each variable has a weak trend over time&mdash;downwards for fertility rate and gender inequality, upwards for GDP per capita and male housework. You can actually see in the left column of the plots the chains of dots representing countries like the USA that have the luxury of multiple time-use surveys and a lovely continuous series of comparable observations.
 
 ## Statistical modelling
 

@@ -18,6 +18,7 @@ library(lme4)
 library(patchwork)
 library(marginaleffects)
 library(gratia) # for extracting the random effects from s(group, bs = "re")
+library(conflicted)
 
 conflicts_prefer(dplyr::lag)
 conflicts_prefer(dplyr::select)
@@ -408,7 +409,7 @@ p5a <- combined |>
 svg_png(p5a, "../img/0290-facet-scatter", w = 11, h = 7)
 
 #------------Just the high income group------------------
-
+full_caption <- "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info."
 p5b <- combined |> 
   inner_join(countries_ok_data, by = "country") |> 
   filter(!is.na(time_period) & !is.na(prop_male)) |> 
@@ -431,7 +432,8 @@ p5b <- combined |>
        shape = "Observation type:",
        title = "Share of domestic work and fertility rate, for countries in different income categories",
        subtitle = "High income countries only. Only selected countries labelled.",
-       caption = "Time use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info.")
+       # smaller size final image for this plot so we need a line break in the caption:
+       caption = str_wrap(full_caption, 100))
 
 svg_png(p5b, "../img/0290-highinc-scatter", w = 9, h = 5.5)
 
@@ -574,7 +576,8 @@ p8 <- tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
        y = "Predicted total fertility rate",
        title = "Interaction of income, housework done by men on fertility rate",
        subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index",
-       colour = "PPP GDP per capita")
+       colour = "PPP GDP per capita",
+       caption = full_caption)
 
 svg_png(p8, "../img/0290-home-made-preds", w = 10, h = 6)
 
@@ -593,7 +596,8 @@ p9 <- plot_predictions(model2, points = 1, condition = list(
        fill = "PPP GDP per capita",
        x = "Proportion of adult housework done by men",
        title = "Interaction of income, housework done by men on fertility rate",
-       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index")
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index",
+       caption = full_caption)
 # note the warning that this only takes into account the uncertainty of
 # fixed-effect parameters. This is probably ok if we ar einterested in the causality.
 
@@ -744,7 +748,9 @@ p12 <- plot_predictions(model6b, points = 1, condition = list(
        fill = "PPP GDP per capita",
        x = "Proportion of adult housework done by men",
        title = "Relation of income and housework done by men to fertility rate",
-       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index")
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index.
+There's no relationship between housework done by men and fertility, when other variables are accounted for.",
+       caption = full_caption)
 
 # The difference between 6b  and the simpler models is the addition of the
 # various curves, but particularly the smoothed interaction between log(GDP)
@@ -767,26 +773,15 @@ p13 <- plot_predictions(model6b, points = 1, condition = list(
        fill = "PPP GDP per capita",
        x = "Gender Inequality Index (higher numbers are more unequal)",
        title = "Relation of gender inequality and income to fertility rate",
-       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
-# note that this chart is essentially identical if you use model6b or model4b
+       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality",
+       caption = full_caption)
+# note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
+
+
+
 
 
 p14 <- plot_predictions(model6b, points = 1, condition = list(
-  "time_period",
-  "gdprppppc" = c(3000, 10000, 80000))) +
-  scale_y_continuous(label = comma) +
-  labs(y = "Total fertility rate",
-       colour = "PPP GDP per capita",
-       fill = "PPP GDP per capita",
-       x = "Year of time use survey",
-       title = "Relation of time and income to fertility rate",
-       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
-# note that this doesn't look particulary 'significant' but the numbers suggest
-# it is. Possibly it's particularly strong for the countries with repeated measures.
-
-
-
-p15 <- plot_predictions(model6b, points = 1, condition = list(
   "gdprppppc",
   "gii" = c(0.2, 0.5))) +
   scale_y_continuous(label = comma) +
@@ -796,7 +791,23 @@ p15 <- plot_predictions(model6b, points = 1, condition = list(
        fill = "Gender Inequality Index (higher numbers are more unequal)",
        x = "PPP GDP per capita",
        title = "Relation of income and gender inequality to fertility rate",
-       subtitle = "Poorer countris have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality")
+       subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower income (top left of plot)",
+       caption = full_caption)
+
+
+p15 <- plot_predictions(model6b, points = 1, condition = list(
+  "time_period",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(label = comma) +
+  labs(y = "Total fertility rate",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Year of time use survey",
+       title = "Relation of time and income to fertility rate",
+       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon). There is a statistically significant trend over time but it isn't visually obvious.",
+       caption = full_caption)
+# note that this doesn't look particulary 'significant' but the numbers suggest
+# it is. Possibly it's particularly strong for the countries with repeated measures.
 
 
 #----------------understanding the country level effects--------
@@ -826,8 +837,8 @@ p16 <- function(){
 
 svg_png(p12, "../img/0290-final-preds-propmale", w = 11, h = 6)
 svg_png(p13, "../img/0290-final-preds-gii", w = 11, h = 6)
-svg_png(p14, "../img/0290-final-preds-time", w = 11, h = 6)
-svg_png(p15, "../img/0290-final-preds-gdp", w = 11, h = 6)
+svg_png(p14, "../img/0290-final-preds-gdp", w = 11, h = 6)
+svg_png(p15, "../img/0290-final-preds-time", w = 11, h = 6)
 
 
 svg_png(p16, "../img/0290-country-effects-pairs", w = 11, h = 8)
