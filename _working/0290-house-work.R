@@ -367,7 +367,7 @@ p4 <- combined |>
        fill = "Year",
        title = "Gender Inequality Index",
        subtitle = st,
-       caption = "Source: UNDP for Gender Inequality Index; IMF World Economic Outlookfor PPP GDP per capita")
+       caption = "Source: UNDP for Gender Inequality Index; IMF World Economic Outlook for PPP GDP per capita")
 
 
 svg_png(p4, "../img/0290-gii-lollipop", w = 13, h = 7)
@@ -380,8 +380,8 @@ hlc <- c("Malawi", "Kyrgyzstan", "China", "Egypt",
          "Brazil", "Oman", "Qatar", "Canada",
          "Korea", "Lao P.D.R.", "Pakistan", "Estonia")
 
-nogii_caption <- "Time-use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; GDP from the IMF World Economic Outlook. Analysis by freerangestats.info."
-full_caption <- "Gender inequality from the UNDP; time-use from UN SDGs; total fertility rate from UN World Population Prospects; GDP from IMF World Economic Outlook. Analysis by freerangestats.info."
+nogii_caption <- "Time-use data from the UN SDGs database; total fertility rate from the UN World Population Prospects; PPP GDP from the IMF World Economic Outlook. Analysis by freerangestats.info."
+full_caption <- "Gender inequality from the UNDP; time-use from UN SDGs; total fertility rate from UN World Population Prospects; PPP GDP from IMF World Economic Outlook. Analysis by freerangestats.info."
 
 
 p5a <- combined |> 
@@ -751,7 +751,7 @@ p12 <- plot_predictions(model6b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Proportion of adult housework done by men",
-       title = "Relation of income and housework done by men to fertility rate",
+       title = "Country-level relation of GDP per capita and housework done by men to fertility rate",
        subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index.
 There's no relationship between housework done by men and fertility, when other variables are accounted for.",
        caption = full_caption)
@@ -776,7 +776,7 @@ p13 <- plot_predictions(model6b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Gender Inequality Index (higher numbers are more unequal)",
-       title = "Relation of gender inequality and income to fertility rate",
+       title = "Country-level relation of gender inequality and GDP per capita to fertility rate",
        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality (top right of plot)",
        caption = full_caption)
 # note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
@@ -794,8 +794,8 @@ p14 <- plot_predictions(model6b, points = 1, condition = list(
        colour = "Gender Inequality Index (higher numbers are more unequal)",
        fill = "Gender Inequality Index (higher numbers are more unequal)",
        x = "PPP GDP per capita",
-       title = "Relation of income and gender inequality to fertility rate",
-       subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower income (top left of plot)",
+       title = "Country-level relation of GDP per capita and gender inequality to fertility rate",
+       subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower GDP per capita (top left of plot)",
        caption = full_caption)
 
 
@@ -807,7 +807,7 @@ p15 <- plot_predictions(model6b, points = 1, condition = list(
        colour = "PPP GDP per capita",
        fill = "PPP GDP per capita",
        x = "Year of time use survey",
-       title = "Relation of time and income to fertility rate",
+       title = "Country-level relation of time and GDP per capita to fertility rate",
        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon). There is a statistically significant trend over time but it isn't visually obvious.",
        caption = full_caption)
 # note that this doesn't look particulary 'significant' but the numbers suggest

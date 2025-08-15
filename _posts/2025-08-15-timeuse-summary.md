@@ -5,7 +5,7 @@ date: 2025-08-15
 tag: 
    - ModellingStrategy
    - DataFromTheWeb
-description: The time that men spend on domestic chores is positively related to total fertility rate. But only in rich countries. Overall, it's negatively related. And if you model it with both income and gender inequality (generally, more country-level gender inequality means more children), the effect goes away altogether.
+description: The time that men spend on domestic chores is positively related to total fertility rate. But only in if you are looking at countries selected because they are rich. Overall, it's negatively related. And if you model it with both GDP per capita and gender inequality (generally, more country-level gender inequality means more children), the effect goes away altogether. At the country level, it's a statistical artefact. To look into this properly, you need individual and household-level data.
 image: /img/0290-dg.svg
 socialimage: https:/freerangestats.info/img/0290-dg.png
 category: R
@@ -28,7 +28,7 @@ This post grew out of a rambling, sporadically multi-month play with a bunch of 
 
 ## Time-use and number of children
 
-### An apparent relationship in high income countries
+### An apparent relationship in high GDP per capita countries
 Some months ago a post floated across my Bluesky feed making an argument to the effect of "if societies want more children, then men should do more of the housework", accompanied by a chart from a few-years-old paper.  The chart was a scatter plot with something like male share of unpaid domestic chores on the horizontal axis, and total fertility rate on the vertical axis&mdash;each point was one of selected OECD countries at a point in time for which data on both variables was available&mdash;and there was a definite positive correlation. 
 
 I can't find the chart now, but it looked something very similar to this one I've made for myself:
@@ -98,7 +98,7 @@ What I'm after here is drawing some charts like this which will get us started i
 
 <object type="image/svg+xml" data='/img/0290-facet-scatter.svg' width='100%'><img src='/img/0290-facet-scatter.png' width='100%'></object>
 
-Here we do see, for example, a very interesting result that within the three lower income categories of countries there is a negative relationship between male share of domestic chores and fertility. But in the highest income category, that relationship is reversed. In fact, the scatter plot that started me on this whole journey was basically the bottom right facet of this diagram.
+Here we do see, for example, a very interesting result that within the three lower GDP per capita categories of countries there is a negative relationship between male share of domestic chores and fertility. But in the highest GDP per capita category, that relationship is reversed. In fact, the scatter plot that started me on this whole journey was basically the bottom right facet of this diagram.
 
 ### Measuring gender inequality
 
@@ -123,7 +123,7 @@ There's a lot packed in to plots like these, but what we see here is that:
 The type of model I want to fit is one that has all these features:
 
 * allows us to include multiple measures for countries that have them, but without making the false assumption that these are independent observations (each extra observation on a country is useful, but not as much extra information as if we had a whole new country)
-* allows for an interaction between income and male housework
+* allows for an interaction between GDP per capita and male housework
 * allows relationships in general to be non-linear if that's what the data suggests
 * allows for a nuisance non-linear trend over time in fertility
 * lets the variance of total fertility rate be proportional to its mean, but not identical (so a quasi-poisson family distribution)
@@ -161,7 +161,7 @@ To see the modelling results visually, here is a plot showing predictions of the
 
 <object type="image/svg+xml" data='/img/0290-final-preds-propmale.svg' width='100%'><img src='/img/0290-final-preds-propmale.png' width='100%'></object>
 
-Contrast that to comparable presentation of the results for gender inequality, and for income per capita:
+Contrast that to comparable presentation of the results for gender inequality, and for PPP GDP per capita:
 
 <object type="image/svg+xml" data='/img/0290-final-preds-gii.svg' width='100%'><img src='/img/0290-final-preds-gii.png' width='100%'></object>
 
@@ -175,7 +175,9 @@ My intuitive explanation for this is that time is more important in explaining t
 
 ## Conclusions
 
-* If you look at just high income countries, there's an apparent positive relationship between the amount of unpaid domestic chores done by men and total fertility rate, at the country level.
+* If you look at just high purchasing power parity GDP per capita countries, there's an apparent positive relationship between the amount of unpaid domestic chores done by men and total fertility rate, at the country level.
 * However, this impact is *reversed* if you look at the full range of countries for which data is available.
 * Most importantly, the relationship *vanishes altogether* when we include it in a statistical model that controls for purchasing power parity GDP per capita and for gender inequality more broadly.
-* We can conclude that <b>the apparent effect of male housework on total fertility is just a statistical artefact</b> standing in for these two, broader&mdash;and obviously important&mdash;factors.
+* We can conclude that <b>the apparent country-level effect of male housework on total fertility is just a statistical artefact</b> standing in for these two, broader&mdash;and obviously important&mdash;factors.
+
+Does this mean that men doing housework doesn't impact on fertility decisions? No! In fact it's very possible it does. But it *does* mean that you can't see this in the country level data. To really investigate this, you will need household level data; something like the Australian HILDA survey (Household Income and Labour Dynamics in Australia).
