@@ -13,12 +13,13 @@ category: R
 
 This post is a collection of more technical notes forming a companion piece to [the previous post on men's time spent on domestic chores and total fertility rates at the country level](/blog/2025/08/15/timeuse-summary). 
 
-The market audience for today's post is future-me, and anyone else similarly interested in the quite specific issues it is jotting down notes for. Those issues are:
+The target audience for today's post is future-me, and anyone else similarly interested in the quite specific issues it is jotting down notes for. Those issues are:
 
 * Drawing directed graphs with `ggdag` that have different coloured edges
 * Accessing the UN Sustainable Development Goals (SDGs) database API
 * Data options on gender inequality
 * Fitting the same mixed effects model with `lme4::lmer`, `mgcv::gamm` and `mgcv::gam`, comparing results and extracting group-level residuals
+* Diagnostics of a simplified version of the model
 * Hand-drawing prediction plots to show the results of models with interactions and comparing that to the `marginaleffects` package
 * Modelling strategy questions relating to use of splines and interaction effects
 
@@ -151,7 +152,7 @@ I ended up using the [Gender Inequality Index (GII) from the UNDP](https://hdr.u
 
 <img src="/img/0290-gii-diagram.png" width = "100%">
 
-But the GII is available for all country-year combinations, which simply can't be based on direct observations of these variables. Obviously the UNDP do a bunch of modelling to interpolate all the missing values. I didn't look into this but just trusted the UNDP to have done the best job possible. It's certainy very convenient to get this measure of gender inequality for so many countries (206 'countries', but this includes some regional groupings), and for so many years.
+But the GII is available for all country-year combinations, which simply can't be based on direct observations of these variables. Obviously the UNDP do a bunch of modelling to interpolate all the missing values. I didn't look into this but just trusted the UNDP to have done the best job possible. It's certainly very convenient to get this measure of gender inequality for so many countries (206 'countries', but this includes some regional groupings), and for so many years.
 
 <object type="image/svg+xml" data='/img/0290-gii-lollipop.svg' width='100%'><img src='/img/0290-gii-lollipop.png' width='100%'></object>
 
@@ -170,25 +171,100 @@ hdr <- read_csv(df)
 
 From there it's straightforward data wrangling to extract just the GII data and combine with my other datasets using year and the ISO three character codes for countries to join by.
 
-### Fitting the same mixed effects model with `lmer`, `gam` and `gamm`
+### Fitting the same mixed effects model with `lmer`, `gamm` and `gam`
 
+#### Specifying models
+
+One of the things I wanted to sort in this post was the near equivalence of some of the many different ways of specifying and fitting a mixed effects model in R. There's a good post from Gavin Simpson on []'Using random effects in GAMs with mgcv'](https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/) that I referred to repeatedly in preparing this.
+
+Specifically, I wanted to check that these four models are very similar:
 
 {% highlight R lineanchors %}
+model2 <- lmer(ltfr ~ gii + log(gdprppppc) * prop_male + (1 | country_fac), 
+               data = model_ready)
 
+model7a <- gamm(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
+               data = model_ready, family = quasipoisson)
+
+
+model7b <- gamm(tfr ~ gii + log(gdprppppc) * prop_male,
+               random = list(country_fac = ~ 1),
+               data = model_ready, family = quasipoisson)
+
+model7c <- gam(tfr ~ gii + log(gdprppppc) * prop_male +  s(country_fac, bs = 're'), 
+                data = model_ready, family = quasipoisson, method = "REML")
 {% endhighlight %}
 
+These are:
+
+* `model2` - fit with `lme4::lmer`, response variable is log-transformed first and then response is Gaussian, country level random effect is specified with `1 | country_fac` formula notation. Note that I *can't* use `glmer` becuase it doesn't allow family = quasipoisson.
+* `model7a` - fit with `mgcv::gamm` which is an iterative process where the mixed effects are with with `lmer` and smoothing splines are done with `gam`, iterate till converges. The end result contains the final version of both the `lme` model and the `gam` model. There's no pre-transformation done of the response variable because we are using a generalized linear model with quasipoisson family - that is, variance is proportional to the mean, but not forced to be equal to it. The random country level effect is specified with `s(country_fac, bs = 're')` (`re` stands for random effects), which is passed on to `lme` that treats it as `Formula: ~1 | country_fac`.
+* `model7b` - identical to 7a except the random effects are specified by `random = list(country_fac = ~ 1)`
+* `model7c` - fit with `mgcv::gam`, using the same model specification as `model7b`. Unlike `gamm`, this does all the work within `gam` itself, there's no iterating to the functions of the `lme4` package. There are limitations imposed as a result - the random effects can't be correlated with eachother, and you can't specify complex error structures (autocorrelation etc) like you could with `gamm` or `lmer`. But I don't have a need for either of these things. **Importantly** `model7c` has to use restricted maximum likelihood as its estimation method if we want it to get equivalent results to the `lmer`-based methods.
+
+In the end, none of these models were referred to in my main post because I went for an approach based purely on the use of `gam()` and with various non-linear effects even in the base, null model. But it was a very useful learning experience for me to work out exactly what is and isn't different in a bunch of similar model specifications.
+
+#### Getting the same fixed coefficients
+
+Here is code to extract the coefficients for the fixed effects from these four essentially identical models:
+
+{% highlight R lineanchors %}
+# Fixed coefficients of the four similar linear models:
+summary(model7a$lme)$tTable |> 
+  as.data.frame() |> 
+  select(mod7a = Value) |> 
+  mutate(mod7b = pull(as.data.frame(summary(model7b$lme)$tTable), Value)) |> 
+  mutate(mod7c = pull(as.data.frame(summary(model7c)$p.table), Estimate)) |> 
+  mutate(mod2 = fixef(model2)) |> 
+  mutate(across(where(is.numeric), round, digits = 2))
+{% endhighlight %}
+
+which gives
+
+```
+                          mod7a mod7b mod7c  mod2
+X(Intercept)               3.55  3.55  3.53  3.65
+Xgii                       1.30  1.30  1.30  1.27
+Xlog(gdprppppc)           -0.34 -0.34 -0.34 -0.35
+Xprop_male                -8.17 -8.17 -8.12 -8.52
+Xlog(gdprppppc):prop_male  0.87  0.87  0.86  0.90
+```
+
+The biggest difference is with model2, not surprising because it has the biggest difference from the other three in that the log transformation is done before modelling and the response then treated as Gaussian, as opposed to the quasipoisson link and variance functions approach of the other three.
+
+Note from the above snippet of code that not least of the differences between these models is the different means used to extract those fixed coefficients...
+
+#### Getting the same group level random effects
+
+Another check that I had these models basically the same was to compare the country-level random effects. For example, is the Oman effect going to be the same in each of these four models?
+
+To answer this I first had to work out how to extract the random effects from the versions that used the `s(country_fac, bs = 're')` notation to set the random effects. It turns out the best way to do this is with the `gratia` package, which has the `smooth_coefs` function for this and related purposes. So this next chunk of code extracts all those country effects and draws a pairs plot of them.
+
+{% highlight R lineanchors %}
+tibble(
+   rf2 = ranef(model2)[[1]][, 1],
+   rf7a = smooth_coefs(model7a, "s(country_fac)"),
+   rf7b = ranef(model7b$lme)[, 1],
+   rf7c = smooth_coefs(model7c, "s(country_fac)")
+) |> 
+   ggpairs()
+{% endhighlight %}
+
+Which gives this result, with a pleasing high correlation in the country effects of the four different models:
 
 <object type="image/svg+xml" data='/img/0290-country-effects-pairs.svg' width='100%'><img src='/img/0290-country-effects-pairs.png' width='100%'></object>
+
+Again, model2 is a little different from the other three, for the same reason. I'm actually struck with how much we get near-identical results in a model that does the log transformation before modelling to those that use a log link function.
+
 
 
 ### Showing marginal effects
 
 
+
 {% highlight R lineanchors %}
 
 {% endhighlight %}
-
-
 <object type="image/svg+xml" data='/img/0290-home-made-preds.svg' width='100%'><img src='/img/0290-home-made-preds.png' width='100%'></object>
 
 <object type="image/svg+xml" data='/img/0290-margeff-preds.svg' width='100%'><img src='/img/0290-margeff-preds.png' width='100%'></object>
@@ -197,7 +273,7 @@ From there it's straightforward data wrangling to extract just the GII data and 
 
 ### Interaction effects and splines
 
-
+key thing to discuss here is how model2 shows male_prop as significant but all the final models, with splines and stuff don't. I think what's happening in model2 is that male_prop interaction becomes a way of representing what is easier to show as just non-linear effects of GII and GDP
 
 {% highlight R lineanchors %}
 
