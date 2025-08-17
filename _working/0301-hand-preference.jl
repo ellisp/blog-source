@@ -49,19 +49,19 @@ end
 println("All simulated data:")
 display(results)
 
-println("Summary tables of first 10 runs")
-
-
-sum_res = Array{Int64}(undef, NR, NI+1)
+# count subjects that had each number of items
+sum_res = Array{Int64}(undef, NR * NG, NI+1)
 
 for r in 1:NR
     for g in 1:NG
         this_r = results[g, 1:NS, r]
         for i in 0:NI
-            sum_res[r, i+1] = count(j->(j==i), this_r)
+            sum_res[r * g, i+1] = count(j->(j==i), this_r)
         end
     end
     
 end
+
+println("Summary tables counting subjects' results of first 10 runs")
 
 display(sum_res[1:10, 1:(NI+1)])
