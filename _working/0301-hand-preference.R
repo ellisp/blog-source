@@ -1,7 +1,10 @@
 
 library(tidyverse)
 
-sim_handedness <- function(nr = 100, ns = 50, ni = 5){
+sim_handedness <- function(nr = 100, ns = 50, ni = 5, 
+                           tail_method = c("most.sig", "two.sided")){
+  
+  tail_method <- match.arg(tail_method)
 
   # nr is number of runs
   # ns is number of subjects
@@ -23,10 +26,10 @@ sim_handedness <- function(nr = 100, ns = 50, ni = 5){
     mutate(range1 = if_else(used_right %in% cutoff1:ni, "Right-handed", "Not right-handed"),
           range2 = if_else(used_right %in% c(0, ni), "Consistent", "Inconsistent"),
           range3 = if_else(used_right %in% c(0:1, (ni-1):ni), "Strong", "weak"),
-          range4 = if_else(used_right %in% ni, "Very-right", "Not very right-handed"),
-          range5 = if_else(used_right %in% 0, "Very-left", "Not very left-handed"),
-          range6 = if_else(used_right %in% (ni-1:ni), "mostly-right", "Not mostly-right"),
-          range7 = if_else(used_right %in% (0:1), "mostly-left", "Not mostly-left"))
+          range4 = if_else(used_right %in% ni, "Pure-right", "Not pur right-handed"),
+          range5 = if_else(used_right %in% 0, "Pure-left", "Not pure left-handed"),
+          range6 = if_else(used_right %in% (ni-1:ni), "Mostly-right", "Not mostly-right"),
+          range7 = if_else(used_right %in% (0:1), "Mostly-left", "Not mostly-left"))
 
 
   # check overall proportions right
@@ -35,9 +38,9 @@ sim_handedness <- function(nr = 100, ns = 50, ni = 5){
   #            sim_biased_left = mean(pr == 0.2)) 
   
   methods <- paste0("range", 1:7)
-  method_full_names <- c("right v not right", "consistent v inconsistent",
-                            "strong v weak", "very-right v not", 
-                             "very-left v not", "mostly-right v not",
+  method_full_names <- c("rightish v not rightish", "consistent v inconsistent",
+                            "strong v weak", "Pure-right v not", 
+                             "Pure-left v not", "mostly-right v not",
                             "mostly-left v not"  )
 
   results <- matrix(0, nrow = nr, ncol = length(methods))
@@ -63,37 +66,75 @@ sim_handedness <- function(nr = 100, ns = 50, ni = 5){
         select(-group) |> 
         as.matrix() 
       
-      ft <- test_m |> 
-          fisher.test(alternative = "two.sided")
-    
-      pv <- as.numeric(ft$p.value)
+
+      if(all(nrow(test_m) == 2, ncol(test_m) == 2)){
+        # see https://online.stat.psu.edu/stat504/lesson/4/4.5
+        # to think about why we are choosing the best of less
+        # or greater,... an alternative might be to half the two.sided
+        # option, is that always the same as doing less or greater and 
+        # choosing the lowest?
+
+        if(tail_method == "most.sig"){
+
+          ft1 <- fisher.test(test_m, alternative = "greater")$p.value
+          ft2 <- fisher.test(test_m, alternative = "less")$p.value
+
+          pv <- min(ft1, ft2)
+        } else {
+          pv <- fisher.test(test_m, alternative = "two.sided")$p.value
+        }
+      } else {
+        pv <- NA
+      }
     
       return(pv)
     })
 
-    
-
-
-    
   }
 
-  most_sig <- apply(results, 1, min)
-  which_method <- unlist(apply(results == most_sig, 1, function(x){which(x)[1]}))
+  most_sig <- apply(results, 1, min, na.rm = TRUE)
+  which_method <- unlist(apply(results == most_sig, 1, 
+    function(x){which(x)[1]}))
 
   return(list(subjects = subjects, 
-              results = cbind(results, most_sig),
-              prop_sig_05 = mean(most_sig < 0.05),
-              prop_sig_01 = mean(most_sig < 0.01), 
+              results = cbind(results, most_sig, which_method),
+              prop_sig_05 = mean(most_sig < 0.05, na.rm = TRUE),
+              prop_sig_01 = mean(most_sig < 0.01, na.rm = TRUE), 
               which_sig = which(most_sig < 0.05),
               best_method = tibble(best_method = method_full_names[which_method],
                                    run = 1:nr,
                                   which_method = which_method)))
 }
 
-sims <- sim_handedness(nr = 100)
-sims
+set.seed(123)
+sims <- sim_handedness(nr = 100, ni = 5)
+sims$prop_sig_05
+sims$prop_sig_01
+
 sims$subjects |> 
   filter(run %in% sims$which_sig) |> 
   count(run, group, used_right) |> 
   spread(used_right, n, fill = 0) |> 
   left_join(sims$best_method, by ="run")
+
+set.seed(123)
+sims <- sim_handedness(nr = 100, ni = 5, tail_method = "two.sided")
+sims$prop_sig_05
+sims$prop_sig_01
+
+
+set.seed(123)
+sims <- sim_handedness(nr = 100, ni = 9)
+sims$prop_sig_05
+sims$prop_sig_01
+
+sims$subjects |> 
+  filter(run %in% sims$which_sig) |> 
+  count(run, group, used_right) |> 
+  spread(used_right, n, fill = 0) |> 
+  left_join(sims$best_method, by ="run")
+
+
+many_results <- sapply(1:5, function(x){
+  sim_handedness(nr = 100, ni = 5)$prop_sig_05
+})
