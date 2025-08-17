@@ -1,4 +1,5 @@
-using Distributions
+using Distributions # for rand()
+using StatsBase
 
 # Number of runs of simulation:
 NR = 100
@@ -45,5 +46,22 @@ for r in 1:NR
     end
 end    
 
+println("All simulated data:")
 display(results)
 
+println("Summary tables of first 10 runs")
+
+
+sum_res = Array{Int64}(undef, NR, NI+1)
+
+for r in 1:NR
+    for g in 1:NG
+        this_r = results[g, 1:NS, r]
+        for i in 0:NI
+            sum_res[r, i+1] = count(j->(j==i), this_r)
+        end
+    end
+    
+end
+
+display(sum_res[1:10, 1:(NI+1)])
