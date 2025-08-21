@@ -159,17 +159,17 @@ This isn't surprising when we reflect on the pairs plot earlier. GDP per capita 
 
 To see the modelling results visually, here is a plot showing predictions of the average level of fertility rate at varying levels of that male housework variable, created with the incredibly useful `marginaleffects` package by Vincent Arel-Bundock, Noah Greifer and Andrew Heiss. What we see here is no material relationship:
 
-<object type="image/svg+xml" data='/img/0290-final-preds-propmale.svg' width='100%'><img src='/img/0290-final-preds-propmale.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0290-final-preds-propmale-model6b.svg' width='100%'><img src='/img/0290-final-preds-propmale-model6b.png' width='100%'></object>
 
 Contrast that to comparable presentation of the results for gender inequality, and for PPP GDP per capita:
 
-<object type="image/svg+xml" data='/img/0290-final-preds-gii.svg' width='100%'><img src='/img/0290-final-preds-gii.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0290-final-preds-gii-model6b.svg' width='100%'><img src='/img/0290-final-preds-gii-model6b.png' width='100%'></object>
 
-<object type="image/svg+xml" data='/img/0290-final-preds-gdp.svg' width='100%'><img src='/img/0290-final-preds-gdp.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0290-final-preds-gdp-model6b.svg' width='100%'><img src='/img/0290-final-preds-gdp-model6b.png' width='100%'></object>
 
 The time relationship is an interesting one. It looks from the plot below that there is no material relationship, but the statistical evidence is pretty strong that it is worth keeping this variable in the model.
 
-<object type="image/svg+xml" data='/img/0290-final-preds-time.svg' width='100%'><img src='/img/0290-final-preds-time.png' width='100%'></object>
+<object type="image/svg+xml" data='/img/0290-final-preds-time-model6b.svg' width='100%'><img src='/img/0290-final-preds-time-model6b.png' width='100%'></object>
 
 My intuitive explanation for this is that time is more important in explaining trends in fertility rate in the countries that have multiple observations in this sample; and this is not easy to pick up visually in a chart of this sort. Anyway, it doesn't matter, as I'm not interested in the time trend in its own right, just in controlling for it as a possible spoiler of our more important statistical conclusions.
 

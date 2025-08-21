@@ -639,6 +639,16 @@ summary(model7a$lme)$tTable |>
   mutate(mod2_coefs = fixef(model2)) |> 
   mutate(across(where(is.numeric), round, digits = 2))
 
+# Fixed coefficients of the four similar linear models:
+summary(model7a$lme)$tTable |> 
+  as.data.frame() |> 
+  select(mod7a = Value) |> 
+  mutate(mod7b = pull(as.data.frame(summary(model7b$lme)$tTable), Value)) |> 
+  mutate(mod7c = pull(as.data.frame(summary(model7c)$p.table), Estimate)) |> 
+  mutate(mod2 = fixef(model2)) |> 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+
 summary(model7a$gam)
 
 # see https://stats.stackexchange.com/questions/485936/nonlinear-multilevel-modeling-with-gamms-which-model-to-choose
@@ -749,7 +759,6 @@ summary(model4a$lme)$tTable |>
   as.data.frame() |> 
   mutate(`p-value` = round(`p-value`, 3)) 
 
-AIC(model6b) # NA - why?
 
 # Basically says if you let the GDP and GII effect be all curved there's no need
 # for a prop_male. Is the lesson one about vulnerability to some modelling
@@ -757,81 +766,94 @@ AIC(model6b) # NA - why?
 
 
 #---------------final presentation---------
-final_model <- model6b
-# model6b is what was used in the blog but now I wonder if model6c (with ti()) is better
+final_models <- list(model6b = model6b, 
+                     model6c = model6c,
+                     model4b = model4b)
+# model6b is what was used in the blog but now I wonder if model6c 
+# (with ti()) is better
 
 # compare this with our final model, model6b, to what we get from model2 or
 # model7c (essentially identical) which show a strong interaction
-p12 <- plot_predictions(final_model, points = 1, condition = list(
-  "prop_male",
-  "gdprppppc" = c(3000, 10000, 80000))) +
-  scale_y_continuous(label = comma) +
-  scale_x_continuous(label = percent) +
-  labs(y = "Total fertility rate",
-       colour = "PPP GDP per capita",
-       fill = "PPP GDP per capita",
-       x = "Proportion of adult housework done by men",
-       title = "Country-level relation of GDP per capita and housework done by men to fertility rate",
-       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index.
-There's no relationship between housework done by men and fertility, when other variables are accounted for.",
-       caption = full_caption)
 
-# The difference between 6b  and the simpler models is the addition of the
-# various curves, but particularly the smoothed interaction between log(GDP)
-# and prop male rather than forcing it to be linear. The smoothed GII effect
-# and the addition of the smoothed time trend also contribute but not as 
-# much
+for(i in 1:length(final_models)){
+  this_model <- final_models[[i]]
+  fm <- names(final_models)[i]
 
-# Really these lines are basically horizontal, and model 4b is probably best.
-# But because I'd used up degrees of freedom in the full model 6b, I'll use
-# that for these prediction plots
+  # this plot wrapped in try as it won't work for models without prop_male
+  try({
+    p12 <- plot_predictions(this_model, points = 1, condition = list(
+      "prop_male",
+      "gdprppppc" = c(3000, 10000, 80000))) +
+      scale_y_continuous(label = comma) +
+      scale_x_continuous(label = percent) +
+      labs(y = "Total fertility rate",
+          colour = "PPP GDP per capita",
+          fill = "PPP GDP per capita",
+          x = "Proportion of adult housework done by men",
+          title = "Country-level relation of GDP per capita and housework done by men to fertility rate",
+          subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index.
+    There's no relationship between housework done by men and fertility, when other variables are accounted for.",
+          caption = full_caption)
 
+    svg_png(p12, glue("../img/0290-final-preds-propmale-{fm}"), w = 11, h = 6)
+    }, silent = TRUE)
 
-p13 <- plot_predictions(final_model, points = 1, condition = list(
-  "gii",
-  "gdprppppc" = c(3000, 10000, 80000))) +
-  scale_y_continuous(label = comma) +
-  scale_x_continuous(label = comma) +
-  labs(y = "Total fertility rate",
-       colour = "PPP GDP per capita",
-       fill = "PPP GDP per capita",
-       x = "Gender Inequality Index (higher numbers are more unequal)",
-       title = "Country-level relation of gender inequality and GDP per capita to fertility rate",
-       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality (top right of plot)",
-       caption = full_caption)
-# note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
+    # The difference between 6b  and the simpler models is the addition of the
+  # various curves, but particularly the smoothed interaction between log(GDP)
+  # and prop male rather than forcing it to be linear. The smoothed GII effect
+  # and the addition of the smoothed time trend also contribute but not as 
+  # much
+
+  # Really these lines are basically horizontal, and model 4b is probably best.
+  # But because I'd used up degrees of freedom in the full model 6b, I'll use
+  # that for these prediction plots
 
 
+  p13 <- plot_predictions(this_model, points = 1, condition = list(
+    "gii",
+    "gdprppppc" = c(3000, 10000, 80000))) +
+    scale_y_continuous(label = comma) +
+    scale_x_continuous(label = comma) +
+    labs(y = "Total fertility rate",
+        colour = "PPP GDP per capita",
+        fill = "PPP GDP per capita",
+        x = "Gender Inequality Index (higher numbers are more unequal)",
+        title = "Country-level relation of gender inequality and GDP per capita to fertility rate",
+        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality (top right of plot)",
+        caption = full_caption)
+  # note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
+  svg_png(p13, glue("../img/0290-final-preds-gii-{fm}"), w = 11, h = 6)
+  
+  p14 <- plot_predictions(this_model, points = 1, condition = list(
+    "gdprppppc",
+    "gii" = c(0.2, 0.5))) +
+    scale_y_continuous(label = comma) +
+    scale_x_log10(label = dollar) +
+    labs(y = "Total fertility rate",
+        colour = "Gender Inequality Index (higher numbers are more unequal)",
+        fill = "Gender Inequality Index (higher numbers are more unequal)",
+        x = "PPP GDP per capita",
+        title = "Country-level relation of GDP per capita and gender inequality to fertility rate",
+        subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower GDP per capita (top left of plot)",
+        caption = full_caption)
+  svg_png(p14, glue("../img/0290-final-preds-gdp-{fm}"), w = 11, h = 6)
+  
+  p15 <- plot_predictions(this_model, points = 1, condition = list(
+    "time_period",
+    "gdprppppc" = c(3000, 10000, 80000))) +
+    scale_y_continuous(label = comma) +
+    labs(y = "Total fertility rate",
+        colour = "PPP GDP per capita",
+        fill = "PPP GDP per capita",
+        x = "Year of time use survey",
+        title = "Country-level relation of time and GDP per capita to fertility rate",
+        subtitle = "Poorer countries have higher fertility rates (higher pink ribbon). There is a statistically significant trend over time but it isn't visually obvious.",
+        caption = full_caption)
+  # note that this doesn't look particulary 'significant' but the numbers suggest
+  # it is. Possibly it's particularly strong for the countries with repeated measures.
 
-
-
-p14 <- plot_predictions(final_model, points = 1, condition = list(
-  "gdprppppc",
-  "gii" = c(0.2, 0.5))) +
-  scale_y_continuous(label = comma) +
-  scale_x_log10(label = dollar) +
-  labs(y = "Total fertility rate",
-       colour = "Gender Inequality Index (higher numbers are more unequal)",
-       fill = "Gender Inequality Index (higher numbers are more unequal)",
-       x = "PPP GDP per capita",
-       title = "Country-level relation of GDP per capita and gender inequality to fertility rate",
-       subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower GDP per capita (top left of plot)",
-       caption = full_caption)
-
-
-p15 <- plot_predictions(final_model, points = 1, condition = list(
-  "time_period",
-  "gdprppppc" = c(3000, 10000, 80000))) +
-  scale_y_continuous(label = comma) +
-  labs(y = "Total fertility rate",
-       colour = "PPP GDP per capita",
-       fill = "PPP GDP per capita",
-       x = "Year of time use survey",
-       title = "Country-level relation of time and GDP per capita to fertility rate",
-       subtitle = "Poorer countries have higher fertility rates (higher pink ribbon). There is a statistically significant trend over time but it isn't visually obvious.",
-       caption = full_caption)
-# note that this doesn't look particulary 'significant' but the numbers suggest
-# it is. Possibly it's particularly strong for the countries with repeated measures.
+  svg_png(p15, glue("../img/0290-final-preds-time-{fm}"), w = 11, h = 6)
+}
 
 
 #----------------understanding the country level effects--------
@@ -858,11 +880,6 @@ p16 <- function(){
 # We do! but also note that if we fit the gam with anything ohter than 
 # method=REML we get more different result. Should we always use REML
 # when we have random effects in s()? I suspect so, but need to check?
-
-svg_png(p12, "../img/0290-final-preds-propmale", w = 11, h = 6)
-svg_png(p13, "../img/0290-final-preds-gii", w = 11, h = 6)
-svg_png(p14, "../img/0290-final-preds-gdp", w = 11, h = 6)
-svg_png(p15, "../img/0290-final-preds-time", w = 11, h = 6)
 
 
 svg_png(p16, "../img/0290-country-effects-pairs", w = 11, h = 8)

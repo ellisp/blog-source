@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Men's domestic chores and fertility rates - Part II, technical notes
-date: 2025-08-16
+date: 2025-08-23
 tag: 
    - ModellingStrategy
    - DataFromTheWeb
@@ -177,9 +177,10 @@ From there it's straightforward data wrangling to extract just the GII data and 
 
 One of the things I wanted to sort in this post was the near equivalence of some of the many different ways of specifying and fitting a mixed effects model in R. There's a good post from Gavin Simpson on []'Using random effects in GAMs with mgcv'](https://fromthebottomoftheheap.net/2021/02/02/random-effects-in-gams/) that I referred to repeatedly in preparing this.
 
-Specifically, I wanted to check that these four models are very similar:
+Specifically, I wanted to check that these four models are very similar. By which I actually mean the last three are *identical* statistically, but have different ways of being estimated and/or the formula written down; and the first is a statistically different model in terms of probability distributions and link functions, but effectively very very similar indeed to the other three:
 
 {% highlight R lineanchors %}
+# note response variable is ltfr, defined earlier as log(tfr):
 model2 <- lmer(ltfr ~ gii + log(gdprppppc) * prop_male + (1 | country_fac), 
                data = model_ready)
 
@@ -256,22 +257,83 @@ Which gives this result, with a pleasing high correlation in the country effects
 
 Again, model2 is a little different from the other three, for the same reason. I'm actually struck with how much we get near-identical results in a model that does the log transformation before modelling to those that use a log link function.
 
-
-
 ### Showing marginal effects
 
+At some point when playing around with the different ways of specifying models I was having trouble understanding some of the output&mdash;some coefficients I thought should be identical weren't&mdash;and started building my own, very basic predicted mean values, by multiplying numbers by the coefficients. The original problem went away when I discovered some mistake or other, but I repurposed what I'd done into the code to produce this plot. 
 
+This is the sort of plot I'd been imagining to use to illustrate the interaction of the male housework variable with GDP per capita that I'd been expecting once I'd seen the direction of the trend swap around in high income countries compared to low income countries:
+
+<object type="image/svg+xml" data='/img/0290-home-made-preds.svg' width='100%'><img src='/img/0290-home-made-preds.png' width='100%'></object>
+
+It was produced with this very hacked-together, brittle, function that multiplies variables by their coefficients:
 
 {% highlight R lineanchors %}
+# Manual way of building a plot. Not even using predict()
+b <- fixef(model2)
 
+#' Predict TFR given those coefficients
+calc_tfr <- function(prop_male, gdp, gii = mean(model_ready$gii)){
+  exp(b[1] + 
+      b[2] * gii + 
+      b[3] * log(gdp) + 
+      b[4] * prop_male + 
+      b[5] * prop_male * log(gdp))
+}
+
+# Home-made prediction plot to show the interaction effect:
+tibble(prop_male = rep(seq(from = 0.05, to = 0.45, length.out = 50), 3),
+       gdp = rep(c(3000, 10000, 80000), each = 50)) |> 
+  mutate(tfr = c(calc_tfr(prop_male, gdp)),
+         gdp = dollar(gdp),
+         gdp = fct_relevel(gdp, "$3,000")) |> 
+  ggplot(aes(x = prop_male, colour = gdp, y = tfr)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(data = model_ready, colour = "black") +
+  scale_x_continuous(label = percent) +
+  labs(x = "Proportion of adult housework done by men",
+       y = "Predicted total fertility rate",
+       title = "Interaction of income, housework done by men on fertility rate",
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index",
+       colour = "PPP GDP per capita",
+       caption = full_caption)
 {% endhighlight %}
-<object type="image/svg+xml" data='/img/0290-home-made-preds.svg' width='100%'><img src='/img/0290-home-made-preds.png' width='100%'></object>
+
+It's not something I'd do for real because I'd want to calculate the standard errors at each point too, and at some point we say that's what the various package authors gave us the `predict` method for the classes they made holding fitted models. But even using `predict` and applying it to a carefully chosen grid of values is easy these days because of the `marginaleffects` package, which I was using for the first serious time in this exercise.
+
+Here's the results of the `marginaleffects::predict_plot()`
 
 <object type="image/svg+xml" data='/img/0290-margeff-preds.svg' width='100%'><img src='/img/0290-margeff-preds.png' width='100%'></object>
 
+It's like my home-made plot, but better in at least one respect; it has confidence intervals. There were some hitches in scales and guides:
 
+* the y axis really wanted to be labelled on the scale of the linear predictor, and in the end I let it have its way and add a secondardy axis on the right hand side labelled on the original scale
+* controling the colour scale looked to be non-trivial, as did labelling it with $ signs. In the end I didn't persist on this; there are ways to get `plot_predictions` to give you the data rather than draw a plot, but I didn't slow things down.
 
-### Interaction effects and splines
+Here's the nice and simple code to draw that; the "nice and simple" bit partiuclarly referring to the easy way you can specify the variables' values to illustrate. Once I'd realised how easy this was, I used it for the rest of the blog post, including the considerably more complex generalized additive models that were my actual preferred models.
+
+{% highlight R lineanchors %}
+plot_predictions(model2, points = 1, condition = list(
+  "prop_male",
+  "gdprppppc" = c(3000, 10000, 80000))) +
+  scale_y_continuous(trans = transform_exp(),
+                     breaks = log(c(2, 4, 6)),
+                     label = comma,
+                     sec.axis = sec_axis(exp, name = "Total Fertility Rate")) +
+  scale_x_continuous(label = percent) +
+  labs(y = "log(total fertility rate)",
+       colour = "PPP GDP per capita",
+       fill = "PPP GDP per capita",
+       x = "Proportion of adult housework done by men",
+       title = "Interaction of income, housework done by men on fertility rate",
+       subtitle = "Calculations done for a hypothetical country that otherwise has the average Gender Inequality Index",
+       caption = full_caption)
+# note the warning that this only takes into account the uncertainty of
+# fixed-effect parameters. This is probably ok? if we are interested in 
+# the causality rather than predicting new countries?
+{% endhighlight %}
+
+### Modelling choices and checks
+Now, all that stuff above is mostly cosmetics. Keen readers will have oticed
 
 key thing to discuss here is how model2 shows male_prop as significant but all the final models, with splines and stuff don't. I think what's happening in model2 is that male_prop interaction becomes a way of representing what is easier to show as just non-linear effects of GII and GDP
 
@@ -283,6 +345,10 @@ key thing to discuss here is how model2 shows male_prop as significant but all t
 <object type="image/svg+xml" data='/img/0290-diagnose-0.svg' width='100%'><img src='/img/0290-diagnose-0.png' width='100%'></object>
 
 <img src="/img/0290-compare-ti-and-s.png" width = "100%">
+
+{% highlight R lineanchors %}
+
+{% endhighlight %}
 
 
 
