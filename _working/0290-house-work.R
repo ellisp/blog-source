@@ -775,13 +775,16 @@ final_models <- list(model6b = model6b,
 # compare this with our final model, model6b, to what we get from model2 or
 # model7c (essentially identical) which show a strong interaction
 
+# lists to hold the plot objects for re-use
+p12 <- p13 <- p14 <- p15 <- list()
+
 for(i in 1:length(final_models)){
   this_model <- final_models[[i]]
   fm <- names(final_models)[i]
 
   # this plot wrapped in try as it won't work for models without prop_male
   try({
-    p12 <- plot_predictions(this_model, points = 1, condition = list(
+    p12[[i]] <- plot_predictions(this_model, points = 1, condition = list(
       "prop_male",
       "gdprppppc" = c(3000, 10000, 80000))) +
       scale_y_continuous(label = comma) +
@@ -795,7 +798,7 @@ for(i in 1:length(final_models)){
     There's no relationship between housework done by men and fertility, when other variables are accounted for.",
           caption = full_caption)
 
-    svg_png(p12, glue("../img/0290-final-preds-propmale-{fm}"), w = 11, h = 6)
+    svg_png(p12[[i]], glue("../img/0290-final-preds-propmale-{fm}"), w = 11, h = 6)
     }, silent = TRUE)
 
     # The difference between 6b  and the simpler models is the addition of the
@@ -809,7 +812,7 @@ for(i in 1:length(final_models)){
   # that for these prediction plots
 
 
-  p13 <- plot_predictions(this_model, points = 1, condition = list(
+  p13[[i]] <- plot_predictions(this_model, points = 1, condition = list(
     "gii",
     "gdprppppc" = c(3000, 10000, 80000))) +
     scale_y_continuous(label = comma) +
@@ -822,9 +825,9 @@ for(i in 1:length(final_models)){
         subtitle = "Poorer countries have higher fertility rates (higher pink ribbon), and so do countries with more gender inequality (top right of plot)",
         caption = full_caption)
   # note that this chart is essentially identical if you use model6b or model4b but we use 6b because we have 'peeked' at its results.
-  svg_png(p13, glue("../img/0290-final-preds-gii-{fm}"), w = 11, h = 6)
+  svg_png(p13[[i]], glue("../img/0290-final-preds-gii-{fm}"), w = 11, h = 6)
   
-  p14 <- plot_predictions(this_model, points = 1, condition = list(
+  p14[[i]] <- plot_predictions(this_model, points = 1, condition = list(
     "gdprppppc",
     "gii" = c(0.2, 0.5))) +
     scale_y_continuous(label = comma) +
@@ -836,9 +839,9 @@ for(i in 1:length(final_models)){
         title = "Country-level relation of GDP per capita and gender inequality to fertility rate",
         subtitle = "More gender-unequal countries have higher fertility rates (higher blue ribbon), and so do countries with lower GDP per capita (top left of plot)",
         caption = full_caption)
-  svg_png(p14, glue("../img/0290-final-preds-gdp-{fm}"), w = 11, h = 6)
+  svg_png(p14[[i]], glue("../img/0290-final-preds-gdp-{fm}"), w = 11, h = 6)
   
-  p15 <- plot_predictions(this_model, points = 1, condition = list(
+  p15[[i]] <- plot_predictions(this_model, points = 1, condition = list(
     "time_period",
     "gdprppppc" = c(3000, 10000, 80000))) +
     scale_y_continuous(label = comma) +
@@ -852,7 +855,7 @@ for(i in 1:length(final_models)){
   # note that this doesn't look particulary 'significant' but the numbers suggest
   # it is. Possibly it's particularly strong for the countries with repeated measures.
 
-  svg_png(p15, glue("../img/0290-final-preds-time-{fm}"), w = 11, h = 6)
+  svg_png(p15[[i]], glue("../img/0290-final-preds-time-{fm}"), w = 11, h = 6)
 }
 
 
