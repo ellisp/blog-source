@@ -1,3 +1,5 @@
+# Original article is at https://statmodeling.stat.columbia.edu/wp-content/uploads/2024/07/bishop1990.pdf
+
 
 library(tidyverse)
 
@@ -107,7 +109,7 @@ sim_handedness <- function(nr = 100, ns = 50, ni = 5,
 }
 
 set.seed(123)
-sims <- sim_handedness(nr = 100, ni = 5)
+sims <- sim_handedness(nr = 1000, ni = 5)
 sims$prop_sig_05
 sims$prop_sig_01
 
@@ -118,23 +120,23 @@ sims$subjects |>
   left_join(sims$best_method, by ="run")
 
 set.seed(123)
-sims <- sim_handedness(nr = 100, ni = 5, tail_method = "two.sided")
-sims$prop_sig_05
-sims$prop_sig_01
+sims_2s <- sim_handedness(nr = 1000, ni = 5, tail_method = "two.sided")
+sims_2s$prop_sig_05
+sims_2s$prop_sig_01
 
 
 set.seed(123)
-sims <- sim_handedness(nr = 100, ni = 9)
-sims$prop_sig_05
-sims$prop_sig_01
+sims_9i <- sim_handedness(nr = 1000, ni = 9)
+sims_9i$prop_sig_05
+sims_9i$prop_sig_01
 
-sims$subjects |> 
+sims$_9isubjects |> 
   filter(run %in% sims$which_sig) |> 
   count(run, group, used_right) |> 
   spread(used_right, n, fill = 0) |> 
   left_join(sims$best_method, by ="run")
 
 
-many_results <- sapply(1:5, function(x){
+many_results <- sapply(1:100, function(x){
   sim_handedness(nr = 100, ni = 5)$prop_sig_05
 })
