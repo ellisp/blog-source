@@ -4,6 +4,9 @@ library(lme4)
 library(forecast) # for chosing box cox parameters
 library(AICcmodavg) # for predictSE with lmer
 library(ggrepel)
+library(mgcv)
+library(gratia)
+library(GGally)
 
 # Analysis to follow up this remark:
 # https://mastodon.sdf.org/@dlakelan/115055789165555934
@@ -43,12 +46,17 @@ d2 <- d |>
   mutate(label = ifelse(type == "Latest" & (gini > 53 | homicide > 35 | 
                                  gini < 26 | homicide < 0.26 | country %in% highlights),
                         country, ""),
-         hom_tran = BoxCox(homicide, lambda = lambda)) 
+         hom_tran = BoxCox(homicide, lambda = lambda),
+         country = as.factor(country)) 
 
 #------------Modelling and predictions (for drawing 95% confidence intervals on charts)----
 
 model0 <- lm(hom_tran ~ gini, data = d2)
 model1 <- lmer(hom_tran ~ gini + (1 | country), data = d2)
+# log link function
+model2 <- gam(homicide ~ gini + s(country, bs = "re"), 
+              family = quasipoisson, data = d2, method = "REML")
+
 summary(model0)
 summary(model1)
 
@@ -63,10 +71,17 @@ avg_country <- ranef(model1)[[1]] |>
   slice(1) |> 
   row.names()
 
+# compare the country level effects
+tibble(m1 = ranef(model1)[[1]]$`(Intercept)`,
+       m2 = as.numeric(smooth_coefs(model2, "s(country)")),
+      country = levels(d2$country)) |> 
+  arrange(abs(m2) + abs(m1))
+
 pred_grid <- tibble(gini = 20:65, country = avg_country)
 
 pse0 <- predict(model0, newdata = pred_grid, se = TRUE)
 pse1 <- predictSE(model1, newdata = pred_grid)
+pse2 <- predict(model2, newdata = pred_grid, se = TRUE)
 
 pred_grid <- pred_grid |> 
   mutate(predicted0 = pse0$fit,
@@ -75,18 +90,25 @@ pred_grid <- pred_grid |>
   mutate(predicted1 = pse1$fit,
          lower1 = predicted1 - 1.96 * pse1$se.fit,
         upper1 = predicted1 + 1.96 * pse1$se.fit) |> 
-  mutate(across(predicted0:upper1, function(x){InvBoxCox(x, lambda = lambda)}))
+  mutate(predicted2 = pse2$fit,
+         lower2 = predicted2 - 1.96 * pse2$se.fit,
+        upper2 = predicted2 + 1.96 * pse2$se.fit) |> 
+  mutate(across(predicted0:upper1, function(x){InvBoxCox(x, lambda = lambda)}),
+         across(predicted2:upper2, function(x){exp(x)}))
 
 #------------------Draw chart--------------------
 
-mod_cols <- c("purple", "darkgreen")
+mod_cols <- c("purple", "darkgreen", "brown")
 
 p1 <- d2 |> 
   ggplot(aes(x = gini, y = homicide)) +
   geom_ribbon(data = pred_grid, aes(ymin = lower0, ymax = upper0, y = NA), 
                fill = mod_cols[1], alpha = 0.2) +
   geom_ribbon(data = pred_grid, aes(ymin = lower1, ymax = upper1, y = NA), 
-                fill = mod_cols[2], alpha = 0.2) +
+               fill = mod_cols[2], alpha = 0.2) +
+# ribbon from fit with gam, is very similar to lmer, just a bit wider. Commented out.
+#  geom_ribbon(data = pred_grid, aes(ymin = lower2, ymax = upper2, y = NA), 
+#                fill = mod_cols[3], alpha = 0.2) +
   geom_point(aes(shape = type, colour = type)) +
   geom_label_repel(aes(label = label), max.overlaps = Inf, colour = "grey10", size = 2.8,
                    seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04)) +
