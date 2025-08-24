@@ -1,10 +1,9 @@
-
-
 library(tidyverse)
 library(WDI)
 library(lme4)
 library(forecast) # for chosing box cox parameters
 library(AICcmodavg) # for predictSE with lmer
+library(ggrepel)
 
 # Analysis to follow up this remark:
 # https://mastodon.sdf.org/@dlakelan/115055789165555934
@@ -44,7 +43,7 @@ d2 <- d |>
   mutate(label = ifelse(type == "Latest" & (gini > 53 | homicide > 35 | 
                                  gini < 26 | homicide < 0.26 | country %in% highlights),
                         country, ""),
-         hom_tran = BoxCox(homicide,lambda = lambda)) 
+         hom_tran = BoxCox(homicide, lambda = lambda)) 
 
 #------------Modelling and predictions (for drawing 95% confidence intervals on charts)----
 
@@ -53,7 +52,11 @@ model1 <- lmer(hom_tran ~ gini + (1 | country), data = d2)
 summary(model0)
 summary(model1)
 
-# find the country with random effect closest to zero. Needed for 'predictions'
+
+# Is the average random country effect basically zero? - check:
+stopifnot(round(mean(ranef(model1)[[1]][,1]), 10) == 0)
+
+# Find the country with random effect closest to zero. Needed for predictions
 # to draw an average country ribbon on the chart
 avg_country <- ranef(model1)[[1]] |> 
   arrange(abs(`(Intercept)`)) |> 
@@ -104,8 +107,9 @@ p1 <- d2 |>
        y = "Homicide rate (per 100,000)",
       colour = "Observation year:",
       shape = "Observation year:",
-      title = "Higher inequality countries have more homicides. But modelling choices impact on 'how strong'.",
-      subtitle = "Selected countries highlighted. Green modelled line is 95% confidence interval of a mixed effects model with random country effect.")
+      title = "Higher inequality countries have more homicides. But modelling choices impact on 'how much'.",
+      subtitle = "Selected countries highlighted. Green modelled line is 95% confidence interval of a mixed effects model with random country effect.",
+      caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.")
 
-svg_png(p1, "../img/0303-scatter", w = 10, h = 7)
+svg_png(p1, "../img/0303-scatter", w = 10, h = 6.5)
 
