@@ -145,32 +145,33 @@ pop_anu <- pnged |>
 pop_pdh <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.PG.MIDYEARPOPEST._T._T?startPeriod=1975&endPeriod=2025&dimensionAtObservation=AllDimensions") |> 
   as_tibble() |> 
   select(year = TIME_PERIOD,
-         UN = obsValue) |> 
+         `UN method` = obsValue) |> 
   mutate(year = as.numeric(year))
 
 # sources:
-# https://png-data.sprep.org/system/files/2011%20Census%20National%20Report.pdf
+# https://spccfpstore1.blob.core.windows.net/digitallibrary-docs/files/f2/f29f4484aeb618921dc4511a3b7ee617.pdf?sv=2015-12-11&sr=b&sig=IDePEoo9hsqC2JDNtSR4%2BFK%2Bp1miHhhBaqBR%2F3ra%2FCw%3D&se=2026-03-05T20%3A35%3A58Z&sp=r&rscc=public%2C%20max-age%3D864000%2C%20max-stale%3D86400&rsct=application%2Fpdf&rscd=inline%3B%20filename%3D%22PNG_2011_Census_National_Report.pdf%22
 # https://www.nso.gov.pg/statistics/population/ (for WorldPop, accessed 6/9/2025)
 specifics <- tribble(~year, ~variable, ~value,
-                      2021, "WorldPop", 11781779,
-                      2011, "Census", 7254442 + 20882, # including both citizens and non-citizens
-                      2000, "Census", 5171548 + 19235,
-                      1990, "Census", 3582333 + 25621,
-                      1980, "Census", 2978057 + 32670) |> 
+                      2021, "WorldPop method", 11781779,
+                      2011, "Census method", 7254442 + 20882, # including both citizens and non-citizens
+                      2000, "Census method", 5171548 + 19235,
+                      1990, "Census method", 3582333 + 25621,
+                      1980, "Census method", 2978057 + 32670) |> 
   # make WorldPop appear first in the legend, better visually:
-  mutate(variable = fct_relevel(variable, "WorldPop"))
+  mutate(variable = fct_relevel(variable, "WorldPop method"))
 
+# Draw plot
 p3 <- pop_anu |> 
-  select(year = Year, ANU = population) |> 
+  select(year = Year, `ANU method` = population) |> 
   full_join(pop_pdh, by = "year") |> 
   gather(variable, value, -year) |> 
   # make UN appear first in legend, better visually:
-  mutate(variable = fct_relevel(variable, "UN")) |> 
+  mutate(variable = fct_relevel(variable, "UN method")) |> 
   ggplot(aes(x = year, y = value, colour = variable)) +
-  geom_line(data = specifics, colour = "grey50", linetype = 2) +
+  geom_line(data = filter(specifics, grepl("Census", variable)), colour = "grey50", linetype = 2) +
   geom_line() +
-  geom_point(data = specifics, aes(colour = NULL, shape = variable), size = 2) +
-  scale_shape_manual(values = c("Census" =19, "WorldPop" = 1)) +
+  geom_point(data = specifics, aes(colour = NULL, shape = variable), size = 3) +
+  scale_shape_manual(values = c("Census method" = 19, "WorldPop method" = 15)) +
   scale_y_continuous(label = comma) +
   labs(shape = "Single-year", colour = "Multi-year",
        x = "", y = "",
@@ -178,12 +179,13 @@ p3 <- pop_anu |>
     subtitle = "Independence to 2025",
   caption = "Source: PNG National Statistics Office (for WorldPop); 2011 National Census Report; ANU PNG economic database; Pacific Data Hub.stat")
 
-svg_png(p3, "../img/0304-population", w = 9, h = 5)
+svg_png(p3, "../img/0304-population", w = 8.5, h = 4.8)
 
 #----------------other variables in PNG ED------
 
 pv <- unique(pnged$Variable)
 pv[grepl("employ", pv, ignore.case = TRUE)]
+pv[grepl("popul", pv, ignore.case = TRUE)]
 
   
 
