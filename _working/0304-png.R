@@ -6,6 +6,7 @@ library(scales)
 library(ggtext)
 library(RColorBrewer)
 library(WDI)
+library(rsdmx)
 
 #---------------download data, set up palette---------------
 
@@ -136,15 +137,54 @@ svg_png(p2, "../img/0304-gdp-with-cpi", w = 9, h = 5)
 # * 2014 de facto rationing of foreign exchange beings
 # * 2022 o8l and gas prices increase with Russian invasion of Ukraine
 
+#--------------population, comparison of data sources--------------
+pop_anu <- pnged |> 
+  filter(Variable %in% c("Population")) |> 
+  select(Year, population = Amount)
+
+pop_pdh <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.PG.MIDYEARPOPEST._T._T?startPeriod=1975&endPeriod=2025&dimensionAtObservation=AllDimensions") |> 
+  as_tibble() |> 
+  select(year = TIME_PERIOD,
+         UN = obsValue) |> 
+  mutate(year = as.numeric(year))
+
+# sources:
+# https://png-data.sprep.org/system/files/2011%20Census%20National%20Report.pdf
+# https://www.nso.gov.pg/statistics/population/ (for WorldPop, accessed 6/9/2025)
+specifics <- tribble(~year, ~variable, ~value,
+                      2021, "WorldPop", 11781779,
+                      2011, "Census", 7254442 + 20882, # including both citizens and non-citizens
+                      2000, "Census", 5171548 + 19235,
+                      1990, "Census", 3582333 + 25621,
+                      1980, "Census", 2978057 + 32670)
+
+p3 <- pop_anu |> 
+  select(year = Year, ANU = population) |> 
+  full_join(pop_pdh, by = "year") |> 
+  gather(variable, value, -year) |> 
+  ggplot(aes(x = year, y = value, colour = variable)) +
+  geom_line(data = specifics, colour = "grey50", linetype = 2) +
+  geom_line() +
+  geom_point(data = specifics, aes(colour = NULL, shape = variable), size = 2) +
+  theme_minimal() +
+  scale_shape_manual(values = c("Census" =19, "WorldPop" = 1)) +
+  scale_y_continuous(label = comma) +
+  labs(shape = "", colour = "Source",
+       x = "", y = "",
+      title = "Different estimates of Papua New Guinea's population",
+    subtitle = "Independence to 2025",
+  caption = "Source: PNG National Statistics Office (for WorldPop); 2011 National Census Report; ANU PNG economic database; Pacific Data Hub.stat")
+
+svg_png(p3, "../img/0304-population", w = 9, h = 5)
+
+
+
 
 #----------------other variables in PNG ED------
 
 pv <- unique(pnged$Variable)
 pv[grepl("employ", pv, ignore.case = TRUE)]
 
-pop <- pnged |> 
-  filter(Variable %in% c("Population")) |> 
-  select(Year, population = Amount)
   
 
 
@@ -160,34 +200,32 @@ pnged |>
 pnged |> 
   filter(Variable %in% c("Total (excluding public service) employment",
                          "Public service employment")) |> 
-  left_join(pop, by = "Year") |>
+  left_join(pop_anu, by = "Year") |>
   mutate(Amount = Amount / population) |>
   mutate(Variable = fct_reorder(str_wrap(Variable, 30), Amount, .desc = TRUE)) |> 
   ggplot(aes(x = Year, y = Amount, colour = Variable)) +
   geom_line() +
-  scale_y_continuous(label = percent, limits = c(0, 0.06))
+  scale_y_continuous(label = percent, limits = c(0, 0.06)) 
 
 # no deflator, multiple variables
 pnged |> 
   filter(grepl("Immunization", Variable)) |> 
   ggplot(aes(x = Year, y = Amount, colour = Variable)) +
-  geom_line() +
-  theme_grey()
+  geom_line() 
 
 # what would be the source for this - too frequent to be a survey - must be
 # a health data admin source
 # DPT, HepB3, measles
 
-#
-
-#-----------comparison to other countries-----------
+#-----------social variables, comparison to other countries-----------
 library(WDI)
 wc <- WDIcache()
 
 d <- WDIsearch("measles")
 
 
-d <- WDI(indicator = "SH.IMM.MEAS")    # does not work, '403 Forbidden'
+d <- WDI(indicator = "SH.IMM.MEAS")   
+
 
 
 
