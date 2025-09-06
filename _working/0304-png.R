@@ -130,7 +130,7 @@ svg_png(p2, "../img/0304-gdp-with-cpi", w = 9, h = 5)
  # some key dates:
 
 # * 1989 Closure of Porgera following violence in Bougainville
- # * 1995 balance of payments crisis, kina floated
+# * 1995 balance of payments crisis, kina floated
 # * 2004 govt revenue from resources starts growing strongly
 # * 2012 sharp fall in oil prices
 #   2010-2013 construction for LNG project
@@ -156,29 +156,29 @@ specifics <- tribble(~year, ~variable, ~value,
                       2011, "Census", 7254442 + 20882, # including both citizens and non-citizens
                       2000, "Census", 5171548 + 19235,
                       1990, "Census", 3582333 + 25621,
-                      1980, "Census", 2978057 + 32670)
+                      1980, "Census", 2978057 + 32670) |> 
+  # make WorldPop appear first in the legend, better visually:
+  mutate(variable = fct_relevel(variable, "WorldPop"))
 
 p3 <- pop_anu |> 
   select(year = Year, ANU = population) |> 
   full_join(pop_pdh, by = "year") |> 
   gather(variable, value, -year) |> 
+  # make UN appear first in legend, better visually:
+  mutate(variable = fct_relevel(variable, "UN")) |> 
   ggplot(aes(x = year, y = value, colour = variable)) +
   geom_line(data = specifics, colour = "grey50", linetype = 2) +
   geom_line() +
   geom_point(data = specifics, aes(colour = NULL, shape = variable), size = 2) +
-  theme_minimal() +
   scale_shape_manual(values = c("Census" =19, "WorldPop" = 1)) +
   scale_y_continuous(label = comma) +
-  labs(shape = "", colour = "Source",
+  labs(shape = "Single-year", colour = "Multi-year",
        x = "", y = "",
       title = "Different estimates of Papua New Guinea's population",
     subtitle = "Independence to 2025",
   caption = "Source: PNG National Statistics Office (for WorldPop); 2011 National Census Report; ANU PNG economic database; Pacific Data Hub.stat")
 
 svg_png(p3, "../img/0304-population", w = 9, h = 5)
-
-
-
 
 #----------------other variables in PNG ED------
 
@@ -197,34 +197,53 @@ pnged |>
   geom_line()
 
 # with population deflator
-pnged |> 
+p4 <- pnged |> 
   filter(Variable %in% c("Total (excluding public service) employment",
                          "Public service employment")) |> 
   left_join(pop_anu, by = "Year") |>
   mutate(Amount = Amount / population) |>
   mutate(Variable = fct_reorder(str_wrap(Variable, 30), Amount, .desc = TRUE)) |> 
   ggplot(aes(x = Year, y = Amount, colour = Variable)) +
+  annotate("rect", xmin = 1975, xmax = 1988.5, ymin = -Inf, ymax = Inf, fill = era_cols[1], alpha = 0.1) +
+  annotate("rect", xmin = 1988.5, xmax = 2003.5, ymin = -Inf, ymax = Inf, fill = era_cols[2], alpha = 0.1) +
+  annotate("rect", xmin = 2003.5, xmax = 2013.5, ymin = -Inf, ymax = Inf, fill = era_cols[3], alpha = 0.1) +
+  annotate("rect", xmin = 2013.5, xmax = 2022.5, ymin = -Inf, ymax = Inf, fill = era_cols[4], alpha = 0.1) +
   geom_line() +
-  scale_y_continuous(label = percent, limits = c(0, 0.06)) 
+  annotate("text", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 0.0585, 
+            x = c(1981.5, 1996, 2009, 2018), hjust = 0.5, fontface = 4, alpha = 0.8) +
+  scale_y_continuous(label = percent, limits = c(0, 0.06)) +
+  labs(x = "", y = "Proportion of population",
+        title = "Formal employment in Papua New Guinea",
+      subtitle = "As a proportion of the population (including children and elderly)")
+
+svg_png(p4, "../img/0304-employment", w = 9, h = 5)
+
 
 # no deflator, multiple variables
-pnged |> 
+p5 <- pnged |> 
   filter(grepl("Immunization", Variable)) |> 
   ggplot(aes(x = Year, y = Amount, colour = Variable)) +
-  geom_line() 
+  annotate("rect", xmin = 1975, xmax = 1988.5, ymin = -Inf, ymax = Inf, fill = era_cols[1], alpha = 0.1) +
+  annotate("rect", xmin = 1988.5, xmax = 2003.5, ymin = -Inf, ymax = Inf, fill = era_cols[2], alpha = 0.1) +
+  annotate("rect", xmin = 2003.5, xmax = 2013.5, ymin = -Inf, ymax = Inf, fill = era_cols[3], alpha = 0.1) +
+  annotate("rect", xmin = 2013.5, xmax = 2022.5, ymin = -Inf, ymax = Inf, fill = era_cols[4], alpha = 0.1) +
+  geom_line() +
+  annotate("text", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 85, 
+            x = c(1981.5, 1996, 2009, 2018), hjust = 0.5, fontface = 4, alpha = 0.8) +
+  scale_y_continuous(label = percent_format(scale = 1)) +
+  labs(x = "", y = "", colour = "",
+       title = "Immunization rates in Papua New Guinea",
+      subtitle = "Proportion of children 12-23 months for measles and DPT; one-year old children for HepB3. Treat data with caution.") 
+
+svg_png(p5, "../img/0304-vaccination", w = 9, h = 5)
+
+
+# proportion of children aged 12-23 months for DPT and measles; of one-year old children for HepB3 
 
 # what would be the source for this - too frequent to be a survey - must be
 # a health data admin source
 # DPT, HepB3, measles
 
-#-----------social variables, comparison to other countries-----------
-library(WDI)
-wc <- WDIcache()
-
-d <- WDIsearch("measles")
-
-
-d <- WDI(indicator = "SH.IMM.MEAS")   
 
 
 

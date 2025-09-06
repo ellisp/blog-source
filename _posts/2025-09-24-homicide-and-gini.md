@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Homicide and income inequality
-date: 2025-08-24
+date: 2025-09-24
 tag: 
    - ModellingStrategy
    - Inequality
@@ -20,7 +20,7 @@ Here is a chart of homicides per 100,000 population on the vertical axis versus 
 
 <object type="image/svg+xml" data='/img/0303-scatter.svg' width='100%'><img src='/img/0303-scatter.png' width='100%'></object>
 
-The model implied by Professor Lakens would be a straight diagonal line, what you'd get if you just used `geom_smooth(method = lm, formula = y ~x - 1)
+The model implied by Professor Lakens would be a straight diagonal line, what you'd get if you just used `geom_smooth(method = lm, formula = y ~ x - 1)`. I haven't shown his, but two slightly more complex models as I started down a rabbit hole a bit different from the original point being made.
 
 
 {% highlight R lineanchors %}
