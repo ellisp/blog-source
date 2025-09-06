@@ -5,8 +5,12 @@ library(spcstyle)
 library(scales)
 library(ggtext)
 library(RColorBrewer)
-librray(WDI)
+library(WDI)
 
+#---------------download data, set up palette---------------
+
+# Read in the ANU's PNG economic database. Download from 
+# https://pngeconomic.devpolicy.org/
 pnged <- read_csv("PNG economic database.csv")
 
 glimpse(pnged)
@@ -14,8 +18,11 @@ count(pnged, Variable)
 
 unique(pnged$Variable)
 
-era_cols <- brewer.pal(6, "Set1")[1:4]
+# era_cols <- brewer.pal(6, "Set1")[1:4]
+era_cols <- c("grey10", "white", "grey10", "white")
 gdp_cols <- brewer.pal(7, "Set1")[c(5,7)]
+
+#-----------GDP chart with GDP deflator-----------
 
 def_13_22 <- pnged |> 
   filter(Variable == "GDP deflator") |> 
@@ -43,8 +50,8 @@ p1 <- pnged |>
   # option, can uncomment this and you get a point showing each observation. 
   # It is helpful to see the actual point, but adds clutter.
 #  geom_point(colour = "white") +
-  annotate("label", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 8100, 
-           x = c(1983, 1996, 2009, 2018), hjust = 0.5, fontface = 4, label.size = 0, alpha = 0.8) +
+  annotate("text", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 13300, 
+           x = c(1981.5, 1996, 2009, 2018), hjust = 0.5, fontface = 4, alpha = 0.8) +
   annotate("text", colour = gdp_cols, x = 2020, y = c(11300, 9200), 
            label = c("All GDP", "Non-resources GDP")) +
   scale_colour_manual(values = gdp_cols) +
@@ -52,12 +59,15 @@ p1 <- pnged |>
   labs(y = "Kina (2022 prices, based on GDP deflator)",
         x = "",
        title = "Real gross domestic product per person in Papua New Guinea",
-       subtitle = "Annotated with the periods used in <i>Struggle, reform, room and bust: an economic history of Papua New Guinea since independence</i>",
+       subtitle = "Annotated with the periods used in <i>Struggle, reform, boom and bust: an economic history of Papua New Guinea since independence</i>",
        caption = "Source: ANU's PNG Economic Database, https://pngeconomic.devpolicy.org/")  +
    theme(legend.position ="none",
          plot.subtitle = element_markdown())
 svg_png(p1, "../img/0304-gdp", w = 9, h = 5)
 
+file.copy("../img/0304-gdp.svg", 
+          "C:/Users/petere/OneDrive - SPC/Documents/misc notes/0304-gdp.svg",
+          overwrite = TRUE)
 #-------------------------CPI so we see prices facing consumers---------
 
  # ratio of CPI to non-resource GDP deflator
@@ -95,12 +105,12 @@ p2 <- pnged |>
   # option, can uncomment this and you get a point showing each observation. 
   # It is helpful to see the actual point, but adds clutter.
   #   geom_point(colour = "white") +
-   annotate("label", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 8900, 
-            x = c(1983, 1996, 2009, 2018), hjust = 0.5, fontface = 4, label.size = 0, alpha = 0.8) +
+   annotate("text", label = c("'Struggle'", "'Reform'", "'Boom'", "'Bust'"), y = 14100, 
+            x = c(1981.5, 1996, 2009, 2018), hjust = 0.5, fontface = 4, alpha = 0.8) +
    annotate("text", colour = gdp_cols, x = 2020, y = c(10200, 7600), 
             label = c("All GDP", "Non-resources GDP")) +
    scale_colour_manual(values = gdp_cols) +
-   scale_y_continuous(label = comma, breaks = 6:13 * 1000) +
+   scale_y_continuous(label = comma, breaks = 6:14 * 1000) +
    labs(y = "Kina (2024 prices, based on CPI deflator)",
         x = "",
         title = "Real gross domestic product per person in Papua New Guinea",
@@ -113,7 +123,7 @@ p2 <- pnged |>
  # https://devpolicy.org/struggle-reform-boom-and-bust-a-profound-wake-up-call-for-png-20250821/
 
 
-svg_png(p2, "../img/0304-gdp-with-cpi", w = 9, h = 6)
+svg_png(p2, "../img/0304-gdp-with-cpi", w = 9, h = 5)
 
  
  # some key dates:
@@ -161,7 +171,9 @@ pnged |>
 pnged |> 
   filter(grepl("Immunization", Variable)) |> 
   ggplot(aes(x = Year, y = Amount, colour = Variable)) +
-  geom_line()
+  geom_line() +
+  theme_grey()
+
 # what would be the source for this - too frequent to be a survey - must be
 # a health data admin source
 # DPT, HepB3, measles
@@ -172,12 +184,10 @@ pnged |>
 library(WDI)
 wc <- WDIcache()
 
-d <- 
-WDIsearch("measles")
+d <- WDIsearch("measles")
 
 
-d1 <- WDI(country=c("US","BR"), indicator="NY.GNS.ICTR.GN.ZS", start=1999, end=2000,
-          extra=TRUE, cache=NULL)
-d2 <- WDI(indicator = "SH.IMM.MEAS")    # does not work, '403 Forbidden'
+d <- WDI(indicator = "SH.IMM.MEAS")    # does not work, '403 Forbidden'
 
-stopifnot()
+
+
