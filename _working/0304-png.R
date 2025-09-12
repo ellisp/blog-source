@@ -246,7 +246,96 @@ svg_png(p5, "../img/0304-vaccination", w = 9, h = 5)
 # a health data admin source
 # DPT, HepB3, measles
 
+#-----------------population in 2025--------------------
+
+pop_anu
+specifics
+
+gr <- pop_anu |> 
+  filter(Year %in% 2023:2024) |> 
+  arrange(Year) |> 
+  mutate(growth = population / dplyr::lag(population)) |> 
+  filter(Year == 2024) |> 
+  pull(growth)
+
+filter(pop_anu, Year == 2024) |> 
+  rename(year = Year) |> 
+  mutate(year = 2025,
+         pop2025 = population * gr,
+         variable = "ANU method",
+        ) |> 
+  select(-population) |> 
+  bind_rows(
+
+    filter(pop_pdh, year == 2025) |> 
+      mutate(variable = "UN method") |> 
+      rename(pop2025 = `UN method`)
+  ) |> 
+  bind_rows(
+
+    specifics |> 
+      # 1.0495 growth rate needed to get to WorldPop number from 2011 Census
+      mutate(pop2025 = value * 1.0495 ^ (2025 - year)) |> 
+      select(-value)
+  ) |> 
+  mutate(pop2025 = round(pop2025 / 1e6, 1)) |> 
+  rename("Base year" = year) |> 
+  filter(`Base year` > 2000) |> 
+  arrange(desc(pop2025))
+# population estimates range from 10.1m to 14.3m
+# note that the whole populationof SPC member PICTs, excluding PNG, is 3.6m in 2025
+# https://stats.pacificdata.org/vis?tm=population&pg=0&snb=54&df[ds]=ds%3ASPC2&df[id]=DF_POP_PROJ&df[ag]=SPC&df[vs]=3.0&dq=A..MIDYEARPOPEST._T._T&pd=2025%2C2025&to[TIME_PERIOD]=false
+
+
+
+#----------------comparison with other countries---------------
+
+
+library(WDI)
+
+WDIsearch("immuni")
+
+" Immunization, full (% of children ages 15-23 months)"
+d <- WDI(indicator = "HF.IMM.FULL") |> 
+  as_tibble()
+
+
+d |> 
+  drop_na() |> 
+  group_by(country) |> 
+  arrange(desc(year)) |> 
+  slice(1) |> 
+  arrange(ifelse(country == "Papua New Guinea", 1, HF.IMM.FULL))
+
+# NO data for PNG:
+filter(d, country == "Papua New Guinea" & !is.na(HF.IMM.FULL))
 
 
 
 
+" Immunization, full (% of children ages 15-23 months)"
+d <- WDI(indicator = "HF.IMM.FULL") |> 
+  as_tibble()
+
+
+d |> 
+  drop_na() |> 
+  group_by(country) |> 
+  arrange(desc(year)) |> 
+  slice(1) |> 
+  arrange(ifelse(country == "Papua New Guinea", 1, HF.IMM.FULL))
+
+# NO data for PNG:
+filter(d, country == "Papua New Guinea" & !is.na(HF.IMM.FULL))
+
+imm_inds <- WDIsearch("Immunization") |> 
+  filter(grepl("SH.IMM", indicator)) |> 
+  pull(indicator)
+
+imm_d <- WDI(indicator = imm_inds) |> 
+  as_tibble()
+
+# No data
+imm_d |> 
+  drop_na() |> 
+  filter(country == "Papua New Guinea")
