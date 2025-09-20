@@ -55,7 +55,7 @@ blogs |>
 the_caption <- "Source: https://freerangestats.info"
 
 # Time series plot showing number of posts by month:
-p1 <- blogs |> 
+d1 <- blogs |> 
   group_by(year, month) |> 
   summarise(number_blogs = n()) |> 
   ungroup() |> 
@@ -65,15 +65,27 @@ p1 <- blogs |>
   # remove months blog did not exist:
   filter(!(year == 2015 & month %in% 1:6)) |> 
   group_by(year) |> 
-  mutate(year_lab = glue("{year}: {sum(number_blogs)} posts")) |> 
+  mutate(year_lab = glue("{year}: {sum(number_blogs)} posts"),
+         is_zero = ifelse(number_blogs == 0, "Zero", "NotZero")) 
+
+# model a smooth curve to the whole data set (don't want)
+# to do this with geom_smooth in the plot as then it has
+# break every year:
+mod <- loess(number_blogs ~ I(year + month / 12), data = d1, span = 0.15)
+d1$fitted <- predict(mod)
+
+# draw time series plot of number of blogs:
+p1 <- d1 |> 
   ggplot(aes(x = month, y = number_blogs)) +
   facet_wrap(~year_lab) +
-  geom_smooth(se = FALSE, colour = "grey80", method = "loess", span = 1.5) +
-  geom_point(colour = "steelblue", size = 2.5) +
+  geom_line(aes(y = fitted), colour = "grey80") +
+  geom_point(colour = "steelblue", size = 2.5, aes(shape = is_zero)) +
   expand_limits(y = 0) +
   scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  scale_shape_manual(values = c("Zero" = 1, "NotZero" = 19)) +
   theme(panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1)) +
+       axis.text.x = element_text(angle = 45, hjust = 1),
+       legend.position = "none") +
   labs(x = "",
        y = "Number of blog posts",
        title = "Ten years of Free Range Statistics blogging",
@@ -96,10 +108,10 @@ p2 <- blogs |>
   mutate(blogs_per_month = number_blogs / number_months) |> 
   ggplot(aes(x = blogs_per_month, y = avg_word_count, label = year)) +
   geom_path(colour = "grey80") +
-  geom_text(colour = "steelblue") +
+  geom_text(colour = "grey50") +
   scale_y_continuous(label = comma) +
   expand_limits(x = 4.5) +
-  annotate("text", fontface = "italic", hjust = 0, colour = "darkgreen",
+  annotate("text", fontface = "italic", hjust = 0, colour = "darkblue",
             x = c(4, 3.4, 2.1), 
             y = c(1165, 1350, 1880),
             label = c("Time series", "Elections", "Covid") 
@@ -113,7 +125,7 @@ p2 <- blogs |>
   labs(x = "Blog posts per month",
        y = "Average words per blog post",
        title = "Ten years of Free Range Statistics blogging",
-       subtitle = "Annotated with important (but not necessarily dominant) <span style = 'color:darkgreen'>themes</span> and <span style = 'color:brown'>day-jobs</span> for different phases.",
+       subtitle = "Annotated with important (but not necessarily dominant) <span style = 'color:darkblue'>themes</span> and <span style = 'color:brown'>day-jobs</span> for different phases.",
       caption = the_caption) +
   theme(plot.subtitle = element_markdown())
     
