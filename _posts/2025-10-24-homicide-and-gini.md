@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Homicide and income inequality
-date: 2025-09-24
+date: 2025-10-24
 tag: 
    - ModellingStrategy
    - Inequality
