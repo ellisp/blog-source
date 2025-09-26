@@ -8,7 +8,10 @@ library(countrycode)
 # https://unstats.un.org/sdgs/dataportal/database
 # select all indicators, all countries, all periods. Size of zip file is about 250MB
 # and it contains an Excel workbook (with one 'data' sheet) for each of the 17 SDGs.
-unzip("../data/20250925043752329_petere@spc.int.zip")
+
+if(!exists("Goal17.xlsx")){
+  unzip("../data/20250925043752329_petere@spc.int.zip")
+}
 
 fns <- paste0("Goal", 1:17, ".xlsx")
 
@@ -16,11 +19,15 @@ fns <- paste0("Goal", 1:17, ".xlsx")
 # but we don't need them if we just want to count number of distinct Indicator-TimePeriod observations that have a 
 # non-NA Value
 
-# this takes a long time:
-d <- fns |> 
-  lapply(read_excel, sheet = "data", range = cell_cols("A:I")) |> 
-  bind_rows()
-
+if(file.exists("raw_sdgs.rda")){
+  load(raw_sdgs)
+} else {
+  # this takes a long time:
+  raw_sdgs <- fns |> 
+    lapply(read_excel, sheet = "data", range = cell_cols("A:I")) |> 
+    bind_rows()
+  save(raw_sdgs, file = "raw_sdgs.rda")
+}
 
 picts <- c("Papua New Guinea", "Solomon Islands", "Vanuatu", "Fiji", "New Caledonia",
             "Tonga", "Samoa", "Cook Islands", "French Polynesia", "Tuvalu", "Niue", "Tokelau", "Pitcairn", "American Samoa", "Wallis and Futuna Islands",
