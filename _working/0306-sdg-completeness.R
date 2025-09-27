@@ -263,3 +263,31 @@ p3 <- pict_summary |>
   theme(axis.line = element_line(colour = "grey70"))
 
 svg_png(p3, "../img/0306-pop-v-sdg-data", w = 9, h = 6)
+
+
+#--------------------heat map of indicators by PICT-----------------
+library(ggforce)
+
+# split this into at least 2 plots
+
+p4 <- d_countries |> 
+  filter(is_pict_priority) |> 
+  count(Goal, iso3c, Indicator, is_pict) |> 
+  group_by(Goal) |> 
+  complete(iso3c, Indicator, fill = list(n = 0)) |> 
+  left_join(goals, by = "Goal") |> 
+  mutate(goal_text = factor(str_wrap(goal_text, 20), levels = str_wrap(goals$goal_text, 20))) |> 
+  mutate(prop_of_max = n / max(n)) |> 
+  filter(is_pict) |> 
+  ungroup() |> 
+  mutate(goal_text = fct_reorder(goal_text, prop_of_max, .fun = mean, .desc = TRUE),
+          iso3c = fct_reorder(iso3c, prop_of_max, .fun = mean, .desc = TRUE)) |> 
+  ggplot(aes(x = Indicator, y = iso3c, fill = prop_of_max)) +
+  facet_row(~goal_text, scales = "free_x", space="free") +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+          panel.border = element_rect(colour = "grey5", fill = "transparent"),
+        legend.position = "bottom")
+
+svg_png(p4, "../img/0304-heatmap-picts", w = 25, h = 8)
