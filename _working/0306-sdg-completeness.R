@@ -3,6 +3,17 @@ library(glue)
 library(janitor)
 library(readxl)
 library(countrycode)
+library(rsdmx)
+
+
+#----------Pacific population data for use later--------------------
+pict_pops <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.FJ+NC+PG+SB+VU+GU+KI+MH+FM+NR+MP+PW+AS+CK+PF+NU+PN+WS+TK+TO+TV+WF.MIDYEARPOPEST._T._T?dimensionAtObservation=AllDimensions") |> 
+  as_tibble() |> 
+  clean_names() |> 
+  filter(time_period == 2025) |> 
+  mutate(iso3c = countrycode(geo_pict, origin = "iso2c", destination = "iso3c")) |> 
+  select(population = obs_value, iso3c) 
+#-------------SDGs data------------
 
 # download from the Global Database screen of the SDGs database,
 # https://unstats.un.org/sdgs/dataportal/database
@@ -29,12 +40,26 @@ if(file.exists("raw_sdgs.rda")){
   save(raw_sdgs, file = "raw_sdgs.rda")
 }
 
+
+goals <- tibble(Goal = 1:17, goal_text = c("No poverty", "Zero hunger", "Good health and well-being", "Quality education",
+            "Gender equality", "Clean water and sanitation", "Affordable and clean energy",
+          "Decent work and economic growth", "Industry, innovation and infrastructure", "Reduced inequalities",
+          "Sustainable cities and communities", "Responsible consumption and production", "Climate action",
+          "Life below water", "Life on land", "Peace, justice and strong institutions", "Partnerships for the goals"))
+
+indicator_lookup <- distinct(raw_sdgs, Indicator, SeriesDescription)
+
 picts <- c("Papua New Guinea", "Solomon Islands", "Vanuatu", "Fiji", "New Caledonia",
             "Tonga", "Samoa", "Cook Islands", "French Polynesia", "Tuvalu", "Niue", "Tokelau", "Pitcairn", "American Samoa", "Wallis and Futuna Islands",
             "Marshall Islands", "Palau", "Guam", "Micronesia (Federated States of)", "Northern Mariana Islands", "Nauru", "Kiribati")
 
 stopifnot(length(picts) == 22)
 stopifnot(length(picts[!picts %in% unique(raw_sdgs$GeoAreaName)]) == 0)
+
+shared_sovereignty <- c("New Caledonia", "Cook Islands", "French Polynesia", "Niue", "Tokelau", 
+            "Pitcairn", "American Samoa", "Wallis and Futuna Islands",
+            "Guam", "Northern Mariana Islands")
+
 
 # Indicators that were chosen as priorities for the Pacific
 pict_priorities <- c("
@@ -79,7 +104,8 @@ d2 <- raw_sdgs |>
   drop_na()
 
 d_countries <- d2 |> 
-  # filter out some geo areas that tend to get given codes they shouldn't (because eg 'Australia' is part of the area name):
+  # filter out some geo areas that tend to get given codes they shouldn't 
+  # (because eg 'Australia' is part of the area name):
   filter(!grepl("Large Marine", GeoAreaName)) |> 
   filter(!grepl("FAO Major Fishing", GeoAreaName)) |> 
   # some other exclusions of multiple entries:
@@ -87,17 +113,19 @@ d_countries <- d2 |>
   filter(!grepl("Southern Asia", GeoAreaName)) |> 
   filter(!grepl("Northern Africa", GeoAreaName)) |> 
   filter(!grepl("Sudan [former]", GeoAreaName, fixed = TRUE)) |> 
-  filter(!grepl("United Kingdom (", GeoAreaName, fixed = TRUE)) |> 
+  # next one is individual entries for England, Wales, Scotland:
+  filter(!grepl("United Kingdom (", GeoAreaName, fixed = TRUE)) |>
   filter(!grepl("Iraq (", GeoAreaName, fixed = TRUE)) |> 
   filter(!grepl("Tanzania (Zanzibar", GeoAreaName, fixed = TRUE)) |> 
-# returns lots of warnings:
+  # returns lots of warnings, for things like "Africa", "Oceania", "Yugoslavia [former]", etc - 
+  # all ok as we only want countries:
   mutate(iso3c = countrycode(sourcevar = GeoAreaName, origin = "country.name", destination = "iso3c")) |> 
   mutate(is_pict = GeoAreaName %in% picts,
          is_pict_priority = Indicator %in% pict_priorities) |>
   filter(!is.na(iso3c)) 
 
 
-
+# Check if we have an ISO codes that have been assigned to more than one GeoAreaName:
 bad_iso <- distinct(d_countries, GeoAreaName, is_pict, iso3c) |> count(iso3c, sort = TRUE) |> 
   filter(n > 1) |> 
   pull(iso3c)
@@ -107,16 +135,22 @@ distinct(d_countries, GeoAreaName, iso3c) |>
 
 stopifnot(length( bad_iso) == 0)
 
+# Country summary, proprotion of indicators with data against them
 country_summary <- d_countries |> 
-  filter(is_pict_priority) |> 
+  filter(is_pict_priority) |>
+  # after this next operation, n will be the number of rows in the data with non-NA 
+  # values for each indicators (counting one for each year):
   count(iso3c, Indicator) |>
+  # Add in rows with n = 0 for indicator-country combinations that don't exist
   complete(iso3c, Indicator, fill = list(n = 0)) |> 
   group_by(iso3c) |> 
+  # for each country, count the indicators and how many have values:
   summarise(indicators = n(), 
            with_zero = sum(n == 0),
            at_least_one = sum(n >= 1),
            more_than_one = sum(n > 1)) |> 
   ungroup() |> 
+  # convert to proportions:
   mutate(prop_at_least_one = at_least_one / indicators,
          prop_at_least_two = more_than_one / indicators) |> 
   left_join(distinct(d_countries, GeoAreaName, is_pict, iso3c), by = "iso3c") |> 
@@ -125,8 +159,11 @@ country_summary <- d_countries |>
    mutate(GeoAreaName = fct_reorder(GeoAreaName, prop_at_least_one))
 
 
-pict_summary<- country_summary |> 
-  filter(is_pict) 
+pict_summary <- country_summary |> 
+  filter(is_pict) |> 
+  left_join(pict_pops, by = "iso3c") |> 
+  mutate(status = ifelse(GeoAreaName %in% shared_sovereignty, "Shared sovereignty", "UN member"),
+         status = fct_relevel(status, "UN member"))
 
 pal <- spcstyle::spc_cols(1:2)
 
@@ -135,7 +172,7 @@ p1 <- pict_summary |>
          `At least one` = prop_at_least_one,
         `At least two` = prop_at_least_two) |> 
   gather(variable, value, -GeoAreaName) |> 
-  mutate(variable = fct_relevel(variable, "At least two")) |> 
+  mutate(variable = fct_relevel(variable, "At least one")) |> 
   ggplot(aes(y = GeoAreaName)) +
   geom_segment(data = pict_summary, aes(x = prop_at_least_one, xend = prop_at_least_two), colour = "steelblue") +
   geom_point(aes(x = value, colour = variable, shape = variable), size = 4) +
@@ -181,18 +218,48 @@ p2 <- country_inds |>
   summarise(p1 = mean(prop_at_least_one)) |> 
   spread(is_pict, p1) |>
   rename('Pacific island' = `TRUE`,
-        Other = `FALSE`) |> 
+        Other = `FALSE`) |>
+  left_join(goals, by = "Goal") |> 
   ggplot(aes(x = `Pacific island`, y = Other, label = Goal)) +
   geom_abline(slope = 1, intercept = 0, colour = "steelblue") +
-  geom_label(size = 5, fontface = "bold", fill = "grey80", label.size = 0) +
-  annotate("text", x = c(0.83, 0.61), y = c(0.78, 0.78), label = c("Pacific has more data", "Pacific has less data"), 
-               hjust = 0, colour = "steelblue") +
   coord_equal() +
-  scale_x_continuous(label = percent) +
-  scale_y_continuous(label = percent) +
+  theme(axis.line = element_line(colour = "grey70")) +
   labs(x = "Pacific Island countries and territories (SPC members)",
-       y = "Other countries",
+       y = "Non-Pacific island countries",
        title = "Sustainable Development Goal data by Goal",
        subtitle = "Proportion of the 132 indicators selected by the Pacific SDG Taskforce that have at least one observation.")
 
-svg_png(p2, "../img/0306-goal-comparison", w = 9, h = 7)
+p2a <-  p2 +
+  geom_text(size = 4) +
+  scale_x_continuous(label = percent, limits = 0:1) +
+  scale_y_continuous(label = percent, limits = 0:1) +
+   annotate("text", x = c(0.63, 0.00), y = c(0.54, 0.54), label = c("Pacific has more data", "Pacific has less data"), 
+               hjust = 0, colour = "steelblue", size = 4, fontface = "italic")
+
+p2b <-  p2 +
+  geom_label(size = 5, fontface = "bold", fill = "grey95", label.size = 0) +
+  geom_text_repel(aes(label = goal_text), colour = "darkgreen", size = 3, alpha = 0.5) +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = percent) +
+   annotate("text", x = c(0.83, 0.61), y = c(0.78, 0.78), label = c("Pacific has more data", "Pacific has less data"), 
+               hjust = 0, colour = "steelblue", size = 4, fontface = "italic")
+
+
+svg_png(p2a, "../img/0306-goal-comparison", w = 9, h = 6)
+svg_png(p2b, "../img/0306-goal-comparison-zoom", w = 9, h = 6)
+
+
+p3 <- pict_summary |> 
+  ggplot(aes(x = population, y = prop_at_least_one)) +
+  geom_point(aes(colour = status), size = 2.5) +
+  geom_text_repel(aes(label = GeoAreaName), family = "Roboto", size = 3, colour = "grey50") +
+  scale_x_log10(label = comma) +
+  scale_y_continuous(label = percent) +
+  scale_colour_manual(values = spcstyle::spc_cols(c(2,3))) +
+  labs(x = "Population in 2025",
+       y = "Proportion of SDG indicators with at least one observation for each country",
+      colour = "",
+    title = "Larger countries generally have more SDG data") +
+  theme(axis.line = element_line(colour = "grey70"))
+
+svg_png(p3, "../img/0306-pop-v-sdg-data", w = 9, h = 6)
