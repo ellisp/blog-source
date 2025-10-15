@@ -1,11 +1,9 @@
 library(tidyverse)
 library(WDI)
-library(lme4)
+library(nlme)
 library(forecast) # for chosing box cox parameters
 library(AICcmodavg) # for predictSE with lmer
 library(ggrepel)
-library(mgcv)
-library(gratia)
 library(GGally)
 
 # Analysis to follow up this remark:
@@ -35,12 +33,14 @@ highlights <- c("United States", "Russian Federation",
 
 # There are a few country-years with zero homicides so can't use a simple
 # logarithm transformation, but can have a Box-Cox that has a similar result
+# Choose a lambda that gives a distribution after the transformation where
+# changes are relatively stable in absolute terms:
 lambda <- forecast::BoxCox.lambda(d$homicide)
 
-
+# version of the data we will use for plotting and modelling:
 d2 <- d |> 
   drop_na() |> 
-  group_by(country) |> 
+ group_by(country) |> 
   mutate(type = ifelse(year == max(year), "Latest", "Earlier")) |> 
   mutate(ctry_avg_gini = mean(gini)) |> 
   ungroup() |> 
@@ -57,7 +57,7 @@ d2 <- d |>
 # for example which says you want at least 6 observations per group to have
 # a random slope. Not sure how many you need, but 1 isn't enough :)
 
-d2 |> 
+p1 <- d2 |> 
   count(country, name = "n_obs") |> 
   count(n_obs, name = "n_countries") |> 
   ggplot(aes(x = n_obs, y = n_countries)) +
@@ -66,69 +66,57 @@ d2 |>
        y = "Number of countries",
       title = "Complete data for Gini coefficient and homicide rates")
 
-model0 <- lm(hom_tran ~ gini, data = d2)
-model1 <- lmer(hom_tran ~ gini + ctry_avg_gini + (1 | country), data = d2)
-# log link function
-model2 <- gam(homicide ~ gini + ctry_avg_gini + s(country, bs = "re"), 
-              family = quasipoisson, data = d2, method = "REML")
-model3 <- lm(hom_tran ~ gini, data = filter(d2, type == "Latest"))
+svg_png(p1, "../img/0303-number-obs", w = 9, h = 5)
 
-library(nlme)
-model4 <- nlme::lme(hom_tran ~ gini + ctry_avg_gini, random = ~1  | country, 
+
+model1 <- lm(hom_tran ~ gini, data = filter(d2, type == "Latest"))
+
+model2 <- lme(hom_tran ~ gini, random = ~1  | country, 
                     data = d2, correlation = corAR1())
 
-# Fairly high coefficients
-summary(model0)
-summary(model3)
+
+model3 <- lme(hom_tran ~ gini + ctry_avg_gini, random = ~1  | country, 
+                    data = d2, correlation = corAR1())
+
+# Fairly high (and similar) coefficients, about 0.11, but for differ
+summary(model1) # 0.12 for gini
+summary(model3) # 0.11 for ctry_avg_gini; gini not significant
 
 # Relatively low coefficients - the country randomness 
 # soaks up a lot of the randomness:
-summary(model1)
-summary(model2)
-summary(model4)
+summary(model2) # gini not significant
 
 # Is the average random country effect basically zero? - check:
-stopifnot(round(mean(ranef(model1)[[1]][,1]), 10) == 0)
+stopifnot(round(mean(ranef(model2)[[1]]), 10) == 0)
+stopifnot(round(mean(ranef(model3)[[1]]), 10) == 0)
 
 # Find the country with random effect closest to zero. Needed for predictions
 # to draw an average country ribbon on the chart
-avg_country <- ranef(model1)[[1]] |> 
+avg_country <- ranef(model3) |> 
   arrange(abs(`(Intercept)`)) |> 
   slice(1) |> 
   row.names()
 
-# compare the country level effects
-tibble(m1 = ranef(model1)[[1]]$`(Intercept)`,
-       m2 = as.numeric(smooth_coefs(model2, "s(country)")),
-      country = levels(d2$country)) |> 
-  arrange(abs(m2) + abs(m1))
+pred_grid <- tibble(gini = 20:65, 
+                    ctry_avg_gini = 20:65, 
+                    country = avg_country)
 
-pred_grid <- tibble(gini = 20:65, ctry_avg_gini = 20:65, country = avg_country)
+pse1 <- predict(model1, newdata = pred_grid, se = TRUE)
+pse2 <- predictSE(model2, newdata = pred_grid, se = TRUE)
+pse3 <- predictSE(model3, newdata = pred_grid, se = TRUE)
 
-pse0 <- predict(model0, newdata = pred_grid, se = TRUE)
-pse1 <- predictSE(model1, newdata = pred_grid)
-pse2 <- predict(model2, newdata = pred_grid, se = TRUE)
-pse3 <- predict(model3, newdata = pred_grid, se = TRUE)
-pse4 <- predictSE(model4, newdata = pred_grid)
 
 pred_grid <- pred_grid |> 
-  mutate(predicted0 = pse0$fit,
-         lower0 = predicted0 - 1.96 * pse0$se.fit,
-        upper0 = predicted0 + 1.96 * pse0$se.fit) |> 
   mutate(predicted1 = pse1$fit,
          lower1 = predicted1 - 1.96 * pse1$se.fit,
         upper1 = predicted1 + 1.96 * pse1$se.fit) |> 
-  mutate(predicted4 = pse4$fit,
-         lower4 = predicted4 - 1.96 * pse4$se.fit,
-        upper4 = predicted4 + 1.96 * pse4$se.fit) |> 
-  mutate(predicted3 = pse3$fit,
-         lower3 = predicted3 - 1.96 * pse3$se.fit,
-        upper3 = predicted3 + 1.96 * pse3$se.fit) |> 
   mutate(predicted2 = pse2$fit,
          lower2 = predicted2 - 1.96 * pse2$se.fit,
         upper2 = predicted2 + 1.96 * pse2$se.fit) |> 
-  mutate(across(predicted0:upper3, function(x){InvBoxCox(x, lambda = lambda)}),
-         across(predicted2:upper2, function(x){exp(x)}))
+  mutate(predicted3 = pse3$fit,
+         lower3 = predicted3 - 1.96 * pse3$se.fit,
+        upper3 = predicted3 + 1.96 * pse3$se.fit) |> 
+  mutate(across(predicted1:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
 
 #------------------Draw chart--------------------
 
@@ -137,35 +125,32 @@ mod_cols <- c("purple", "darkgreen", "brown", "pink")
 p1 <- d2 |> 
   ggplot(aes(x = gini, y = homicide)) +
 
-# single level with the full dataset, most naive
-#  geom_ribbon(data = pred_grid, aes(ymin = lower0, ymax = upper0, y = NA), 
-#               fill = mod_cols[1], alpha = 0.2) +
-# ribbon fit from lm with just the 'final' subset:
-  geom_ribbon(data = pred_grid, aes(ymin = lower3, ymax = upper3, y = NA), 
-               fill = mod_cols[1], alpha = 0.2) +
 
-# ribbon from lmer with the full dataset, multilevel but n:
-#  geom_ribbon(data = pred_grid, aes(ymin = lower1, ymax = upper1, y = NA), 
-#               fill = mod_cols[2], alpha = 0.2) +
-  
-# ribbon from fit with gam, is very similar to lmer, just a bit wider. Commented out.
-#  geom_ribbon(data = pred_grid, aes(ymin = lower2, ymax = upper2, y = NA), 
-#                fill = mod_cols[3], alpha = 0.2) +
-  
 # ribbon with with lme, with CorAR1() error structure
-  geom_ribbon(data = pred_grid, aes(ymin = lower4, ymax = upper4, y = NA), 
+#  geom_ribbon(data = pred_grid, aes(ymin = lower1, ymax = upper1, y = NA), 
+#                fill = mod_cols[1], alpha = 0.2) +
+  
+# model2 - just country-year level data, country random effect
+  geom_ribbon(data = pred_grid, aes(ymin = lower2, ymax = upper2, y = NA), 
                 fill = mod_cols[2], alpha = 0.2) +
+  
+#model3 - country-year but also country average data, country random effect
+  geom_ribbon(data = pred_grid, aes(ymin = lower3, ymax = upper3, y = NA), 
+                fill = mod_cols[3], alpha = 0.2) +
+  
   geom_point(aes(shape = type, colour = type)) +
   geom_label_repel(aes(label = label), max.overlaps = Inf, colour = "grey10", size = 2.8,
                    seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04)) +
-  annotate("text", x = 61.5, y = 2.6, colour = mod_cols[2], hjust = 0, vjust = 1,
-               label = str_wrap("Mixed-effects model takes into account random 'country level' 
-                                effects, and repeated observations for each country.", 26)) +
-  annotate("text", x = 61.5, y = 165, colour = mod_cols[1], hjust = 0, vjust = 1,
-               label = str_wrap("Single-level model fitted to latest value for each country.", 26)) +
-  annotate("segment", x = 64, xend = 64, y = 3, yend = 4.5, colour = mod_cols[2], 
+  
+  # annotations - text and arrows - for models 2 and 3
+  annotate("text", x = 61.5, y = 0.9, colour = mod_cols[2], hjust = 0, vjust = 1,
+               label = str_wrap("Model that has country level random effect but no average country inequality effect.", 26)) +
+  annotate("text", x = 61.5, y = 200, colour = mod_cols[3], hjust = 0, vjust = 1,
+               label = str_wrap("Model has both country level random effect and average country inequality effect.", 26)) +
+  
+  annotate("segment", x = 64, xend = 64, y = 1, yend = 2, colour = mod_cols[2], 
             arrow = arrow(length = unit(2, "mm"))) +
-  annotate("segment", x = 64, xend = 64, y = 65, yend = 40, colour = mod_cols[1], 
+  annotate("segment", x = 64, xend = 64, y = 75, yend = 45, colour = mod_cols[3], 
             arrow = arrow(length = unit(2, "mm"))) +
   scale_y_log10() +
   xlim(18, 70) +
