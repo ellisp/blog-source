@@ -40,7 +40,7 @@ lambda <- forecast::BoxCox.lambda(d$homicide)
 # version of the data we will use for plotting and modelling:
 d2 <- d |> 
   drop_na() |> 
- group_by(country) |> 
+  group_by(country) |> 
   mutate(type = ifelse(year == max(year), "Latest", "Earlier")) |> 
   mutate(ctry_avg_gini = mean(gini)) |> 
   ungroup() |> 
@@ -48,7 +48,8 @@ d2 <- d |>
                                  gini < 26 | homicide < 0.26 | country %in% highlights),
                         country, ""),
          hom_tran = BoxCox(homicide, lambda = lambda),
-         country = as.factor(country)) 
+         country = as.factor(country)) |> 
+  arrange(year)
 
 #------------Modelling and predictions (for drawing 95% confidence intervals on charts)----
 # you could have random slopes too but a fair number of countries have only one
@@ -68,13 +69,16 @@ p1 <- d2 |>
 
 svg_png(p1, "../img/0303-number-obs", w = 9, h = 5)
 
-
+# super simple model, not mentioned in the actual blog post
 model1 <- lm(hom_tran ~ gini, data = filter(d2, type == "Latest"))
 
+# multilevel model with a country random intercept, and inequality only at the lowest level
 model2 <- lme(hom_tran ~ gini, random = ~1  | country, 
                     data = d2, correlation = corAR1())
 
 
+# multilevel model with country random intercept and countries' average inequality, as well
+# as the lowest level (country-year) granularity inequality:
 model3 <- lme(hom_tran ~ gini + ctry_avg_gini, random = ~1  | country, 
                     data = d2, correlation = corAR1())
 
@@ -122,97 +126,156 @@ pred_grid <- pred_grid |>
 
 mod_cols <- c("purple", "darkgreen", "brown", "pink")
 
-p1 <- d2 |> 
+p2 <- d2 |> 
   ggplot(aes(x = gini, y = homicide)) +
-
-
-# ribbon with with lme, with CorAR1() error structure
-#  geom_ribbon(data = pred_grid, aes(ymin = lower1, ymax = upper1, y = NA), 
-#                fill = mod_cols[1], alpha = 0.2) +
+  scale_y_log10() +
+  xlim(18, 70) +
+  scale_shape_manual(values = c(1, 19)) +
+  scale_colour_manual(values = c("steelblue", "black")) +
+  labs(x = "Inequality (Gini coefficient), based on individual income or in some cases, consumption. Higher means more inequality.",
+       y = "Homicide rate (per 100,000)",
+      colour = "Observation year:",
+      shape = "Observation year:",
+      title = "Higher inequality countries have more homicides.",
+      caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.") 
   
-# model2 - just country-year level data, country random effect
+  
+p2a <- p2 +
+  # model2 - just country-year level data, country random effect
   geom_ribbon(data = pred_grid, aes(ymin = lower2, ymax = upper2, y = NA), 
                 fill = mod_cols[2], alpha = 0.2) +
   
-#model3 - country-year but also country average data, country random effect
+  #model3 - country-year but also country average data, country random effect
   geom_ribbon(data = pred_grid, aes(ymin = lower3, ymax = upper3, y = NA), 
                 fill = mod_cols[3], alpha = 0.2) +
   
   geom_point(aes(shape = type, colour = type)) +
   geom_label_repel(aes(label = label), max.overlaps = Inf, colour = "grey10", size = 2.8,
-                   seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04)) +
-  
+                   seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04))  +
   # annotations - text and arrows - for models 2 and 3
   annotate("text", x = 61.5, y = 0.9, colour = mod_cols[2], hjust = 0, vjust = 1,
-               label = str_wrap("Model that has country level random effect but no average country inequality effect.", 26)) +
+               label = str_wrap("Model with no such average country inequality effect.", 24)) +
   annotate("text", x = 61.5, y = 200, colour = mod_cols[3], hjust = 0, vjust = 1,
-               label = str_wrap("Model has both country level random effect and average country inequality effect.", 26)) +
+               label = str_wrap("Model including an effect for average inequality in each 
+                                country over time.", 26)) +
   
   annotate("segment", x = 64, xend = 64, y = 1, yend = 2, colour = mod_cols[2], 
             arrow = arrow(length = unit(2, "mm"))) +
   annotate("segment", x = 64, xend = 64, y = 75, yend = 45, colour = mod_cols[3], 
             arrow = arrow(length = unit(2, "mm"))) +
-  scale_y_log10() +
+  
+  labs(subtitle = "Selected countries highlighted. 
+Shaded ribbons show 95% confidence interval of mixed effects models with random country effect and autocorrelated error terms.",
+)
+
+svg_png(p2a, "../img/0303-scatter", w = 10, h = 6.5)
+
+
+p2b <- p2 +
+  
+  #model3 - country-year but also country average data, country random effect
+  geom_ribbon(data = pred_grid, aes(ymin = lower3, ymax = upper3, y = NA), 
+                fill = mod_cols[3], alpha = 0.2) +
+  
+  geom_point(aes(shape = type, colour = type)) +
+  geom_label_repel(aes(label = label), max.overlaps = Inf, colour = "grey10", size = 2.8,
+                   seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04)) 
+
+svg_png(p2b, "../img/0303-scatter-final", w = 10, h = 6.5)
+
+
+#---------------residuals from model2 and model3---------------
+
+# Individual level residuals - plot not used in blog
+p3 <- d2 |> 
+  mutate(`Residuals from Model 2` = residuals(model2),
+          `Residuals from Model 3` = residuals(model3)) |> 
+  select(gini, `Residuals from Model 2`, `Residuals from Model 3`) |> 
+  gather(variable, value, -gini) |> 
+  ggplot(aes(x = gini, y = value)) +
+  facet_wrap(~variable) +
+  geom_point() +
+  labs(x = "Inequality",
+       y = "Residuals (on Box-Cox transformed scale)",
+       title = "Residuals from two mixed-effects models of homicide",
+       subtitle = "Residuals at the most granular level ie year-country are uncorrelated with inequality")
+
+svg_png(p3, "../img/0303-residuals", w = 8, h = 4)
+
+# out of curiousity what are those low outlier residuals? - Iceland and Malta
+round(sort(residuals(model2)),2)[1:5]
+round(sort(residuals(model3)),2)[1:5]
+
+
+# Country level effects plot - pairs plot used in blog
+p4 <- function(){
+  p <- d2 |> 
+  distinct(country, ctry_avg_gini) |> 
+  arrange(country) |> 
+  mutate(`Country effects in Model 2` = ranef(model2)[[1]],
+         `Country effects in Model 3` = ranef(model3)[[1]]) |> 
+  select(-country) |> 
+  rename(`Countries' average inequality` = ctry_avg_gini) |> 
+  ggpairs() +
+  labs(title = "Comparison of country-level random effects in two models",
+      subtitle = "Model 3 has a fixed effect for countries' average inequality; Model 2 doesn't.
+The country-level residuals are correlated with this variable in Model 2, but not Model 3.")
+ 
+    print(p)
+}
+
+svg_png(p4, "../img/0303-country-level-ranef", w = 10, h = 7.5)
+
+
+#---------------further illustrations - facets----------------------
+d3 <- d2 |> 
+  filter(country %in% c(highlights, "South Africa", "France", "Japan", "Ukraine")) |> 
+  group_by(country) |> 
+  summarise(r = coef(lm(log10(homicide) ~ gini))[2]) |> 
+  mutate(r = replace_na(r, 0)) |> 
+  mutate(country = fct_reorder(country, r) |>  fct_drop()) |> 
+  arrange(country)
+
+
+pred_grid2 <- d2 |> 
+  filter(country %in% d3$country) |> 
+  distinct(country, ctry_avg_gini) |> 
+  expand_grid(gini = 20:70)
+
+more_preds <- predictSE(model3, newdata = pred_grid2, se = TRUE)
+
+
+pred_grid2 <- pred_grid2 |> 
+  mutate(predicted3 = more_preds$fit,
+         lower3 = predicted3 - 1.96 * more_preds$se.fit,
+        upper3 = predicted3 + 1.96 * more_preds$se.fit) |> 
+  mutate(across(predicted3:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
+
+
+
+p5 <- d2 |> 
+  mutate(country = factor(country, levels = levels(d3$country))) |> 
+  drop_na() |> 
+  ggplot(aes(x = gini, y = homicide)) +
+  scale_y_log10(label = comma, limits = c(0.1, 100)) +
   xlim(18, 70) +
   scale_shape_manual(values = c(1, 19)) +
   scale_colour_manual(values = c("steelblue", "black")) +
-  labs(x = "Individual income (or in some cases, consumption) inequality (Gini coefficient)",
+  geom_ribbon(data = pred_grid2, aes(ymin = lower3, ymax = upper3, y = NA), 
+                fill = mod_cols[3], alpha = 0.2) +
+  geom_smooth(method = lm, se = FALSE, colour = "grey50", fullrange = TRUE, linewidth = 0.5) +
+  geom_point(aes(shape = type, colour = type)) +
+  facet_wrap(~country, ncol = 3)  +
+  labs(x = "Inequality (Gini coefficient), based on individual income or in some cases, consumption. Higher means more inequality.",
        y = "Homicide rate (per 100,000)",
       colour = "Observation year:",
       shape = "Observation year:",
-      title = "Higher inequality countries have more homicides. But modelling choices impact on 'how much'.",
-      subtitle = "Selected countries highlighted. Green modelled line is 95% confidence interval of a mixed effects model with random country effect.",
-      caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.")
-
-svg_png(p1, "../img/0303-scatter", w = 10, h = 6.5)
-
-
-#------------------why is this so---------------------------
-rf <- tibble(country_effect = ranef(model4)[[1]],
-              country = levels(d2$country))
-
-set.seed(124)
-random_countries <- sample(unique(d2$country), 16, replace = FALSE)
-
-pred_grid_b <- expand_grid(gini = 20:65, country = random_countries)
-
-pse4b <- predictSE(model4, newdata = pred_grid_b)
-
-pred_grid_b <- pred_grid_b |> 
-  mutate(predicted4 = pse4b$fit) |> 
-  left_join(rf, by = "country") |> 
-  mutate(predicted4 = predicted4 + country_effect,
-         lower4 = predicted4 - 1.96 * pse4b$se.fit,
-        upper4 = predicted4 + 1.96 * pse4b$se.fit) |> 
-  mutate(across(predicted4:upper4, function(x){InvBoxCox(x, lambda = lambda)}))
-
-
-
-d2 |> 
-  filter(country %in% random_countries) |> 
-  ggplot(aes(x = gini, y = homicide)) +
-  facet_wrap(~country) +
-  geom_point() +
-  scale_y_log10() +
-  geom_smooth(method = "lm") +
-  geom_ribbon(data = pred_grid_b, aes(ymin = lower4, ymax = upper4, y = NA), 
-                fill = mod_cols[2], alpha = 0.2)
-
-
+      title = "Higher inequality countries have more homicides.",
+      subtitle = "But for any given country, the relationship over time may well be the reverse.
+Pale ribbon shows overall model's confidence interval for homicide for this country, at its average over time level of inequality.
+Dark line shows simple model fit to just this country's data.",
+      caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.") 
   
-d2 |> 
-  left_join(rf, by  = "country") |> 
-  ggplot(aes(x = gini, y = country_effect)) +
-  geom_smooth(method = "lm") +
-  geom_point()
 
-d2 |> 
-  group_by(country) |> 
-  summarise(avg_gini = mean(gini)) |> 
-  left_join(rf, by  = "country") |> 
-  ggplot(aes(x = avg_gini, y = country_effect)) +
-  geom_smooth(method = "lm") +
-  geom_point()
+svg_png(p5, "../img/0303-faceted", w = 10, h = 7.5)
 
-# thius makes me think, do i need to have a average gini at the country level
-# I think this is relevant: https://mingze-gao.com/posts/correlated-random-effects/
