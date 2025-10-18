@@ -95,7 +95,8 @@ stopifnot(round(mean(ranef(model2)[[1]]), 10) == 0)
 stopifnot(round(mean(ranef(model3)[[1]]), 10) == 0)
 
 # Find the country with random effect closest to zero. Needed for predictions
-# to draw an average country ribbon on the chart
+# to draw an average country ribbon on the chart, even though the country effect
+# is actually not taken into account in predictSE
 avg_country <- ranef(model3) |> 
   arrange(abs(`(Intercept)`)) |> 
   slice(1) |> 
@@ -153,13 +154,13 @@ p2a <- p2 +
   geom_label_repel(aes(label = label), max.overlaps = Inf, colour = "grey10", size = 2.8,
                    seed = 123, label.size = unit(0, "mm"), fill = rgb(0,0,0, 0.04))  +
   # annotations - text and arrows - for models 2 and 3
-  annotate("text", x = 61.5, y = 0.9, colour = mod_cols[2], hjust = 0, vjust = 1,
+  annotate("text", x = 61.5, y = 3, colour = mod_cols[2], hjust = 0, vjust = 1,
                label = str_wrap("Model with no such average country inequality effect.", 24)) +
   annotate("text", x = 61.5, y = 200, colour = mod_cols[3], hjust = 0, vjust = 1,
                label = str_wrap("Model including an effect for average inequality in each 
                                 country over time.", 26)) +
   
-  annotate("segment", x = 64, xend = 64, y = 1, yend = 2, colour = mod_cols[2], 
+  annotate("segment", x = 64, xend = 64, y = 3.5, yend = 6, colour = mod_cols[2], 
             arrow = arrow(length = unit(2, "mm"))) +
   annotate("segment", x = 64, xend = 64, y = 75, yend = 45, colour = mod_cols[3], 
             arrow = arrow(length = unit(2, "mm"))) +
@@ -242,14 +243,19 @@ pred_grid2 <- d2 |>
   distinct(country, ctry_avg_gini) |> 
   expand_grid(gini = 20:70)
 
-more_preds <- predictSE(model3, newdata = pred_grid2, se = TRUE)
+# Note that predictSE excludes random country effect....
+more_preds2 <- predictSE(model2, newdata = pred_grid2, se = TRUE)
+more_preds3 <- predictSE(model3, newdata = pred_grid2, se = TRUE)
 
 
 pred_grid2 <- pred_grid2 |> 
-  mutate(predicted3 = more_preds$fit,
-         lower3 = predicted3 - 1.96 * more_preds$se.fit,
-        upper3 = predicted3 + 1.96 * more_preds$se.fit) |> 
-  mutate(across(predicted3:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
+  mutate(predicted2 = more_preds2$fit,
+         lower2 = predicted2 - 1.96 * more_preds2$se.fit,
+         upper2 = predicted2 + 1.96 * more_preds2$se.fit,
+         predicted3 = more_preds3$fit,
+         lower3 = predicted3 - 1.96 * more_preds3$se.fit,
+        upper3 = predicted3 + 1.96 * more_preds3$se.fit) |> 
+  mutate(across(predicted2:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
 
 
 
@@ -272,7 +278,7 @@ p5 <- d2 |>
       shape = "Observation year:",
       title = "Higher inequality countries have more homicides.",
       subtitle = "But for any given country, the relationship over time may well be the reverse.
-Pale ribbon shows overall model's confidence interval for homicide for this country, at its average over time level of inequality.
+Pale ribbons show a model's confidence interval for homicide for a country's average over time level of inequality.
 Dark line shows simple model fit to just this country's data.",
       caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.") 
   

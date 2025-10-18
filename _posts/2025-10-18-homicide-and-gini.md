@@ -1,14 +1,14 @@
 ---
 layout: post
-title: Tripping over group level effects
-date: 2025-11-11
+title: Inequality and homicide, within-country and between country 
+date: 2025-10-18
 tag: 
    - ModellingStrategy
    - Inequality
    - Crime
    - Transformations
    - DataFromTheWeb
-description: Countries with higher income or consumption inequality tend to have more homicides per population. A multilevel model with a random country effect shows a much weaker relationship than a simple model that treats each repeated country observation as equally valuable, or a multilevel model that includes an average country-level inequality fixed effect.
+description: Countries with higher income or consumption inequality tend to have more homicides per population. But looking at the relationship within each country's data, there does not seem to be a consistent relationship between inequality and homicide rates (that is, when there is a relationship in some countries, on average there is no evidence of such a relationship). This is an interesting multilevel or mixed-effects modelling problem that could easily trip one up.
 image: /img/0303-scatter.png
 socialimage: https:/freerangestats.info/img/0303-scatter.png
 category: R
@@ -18,16 +18,18 @@ So this is a blog post about making and finding an error in modelling strategy, 
 
 I saw [this post (toot?) on Mastodon](https://mastodon.sdf.org/@dlakelan/115055789165555934) from Daniel Lakens mentioning in passing that "On the other hand, the homicide rate across the world is well modeled as exp(k * income_gini_coefficient)." This struck me as worth checking; So I did! It turns out it is more or less correct.
 
-Here is a chart I drew of homicides per 100,000 population on the vertical axis versus income or consumption inequality on the horizontal. 
+Here is a chart I drew of homicides per 100,000 population on the vertical axis versus income or consumption inequality on the horizontal. Consumption is the preferred way to measure poverty and inequality in poorer countries in particular, so in this data, which comes from the World Bank, it is used when available.
 
 <object type="image/svg+xml" data='/img/0303-scatter.svg' width='100%'><img src='/img/0303-scatter.png' width='100%'></object>
 
-It's not a big point, but the model implied by Professor Lakens would be a straight diagonal line, what you'd get if you just used `geom_smooth(method = lm, formula = y ~ x - 1)`. I haven't shown his, but two slightly more complex models. Here's the code that downloads the data, fits those models and draws the chart. A few things to note:
+It's not a big point, but the model implied by Professor Lakens would be a straight diagonal line, what you'd get if you just used `geom_smooth(method = lm, formula = y ~ x - 1)`. I haven't shown his, but two slightly more complex models. 
+
+Here's the code that downloads the data, fits those models and draws the chart. A few things to note:
 
 * There's a bit of fancy footwork to define which countries I label on the chart, and in the end also a few I chose manually and ad hoc because I was interested in them.
-* While the y axis in this plot uses a logarithm transform, for the model itself I transformed the response variable not with a logarithm but with a BoxCox transformation that still works when countries have zero homicides in a particular year. I toyed with alternatives like using a generalized linear model with a log link (which still works when data is observed to be zero, because it will be predicted/expected to be slightly more) but decided to avoid this so I could use `lme` which lets me specify autocorrelated error terms
-* Because the model and plot are both a bit complex I set out my own prediction grid and calculate expected values and crude (ie assuming asymptotic normality) confidence intervals rather than using `marginaleffects` package to get me something out of the box
-* The ribbons drawn are showing the expected homicide rate for the country with random country effect closest to zero, which happens to be Czechia with the data at the time of writing (17 October 2025)
+* While the y axis in this plot uses a logarithm transform, for the model itself I transformed the response variable not with a logarithm but with a BoxCox transformation that still works when countries have zero homicides in a particular year. I toyed with alternatives like using a generalized linear model with a log link (which still works when data is observed to be zero, because it will be predicted/expected to be slightly more) but decided to avoid this so I could use `lme` which lets me specify autocorrelated error terms.
+* Because the model and plot are both a bit complex I set out my own prediction grid and calculate expected values and crude (ie assuming asymptotic normality) confidence intervals rather than using `marginaleffects` package to get me something out of the box.
+* The ribbons drawn are showing the expected homicide rate for the country with random country effect closest to zero, which happens to be Czechia with the data at the time of writing (17 October 2025).
 * The ribbons are also based on the assumption that the hypothetical country they refer to has an average inequality (over all years for which there are observations) as shown on the horizontal axis. This point is pretty crucial.
 
 {% highlight R lineanchors %}
@@ -129,7 +131,8 @@ stopifnot(round(mean(ranef(model2)[[1]]), 10) == 0)
 stopifnot(round(mean(ranef(model3)[[1]]), 10) == 0)
 
 # Find the country with random effect closest to zero. Needed for predictions
-# to draw an average country ribbon on the chart
+# to draw an average country ribbon on the chart, even though the country effect
+# is actually not taken into account in predictSE
 avg_country <- ranef(model3) |> 
   arrange(abs(`(Intercept)`)) |> 
   slice(1) |> 
@@ -207,7 +210,7 @@ print(p2a)
 
 
 
-In fact at first I just had that green line&mdash;`model2` in the code&mdash;which is pretty flat. I was naturally struck at how it doesn't seem to go through the data points. At first I thought this was because I was so clever, and had incorporated a country level random effect, and allowed autocorrelation over time for the multiple observations of each country.
+In fact at first I just had that green line&mdash;`model2` in the code&mdash;which is pretty flat. I was naturally struck at how it doesn't seem to go through the data points. At first I thought this was because I was so clever, and had incorporated a country level random effect, and allowed autocorrelation over time for the multiple observations of each country. That is, I thought I'd revealed some fundamental truth of a non-relationship where more naive modelling appeared to show a relationship.
 
 To extract that model&mdash;the one with the green line that's conspicuously under the data&mdash;from the mess of code above, it's `model2` and it looks like this:
 
@@ -222,7 +225,7 @@ This seemed like the really obvious thing to fit for me. Why not just some ordin
 
 I would say that the thing that is most often done in this situation is to filter the data down to just one observation per country&mdash;perhaps by taking the latest observation for each country, or the one that is closest to some year that is chosen precisely because most countries have an observation in that year or close to it. 
 
-That seemed like a sad waste of data to me (although in my code above you can see that I did fit such a model, `model1`, and if you want to look at it, it avoids the problem I'm about to talk about!). So my thinking was to use all the data in a mixed effects model, with a random intercept at the country level to allow for the fact that each new observation on a country, while definitely worth *something*, isn't worth as much as an independent observation because it's going to be similar to the other observations for that country. To do this even better, as well as the country level random intercept I throw in an autocorrelation of the residuals, showing that the values in one year are expected to be correlated with those in the previous year (as indeed they turn out to be)
+That seemed like a sad waste of data to me (although in my code above you can see that I did fit such a model, `model1`, and if you want to look at it, it avoids the problem I'm about to talk about!). So my thinking was to use all the data in a mixed effects model, with a random intercept at the country level to allow for the fact that each new observation on a country, while definitely worth *something*, isn't worth as much as an independent observation because it's going to be similar to the other observations for that country. To do this even better, as well as the country level random intercept I throw in an autocorrelation of the residuals, showing that the values in one year are expected to be correlated with those in the previous year (as indeed they turn out to be).
 
 That's all well and good but in this case it backfired on me. When I first drew this plot, with only the green line of `model2` showing, I thought "Oh that's cool, when we correct for the fact that many of these observations are low-value repeats of the same country's previous observations, it turns out there's very little relationship between inequality and homicide after all". But more thinking, and looking at some residuals, and comparing it to the more positive results from the much simpler `model1`, quickly made me realise I was barking badly up the wrong tree.
 
@@ -230,12 +233,12 @@ The problem is best illustrated by this chart that I drew at some point along th
 
 <object type="image/svg+xml" data='/img/0303-faceted.svg' width='100%'><img src='/img/0303-faceted.png' width='100%'></object>
 
-If we had a random slope as well, the result would look like the dark grey lines in these plots&mdash;a different relationship for each country. But I hadn't done this, because I judged there just weren't enough observations per country for a random slope (many countries in fact have a single observation&mdash;economic inequality is difficult and costly to measure, needing a special household consumption survey if possible). So my models look more like the pale red ribbon shown here:
+If we had a random slope as well, the result would look closer to the dark grey lines in these plots&mdash;a different relationship for each country. But I hadn't done this, because I judged there just weren't enough observations per country for a random slope (many countries in fact have a single observation&mdash;economic inequality is difficult and costly to measure, needing a special household consumption survey if possible). So my models look more like the pale red ribbon shown here:
 
 What's happening is that we have two things going on:
 
-* inequality *between* countries does quite a good job of explaining differences in homicide rates
-* *within* each country that has observations over multiple years, there is much less relationship between the two; and where there is a relationship, it differs country by country. For example, judging by the the black dot representing the most recent point, Australia and the United States look to have gotten more unequal over time but less homicides; Mexico has gotten less unequal and more homicides; whereas Russia, Ukraine and the UK have had decreases in both inequality and homicides. In other words, for Russia, Ukraine and the UK, the within-country data matches the between-country positive rleationship between inequality and homicide, but Australia, USA and Mexico have a negative relationship between the two variables.
+* Inequality *between* countries does quite a good job of explaining differences in homicide rates.
+* *Within* each country that has observations over multiple years, there is much less relationship between the two variables; and where there is a relationship, it differs country by country. For example, judging by the the black dot representing the most recent point, Australia and the United States look to have gotten more unequal over time but less homicides; Mexico has gotten less unequal and more homicides; whereas Russia, Ukraine and the UK have had decreases in both inequality and homicides. In other words, for Russia, Ukraine and the UK, the within-country data matches the between-country positive rleationship between inequality and homicide, but Australia, USA and Mexico have a negative relationship between the two variables.
 
 Another way of looking at this is to say that the random country intercept absorbs the variance in homicide that could be instead explained by that country's enduring average inequality. But we don't have "enduring, average inequality" as a variable in model2. If we calculate a proxy for that the obvious way (average of the inequality values we have for that country, disregarding the fact that they come from different years for each country), we can look at the relationship between this "enduring inequality" and the country intercepts in `model2`, and we see a strong positive relationship. That's the middle left panel (a scatter plot) in the chart below, as well as the middle top correlation (0.608, well different from zero).
 
@@ -255,8 +258,38 @@ In the scatterplot matrix above we can see that once we include each country's a
 Here's the summary results for `model3`:
 
 ```
+> summary(model3)
+Linear mixed-effects model fit by REML
+  Data: d2 
+       AIC      BIC   logLik
+  2542.301 2574.914 -1265.15
 
+Random effects:
+ Formula: ~1 | country
+        (Intercept)  Residual
+StdDev:   0.8371227 0.7065144
 
+Correlation Structure: AR(1)
+ Formula: ~1 | country 
+ Parameter estimate(s):
+      Phi 
+0.7574314 
+Fixed effects:  hom_tran ~ gini + ctry_avg_gini 
+                  Value Std.Error   DF   t-value p-value
+(Intercept)   -3.193199 0.3950271 1554 -8.083494  0.0000
+gini           0.007850 0.0056463 1554  1.390213  0.1647
+ctry_avg_gini  0.113641 0.0117143  141  9.701081  0.0000
+ Correlation: 
+              (Intr) gini  
+gini           0.001       
+ctry_avg_gini -0.858 -0.482
+
+Standardized Within-Group Residuals:
+         Min           Q1          Med           Q3          Max 
+-11.47176745  -0.44184320  -0.04595294   0.42362704   3.06647091 
+
+Number of Observations: 1698
+Number of Groups: 143 
 
 ```
 
@@ -341,14 +374,19 @@ pred_grid2 <- d2 |>
   distinct(country, ctry_avg_gini) |> 
   expand_grid(gini = 20:70)
 
-more_preds <- predictSE(model3, newdata = pred_grid2, se = TRUE)
+# Note that predictSE excludes random country effect....
+more_preds2 <- predictSE(model2, newdata = pred_grid2, se = TRUE)
+more_preds3 <- predictSE(model3, newdata = pred_grid2, se = TRUE)
 
 
 pred_grid2 <- pred_grid2 |> 
-  mutate(predicted3 = more_preds$fit,
-         lower3 = predicted3 - 1.96 * more_preds$se.fit,
-        upper3 = predicted3 + 1.96 * more_preds$se.fit) |> 
-  mutate(across(predicted3:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
+  mutate(predicted2 = more_preds2$fit,
+         lower2 = predicted2 - 1.96 * more_preds2$se.fit,
+         upper2 = predicted2 + 1.96 * more_preds2$se.fit,
+         predicted3 = more_preds3$fit,
+         lower3 = predicted3 - 1.96 * more_preds3$se.fit,
+        upper3 = predicted3 + 1.96 * more_preds3$se.fit) |> 
+  mutate(across(predicted2:upper3, function(x){InvBoxCox(x, lambda = lambda)}))
 
 
 
@@ -371,12 +409,11 @@ p5 <- d2 |>
       shape = "Observation year:",
       title = "Higher inequality countries have more homicides.",
       subtitle = "But for any given country, the relationship over time may well be the reverse.
-Pale ribbon shows overall model's confidence interval for homicide for this country, at its average over time level of inequality.
+Pale ribbons show a model's confidence interval for homicide for a country's average over time level of inequality.
 Dark line shows simple model fit to just this country's data.",
       caption = "Source: World Bank, World Development Indicators, series VC.IHR.PSRC.P5 and SI.POV.GINI. Analysis by freerangestats.info.") 
   
-
 print(p5)
 {% endhighlight %}
 
-The full set of code, in sequence, can be [found on GitHub]() if the above presentaiton is confusing.
+The full set of code, in sequence, can be [found on GitHub](https://github.com/ellisp/blog-source/blob/master/_working/0303-homicide-inequality.R) if the above presentaiton is confusing.
