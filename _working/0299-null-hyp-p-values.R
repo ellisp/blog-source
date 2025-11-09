@@ -11,27 +11,31 @@ library(tidyverse)
 library(corpora)
 library(GGally)
 library(glue)
+library(scales)
+library(frs)
 
 #' Version of fisher.pval that won't break if k1 and k2 both 0
 tough_fisher <- function(k1, n1, k2, n2, set_both_zero = 1, ...){
   problems <- k1 + k2 == 0
   k1[problems] <- 1
-  temp <- fisher.pval(k1, n1, k2, n2)
+  temp <- corpora::fisher.pval(k1, n1, k2, n2)
   temp[problems] <- set_both_zero
   return(temp)
 }
-# note need a decision on what to do when k1 and k2 are both zero. I think
+# note needed a decision on what to do when k1 and k2 are both zero. I think
 # p value is 1 here, as p is the "probability of seeing data at least as extreme
 # as this if the null hypothesis of no difference is true". Not sure why Fisher's
-# exact test returns an error, worth looking into that. My 'hand' method below
+# exact test returns an error, worth looking into that. 
+#
+# My 'hand' method below
 # gives NaN because the estimated variance is 0 andyou have 0/0, probably similar
 # problem to that.
 
 
 
-# Takes about 30 seconds with 100,000 reps, but a long time with 10 million reps
+# Takes about 30 seconds with 100,000 reps
 st <- system.time({
-  for(reps in c(1e3, 1e5, 1e7)){
+  for(reps in c(1e3, 1e5)){
     set.seed(42)
     
     d <- expand_grid(
