@@ -128,4 +128,8 @@ d |>
   spread(prob_lab, number_p_values)
 
 
+d |> 
+  group_by(prob_lab, size_lab) |> 
+  summarise(false_positive_rate = mean(pval_fisher <= 0.05)) |> 
+  spread(prob_lab, false_positive_rate)
 

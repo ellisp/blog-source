@@ -1,3 +1,28 @@
+---
+layout: post
+title: Visual summaries of population in Pacific islands 
+date: 2025-11-28
+tag: 
+   - Demography
+   - WorkRelated
+   - DataVisualisation
+description: Accessing population data for the Pacific and drawing two visual summaries of its recent and projected growth and absolute size, as used recently in a side event before the Pacific Heads of Planning and Statistics meeting in Wellington.
+image: /img/0305-population-scatter-highlighted.svg
+socialimage: https:/freerangestats.info/img/0305-population-scatter-highlighted.png
+category: R
+---
+
+This will be the first of several posts where I post some code and visualisations of population issues in the Pacific. The analysis and visualisations are pretty simple. But the net effect is interesting because between them, they'll show how to make (with publicly available data) all the statistical images used in a presentation I recently gave in Wellington on the topic of XXX. 
+
+This was for a side event before the Pacific "Heads of Planning and Statistics" meeting, which takes place every two years and is the biggest event my team at the Pacific Community (SPC) organises. It was fun at this side event to have the chance for once to talk about the substantive issues the data shows, rather than (as is the usual focus of these sorts of meetings) how to improve the data, improve its use, and general strategise and prioritise to improve statistics. These things are important and fun too, but it's nice to actually put them aside and talk about some actual development issues now and then. My talk was followed by a great panel discussion with speakers from academia, a UN organisation, Stats NZ and a Pacific island national planner.
+
+Today's post is the most basic of them all and is just about producing two statistical charts (one of them with a "bare" and a "highlighted" version), setting the scene for population in the Pacific.
+
+### Downloading data
+
+First, I download and tidy up the data. Everything I need for these charts is already in the Pacific Data Hub, making this pretty straightforward. The thing that takes a bit of fiddling is converting the country codes to user-friendly country names; and classifying each country into one of Melanesia, Polynesia or Micronesia.
+
+{% highlight R lineanchors %}
 # This script produces a couple of general use plots on population growth in the Pacific
 # for use in presentations on data issues
 
@@ -15,7 +40,6 @@ library(ggrepel)
 # general use caption and font:
 the_caption <- "Source: UN World Population Prospects, via the Pacific Data Hub"
 the_font <- "Roboto" 
-
 
 # Download all the mid year population estimates from PDH.stat
 d <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.AS+CK+FJ+PF+GU+KI+MH+FM+NR+NC+NU+MP+PW+PG+PN+WS+SB+TK+TO+TV+VU+WF+_T+MEL+MIC+POL+_TXPNG+MELXPNG.MIDYEARPOPEST._T._T?startPeriod=1950&endPeriod=2050&dimensionAtObservation=AllDimensions") |> 
@@ -51,13 +75,24 @@ d2 <- d |>
   mutate(pict = gsub("Federated States of", "Fed. States", pict)) |> 
   # Order country names from smallest to largest population in 2050:
   mutate(pict = fct_reorder(pict, obs_value, .fun = last)) 
+{% endhighlight %}
 
+### Line plot
 
+This puts us in a position to just draw our first plot:
+
+<object type="image/svg+xml" data='/img/0305-population-line.svg' width='100%'><img src='/img/0305-population-line.png' width='100%'></object>
+
+It's very intuitive, and I think a necessary introduction to all the countries and territories we're talking about. When we first made a version of this plot I thought it would never be neat enough to use in a presentation, but in fact it works ok on a big conference screen, so long as we exclude (as I have) the various regional and sub-regional totals.
+
+All the hard work to produce this plot had been done earlier in the data management, so producing the plot is just a single chunk of code:
+
+{% highlight R lineanchors %}
 #----------------------time series line plot-------------
 
 # This version just has 21 individual PICTs, no subregional totals. 21 fits
 # ok on the screen in 3 rows of 7:
-p1a <- d2 |> 
+d2 |> 
   # remove subregional and regional totals, so only actual countries
   filter(!(pict %in% c("Micronesia", "Polynesia", "Melanesia") | 
              grepl("total", pict, ignore.case = TRUE) | 
@@ -77,10 +112,21 @@ p1a <- d2 |>
        title = "Population in the Pacific, 1950 to 2050",
        subtitle = "Countries listed in sequence of projected population in 2050",
        caption = the_caption) 
+{% endhighlight %}
 
-svg_png(p1a, "../img/0305-population-line", w = 10, h = 5)
+### Scatter plots
 
+The line plot's a nice introduction to population, but unless people look carefully at the vertical axis labels it gives no sense of the absolute size of the different countries, and only a very rought visual sense of the differing growth rates. In looking for a single image that would summarise two things I cam up with this chart:
 
+<object type="image/svg+xml" data='/img/0305-population-scatter.svg' width='100%'><img src='/img/0305-population-scatter.png' width='100%'></object>
+
+This is something we'd prepared earlier well before this talk and not yet needed to use, but it was for exactly this sort of use case&mdash;a single slide summary of Pacific island countries and territories' absolute size and growth rates. 
+
+It takes a little bit of explanation and concentration from an audience&mdash;in particular, explaining why the negative growth area is shaded and what that means. But it's straightforward enough for people to grasp even in a conference setting.
+
+Again, it was pretty simple to create the plot with the data we've already got. Here's the R code to do that:
+
+{% highlight R lineanchors %}
 #----------------scatter plot comparing growth to totals---------------
 # Summary data as one row per country for use in scatter plot
 d3 <- d2 |> 
@@ -93,7 +139,6 @@ d3 <- d2 |>
          font_type = ifelse(point_type == "total_like", 4, 1),
          # couldnt' get Melanesia in the right spot with ggrepel so have to make a specific adjustment for it:
          adjusted_x = ifelse(pict == "Melanesia", pop2025 * 1.35, pop2025))
-
 
 # For a presentation used at HOPS7, I want
 # 1) scatter plot but without the region and subregions, to avoid clutter
@@ -128,7 +173,7 @@ p2b <- d4 |>
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.minor = element_blank(),
         plot.caption = element_text(colour = "grey50")) +
-  # labels for the axes, plot tile, legend:
+  # labels for the axes, plot title, legend:
   labs(x = "Population in 2025 (logarithmic scale)",
        y = "Compound annual population growth rate 2020 to 2025",
        colour = "",
@@ -136,11 +181,16 @@ p2b <- d4 |>
        subtitle = "Populations of the Pacific Island country and territory members of the Pacific Community (SPC). 
 ",
        caption = the_caption)
+{% endhighlight %}
 
-# Save as a PNG, suitable for use in presentation or elsewhere
-svg_png(p2b, "../img/0305-population-scatter.png", width = 8, height = 5)
+There's a few tricks used here, most important of which is probably the way I've used the exact population sizes as horizontal axis labels. This is something that works well with a small number of points, and which I learned from a Tufte book.
+
+<object type="image/svg+xml" data='/img/0305-population-scatter-highlighted.svg' width='100%'><img src='/img/0305-population-scatter-highlighted.png' width='100%'></object>
 
 
+
+
+{% highlight R lineanchors %}
 easy_mobility <- c("Pitcairn", 
                    "Niue", "Tokelau", "Cook Islands", 
                    "Wallis and Futuna", "New Caledonia", "French Polynesia",
@@ -150,7 +200,7 @@ easy_mobility <- c("Pitcairn",
 # check all are in data
 stopifnot(all(easy_mobility %in% d4$pict))
 
-p2c <- d4 |> 
+d4 |> 
   ggplot(aes(x = pop2025, y = cagr, colour = region)) +
   # Draw a pale (transparent, alpha) background rectangle for the negative growth countries:
   annotate("rect", xmin = 30, xmax = Inf, ymin = 0, ymax = -Inf, alpha = 0.1, fill = "red") +
@@ -180,6 +230,6 @@ p2c <- d4 |>
        subtitle = "Populations of the Pacific Island country and territory members of the Pacific Community (SPC). 
 Countries and territories with easy migration access to a larger country are highlighted.",
        caption = the_caption)
+{% endhighlight %}
 
-svg_png(p2c, "../img/0305-population-scatter-highlighted.png", width = 8, height = 5)
-
+That's all for today. In subsequent blogs I'll show how I drew the other charts with net migration, diaspora sizes, Pacific Islander populations in various world cities, and remittances.
