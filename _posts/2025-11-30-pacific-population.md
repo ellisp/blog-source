@@ -1,22 +1,25 @@
 ---
 layout: post
 title: Visual summaries of population in Pacific islands 
-date: 2025-11-28
+date: 2025-11-30
 tag: 
    - Demography
    - WorkRelated
-   - DataVisualisation
+   - Pacific
+   - DataVisualization
 description: Accessing population data for the Pacific and drawing two visual summaries of its recent and projected growth and absolute size, as used recently in a side event before the Pacific Heads of Planning and Statistics meeting in Wellington.
 image: /img/0305-population-scatter-highlighted.svg
 socialimage: https:/freerangestats.info/img/0305-population-scatter-highlighted.png
 category: R
 ---
 
-This will be the first of several posts where I post some code and visualisations of population issues in the Pacific. The analysis and visualisations are pretty simple. But the net effect is interesting because between them, they'll show how to make (with publicly available data) all the statistical images used in a presentation I recently gave in Wellington on the topic of XXX. 
+This will be the first of several posts where I post some code and visualisations of population issues in the Pacific. The analysis and visualisations are pretty simple. Between them, they'll show how to make (with publicly available data) all the statistical images used in a presentation I recently gave in Wellington on [migration and mobility in the Pacific](https://spccfpstore1.blob.core.windows.net/digitallibrary-docs/files/6a/6ad1c5b68b49b1462b9eb172a056c46c.pdf?sv=2015-12-11&sr=b&sig=TNWwFi4l8um7rBJavVHx41%2BhJvT5AI4PQ7OvWAoP1e0%3D&se=2026-05-27T18%3A44%3A49Z&sp=r&rscc=public%2C%20max-age%3D864000%2C%20max-stale%3D86400&rsct=application%2Fpdf&rscd=inline%3B%20filename%3D%22HOPS7_Opening_Day_Seminar_Pacific_priorities_and_change___Population_mobility_priorities_and_trends.pdf%22). 
 
-This was for a side event before the Pacific "Heads of Planning and Statistics" meeting, which takes place every two years and is the biggest event my team at the Pacific Community (SPC) organises. It was fun at this side event to have the chance for once to talk about the substantive issues the data shows, rather than (as is the usual focus of these sorts of meetings) how to improve the data, improve its use, and general strategise and prioritise to improve statistics. These things are important and fun too, but it's nice to actually put them aside and talk about some actual development issues now and then. My talk was followed by a great panel discussion with speakers from academia, a UN organisation, Stats NZ and a Pacific island national planner.
+This was for a side event before the Pacific "Heads of Planning and Statistics" meeting, which takes place every two years and is the biggest event my team at the Pacific Community (SPC) organises. [All the papers and presentations considered the meeting are available online](https://sdd.spc.int/events/2025/11/7th-regional-conference-heads-planning-and-statistics-hops-7), which is definitely transparency in action. 
 
-Today's post is the most basic of them all and is just about producing two statistical charts (one of them with a "bare" and a "highlighted" version), setting the scene for population in the Pacific.
+It was fun at this side event to have the chance for once to talk about the substantive issues the data shows, rather than (as is the usual focus of my meetings) how to improve the data, improve its use, and generally strategise and prioritise to improve statistics. These things are important and (arguably) fun too, but it's nice to put them aside and talk about some actual development issues now and then. My talk was followed by a great panel discussion with speakers from academia, a UN organisation, Stats NZ and a Pacific island national planner.
+
+Today's post is pretty straightforward and is just about producing two statistical charts (one of them with both a "bare" and a "highlighted" version), setting the scene for population in the Pacific.
 
 ### Downloading data
 
@@ -102,6 +105,7 @@ d2 |>
   geom_line() +
   theme(legend.position = "none",
         panel.grid.minor = element_blank(),
+        strip.text = element_text(face = 'plain'),
         plot.caption = element_text(colour = "grey50")) +
   scale_y_continuous(label = comma) +
   scale_colour_manual(values = spc_cols(c(4, 2))) +
@@ -114,15 +118,21 @@ d2 |>
        caption = the_caption) 
 {% endhighlight %}
 
-### Scatter plots
+### Scatter plot
 
-The line plot's a nice introduction to population, but unless people look carefully at the vertical axis labels it gives no sense of the absolute size of the different countries, and only a very rought visual sense of the differing growth rates. In looking for a single image that would summarise two things I cam up with this chart:
+The line plot's a nice introduction to population and most importantly, it's easily understood. But unless people look carefully at the vertical axis labels it gives no sense of the absolute size of the different countries, and only a very rough visual sense of the differing growth rates. 
+
+In looking for a single image that would summarise two things I came up with this chart:
 
 <object type="image/svg+xml" data='/img/0305-population-scatter.svg' width='100%'><img src='/img/0305-population-scatter.png' width='100%'></object>
 
 This is something we'd prepared earlier well before this talk and not yet needed to use, but it was for exactly this sort of use case&mdash;a single slide summary of Pacific island countries and territories' absolute size and growth rates. 
 
-It takes a little bit of explanation and concentration from an audience&mdash;in particular, explaining why the negative growth area is shaded and what that means. But it's straightforward enough for people to grasp even in a conference setting.
+It takes a little bit of explanation for, and concentration from, an audience&mdash;in particular, explaining why the negative growth area is shaded and what that means. The logarithmic scale for population size means people probably won't realise just how overwhelmingly big Papua New Guinea is compared to the rest of the Pacific; to show that properly, we really need a different chart. But overall, this is straightforward enough for people to grasp.
+
+What I like about this plot is that it makes clear the two broad categories of Pacific island countries and territories in population terms: relatively large (meaning >100,000 people!) and growing, which is all of Melanesia and a few others; and small and shrinking, comprising most of Polynesia and parts of Micronesia. Tonga, population estimated around 104,000, is the borderline case&mdash;all the countries larger than Tonga are growing in population terms; and nearly all those smaller than it are shrinking.
+
+There's two territories I dropped from this plot because the UN 2024 population projections, which is the data used, are materially out of date and I didn't want to get side-tracked into explaining why in the talk. We'll be able to include them in future versions of the pot hopefully soon.
 
 Again, it was pretty simple to create the plot with the data we've already got. Here's the R code to do that:
 
@@ -185,10 +195,15 @@ p2b <- d4 |>
 
 There's a few tricks used here, most important of which is probably the way I've used the exact population sizes as horizontal axis labels. This is something that works well with a small number of points, and which I learned from a Tufte book.
 
+### Scatter plot with highlights
+
+Finally for today, I wanted a version of the same plot that highlighted the countries that have easy mobility to a larger a richer country&mdash;that is, France (three territories), the USA (three territories and three self-governing countries), New Zealand (three members of the "Realm of New Zealand") or the UK (Pitcairn). One of the themes of my talk was the way that in countries where people *can* move, a certain number of them generally *do*. This is a very politically and culturally sensitive point, and it's not one I'm going to try to explore the reasons for here, but we can certainly note it as a dominant fact of importance for understanding the demographic dynamics of the Pacific. It's one of two or three critical big picture points that explain many of the differences between Kiribati (very densely populated on Tarawa and relatively poor) and Marshall Islands (less obvious excessive population density, higher standard of living), for example.
+
+My plot with the highlights&mdash;which are just oversized point geoms using shape number 1, a hollow circle&mdash;shows this nicely I believe:
+
 <object type="image/svg+xml" data='/img/0305-population-scatter-highlighted.svg' width='100%'><img src='/img/0305-population-scatter-highlighted.png' width='100%'></object>
 
-
-
+And here is the code for that plot:
 
 {% highlight R lineanchors %}
 easy_mobility <- c("Pitcairn", 
@@ -197,8 +212,8 @@ easy_mobility <- c("Pitcairn",
                    "Guam", "Northern Mariana Islands", "American Samoa",
                    "Marshall Islands", "Palau", "Micronesia, Fed. States")
 
-# check all are in data
-stopifnot(all(easy_mobility %in% d4$pict))
+# check all are in data apart from the two we deliberately dropped
+stopifnot(sum(!easy_mobility %in% d4$pict) == 2)
 
 d4 |> 
   ggplot(aes(x = pop2025, y = cagr, colour = region)) +
@@ -232,4 +247,4 @@ Countries and territories with easy migration access to a larger country are hig
        caption = the_caption)
 {% endhighlight %}
 
-That's all for today. In subsequent blogs I'll show how I drew the other charts with net migration, diaspora sizes, Pacific Islander populations in various world cities, and remittances.
+That's all for today. In subsequent blogs I'll show how I drew the other charts in the original presentation, with net migration, diaspora sizes, Pacific Islander populations in various world cities, and remittances.

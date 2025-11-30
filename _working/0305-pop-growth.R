@@ -18,10 +18,15 @@ the_font <- "Roboto"
 
 
 # Download all the mid year population estimates from PDH.stat
-d <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.AS+CK+FJ+PF+GU+KI+MH+FM+NR+NC+NU+MP+PW+PG+PN+WS+SB+TK+TO+TV+VU+WF+_T+MEL+MIC+POL+_TXPNG+MELXPNG.MIDYEARPOPEST._T._T?startPeriod=1950&endPeriod=2050&dimensionAtObservation=AllDimensions") |> 
-  as_tibble() |> 
-  clean_names() |> 
-  mutate(time_period = as.numeric(time_period))
+if(!file.exists("pop-mid-year-temp.rda")){
+  d <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.AS+CK+FJ+PF+GU+KI+MH+FM+NR+NC+NU+MP+PW+PG+PN+WS+SB+TK+TO+TV+VU+WF+_T+MEL+MIC+POL+_TXPNG+MELXPNG.MIDYEARPOPEST._T._T?startPeriod=1950&endPeriod=2050&dimensionAtObservation=AllDimensions") |> 
+    as_tibble() |> 
+    clean_names() |> 
+    mutate(time_period = as.numeric(time_period))
+  save(d, file = "pop-mid-year-temp.rda")
+} else {
+  load("pop-mid-year-temp.rda")
+}
 
 # Some subregional classifications.
 mel <- c("Melanesia", "Papua New Guinea", "Fiji", "Solomon Islands", "Vanuatu", "New Caledonia")
@@ -67,6 +72,7 @@ p1a <- d2 |>
   geom_line() +
   theme(legend.position = "none",
         panel.grid.minor = element_blank(),
+        strip.text = element_text(face = 'plain'),
         plot.caption = element_text(colour = "grey50")) +
   scale_y_continuous(label = comma) +
   scale_colour_manual(values = spc_cols(c(4, 2))) +
@@ -78,7 +84,7 @@ p1a <- d2 |>
        subtitle = "Countries listed in sequence of projected population in 2050",
        caption = the_caption) 
 
-svg_png(p1a, "../img/0305-population-line", w = 10, h = 5)
+svg_png(p1a, "../img/0305-population-line", w = 13, h = 6)
 
 
 #----------------scatter plot comparing growth to totals---------------
@@ -138,7 +144,7 @@ p2b <- d4 |>
        caption = the_caption)
 
 # Save as a PNG, suitable for use in presentation or elsewhere
-svg_png(p2b, "../img/0305-population-scatter.png", width = 8, height = 5)
+svg_png(p2b, "../img/0305-population-scatter", w = 9.5, h = 6)
 
 
 easy_mobility <- c("Pitcairn", 
@@ -147,8 +153,8 @@ easy_mobility <- c("Pitcairn",
                    "Guam", "Northern Mariana Islands", "American Samoa",
                    "Marshall Islands", "Palau", "Micronesia, Fed. States")
 
-# check all are in data
-stopifnot(all(easy_mobility %in% d4$pict))
+# check all are in data apart from the two we deliberately dropped
+stopifnot(sum(!easy_mobility %in% d4$pict) == 2)
 
 p2c <- d4 |> 
   ggplot(aes(x = pop2025, y = cagr, colour = region)) +
@@ -181,5 +187,5 @@ p2c <- d4 |>
 Countries and territories with easy migration access to a larger country are highlighted.",
        caption = the_caption)
 
-svg_png(p2c, "../img/0305-population-scatter-highlighted.png", width = 8, height = 5)
+svg_png(p2c, "../img/0305-population-scatter-highlighted", w = 9.5, h = 6)
 
