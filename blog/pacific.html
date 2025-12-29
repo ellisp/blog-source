@@ -1,0 +1,30 @@
+---
+layout: narrow
+title: Posts about the Pacific
+image: /img/0241-map1.svg
+nametype: index
+---
+   
+   {% for post in site.posts %}
+   {% if post.tags[0] == "Pacific" or post.tags[1] == "Pacific" or post.tags[2] == "Pacific" or post.tags[3] == "Pacific" or post.tags[4] == "Pacific" or post.tags[5] == "Pacific"%}
+	   <hr> </hr>
+	   <div class ="row">
+		  <div class="col-md-8">
+			 <a href="{{ post.url }}">
+				<h3>{{ post.title }}</h3>
+				<h4>{{ post.date | date_to_long_string }}</h4>
+			 </a>
+			 <p>{{ post.description }}</p>
+		  </div>
+		  <div class = "col-md-4">
+			 <a href="{{ post.url }}"><img src = {{ post.image }} height = "150"></a>
+		  </div>
+		 </div>
+	{% endif %}
+
+   {% endfor %}
+</div>   
+<div class = "container">
+   <hr> </hr>
+</div>
+
