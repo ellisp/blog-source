@@ -7,7 +7,6 @@
 
 library(tidyverse)
 library(readxl)
-library(spcstyle)
 library(scales)
 
 #-------------Download and get ready the data---------------
@@ -21,14 +20,15 @@ if(!file.exists(df2)){
 
 un_indicators <- read_excel(df2, skip = 16) 
 
-unique(un_indicators$`Region, subregion, country or area *`)
-
 picts <- c(
   "Fiji", "New Caledonia", "Papua New Guinea", "Solomon Islands",                                             
   "Guam", "Kiribati", "Marshall Islands", "Micronesia (Fed. States of)", "Nauru",
   "Vanuatu", "Northern Mariana Islands","Palau", "American Samoa", "Cook Islands",
   "French Polynesia", "Niue", "Samoa", "Tokelau", "Tonga", "Tuvalu", "Wallis and Futuna Islands" 
 )
+
+# check all spelled correctly and in data
+stopifnot(all(picts %in% un_indicators$`Region, subregion, country or area *`))
 
 pict_indicators <- un_indicators |> 
   rename(country = `Region, subregion, country or area *`) |> 
@@ -62,7 +62,7 @@ p0 <- pict_indicators |>
         panel.grid.minor = element_blank())
 
 
-svg_png(p0, "../img/0307-all-picts-net-migration", w = 10, h = 5)
+svg_png(p0, "../img/0309-all-picts-net-migration", w = 10, h = 5)
 
 #------------Just six selected PICTs----------------
 
@@ -77,12 +77,12 @@ p1 <- pict_indicators |>
   facet_wrap(~country, ncol = 3, scales = "free_y") + 
   geom_hline(yintercept = 0, colour = "grey50") +
   geom_line() +
-  scale_colour_manual(values = spc_cols(c(3, 2, 4))) +
+  scale_colour_manual(values = c("darkgreen", "blue", "red")) +
   scale_linetype_manual(values = c(2,1,3)) +
   labs(y = "Annual change in population (thousands)",
        x = "",
        colour = "", linetype = "")
 
-svg_png(p1, "../img/0307-six-picts-natural-immmigration-line", w = 10, h = 5)
+svg_png(p1, "../img/0309-six-picts-natural-immmigration-line", w = 10, h = 5)
 
 
