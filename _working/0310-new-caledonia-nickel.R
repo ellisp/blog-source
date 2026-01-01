@@ -32,7 +32,8 @@ p1 <- ore |>
        panel.grid.major.x = element_blank()) +
   scale_x_discrete(labels = labs) +
   scale_y_continuous(label = comma) +
-  labs(x = "", y = "XPF (m)", fill = "Destination")
+  labs(x = "", y = "XPF (m)", fill = "Destination:",
+       title = "Nickel ore exports from New Caledonia, 2008-2025")
 
 svg_png(p1, "../img/0310-ore", w = 10, h = 5)
 
@@ -56,7 +57,8 @@ p2 <- metal |>
        panel.grid.major.x = element_blank()) +
   scale_x_discrete(labels = labs) +
   scale_y_continuous(label = comma) +
-  labs(x = "", y = "XPF (m)", fill = "Destination")
+  labs(x = "", y = "XPF (m)", fill = "Destination:",
+       title = "Nickel metal exports from New Caledonia, 2008-2025")
 
 svg_png(p2, "../img/0310-metals", w = 10, h = 5)
 
@@ -75,7 +77,8 @@ p3 <- both |>
        panel.grid.major.x = element_blank()) +
   scale_x_discrete(labels = labs) +
   scale_y_continuous(label = comma) +
-  labs(x = "", y = "XPF (m)", fill = "Type of export")
+  labs(x = "", y = "XPF (m)", fill = "Type of export:",
+       title = "Nickel exports from New Caledonia 2008-2025")
 
 svg_png(p3, "../img/0310-both", w = 10, h = 5)
 
