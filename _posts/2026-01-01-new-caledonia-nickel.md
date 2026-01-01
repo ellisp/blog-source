@@ -34,7 +34,7 @@ The next chart shows them both, now paying no attention to destination:
 
 <object type="image/svg+xml" data='/img/0310-both.svg' width='100%'><img src='/img/0310-both.png' width='100%'></object>
 
-What we see in recent years from all of these of course is pretty obvious&mdash;a big increase in exports by value in 2021 and 2022, decline in 2023 and collapse in 2024 and 2025.
+None of these charts are adjusted for inflation. Putting that aside, what we see in recent years from all of these of course is pretty obvious&mdash;a big increase in exports by value in 2021 and 2022, decline in 2023 and collapse in 2024 and 2025.
 
 Here's the code to download this data from the ISEE website and draw those charts:
 
@@ -149,6 +149,8 @@ I won't go into those New Caledonia-specific reasons here. But here's the world 
 <object type="image/svg+xml" data='/img/0310-nickel-prices.svg' width='100%'><img src='/img/0310-nickel-prices.png' width='100%'></object>
 
 The structural increase in price was associated with the demand for nickel in batteries, including in electric vehicles. The 2022 spike came about from a genuine squeeze in supply when Russia invaded Ukraine, and fear about Russian nickel going off the market. Prices then fell because of Indonesian supply coming on line, and the rise of nickel-free electric vehicle batteries.
+
+When prices go down, of course the value of exports goes down even if volumes stay the same. But when the price is going down because of more competititon, volume goes down as well. And the impact can be strong enough to lead whole mines to close (as has been the case in New Caledonia).
 
 Code for the world nickel prices data, which comes from the USA Federal Reserve data system (FRED):
 
