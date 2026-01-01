@@ -117,3 +117,5 @@ _working/data/*
 
 # made by jekyll
 site/*
+
+*secrets.R
