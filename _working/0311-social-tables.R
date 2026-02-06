@@ -1,7 +1,25 @@
-
+#==================setup==================
 library(tidyverse)
 library(ggtext)
 library(ggrepel)
+
+
+# some general graphics parameters:
+inc_col <- "red"
+pop_col <- "blue"
+
+theme_set(
+  theme_minimal(base_family = "Roboto") +
+    theme(
+      panel.grid.minor = element_blank(),
+      plot.subtitle = element_markdown(),
+      plot.caption = element_markdown(colour = "grey50"),
+      plot.title = element_markdown(family = "Sarala")
+    )
+)
+
+
+#==============Quesnay France 1763=====================
 
 d1 <- tribble(~population, ~income, ~class, ~class_detail,
               48, 0.5, "Workers",            "Agricultural labourers",
@@ -23,19 +41,6 @@ d1 <- tribble(~population, ~income, ~class, ~class_detail,
 
 
 stopifnot(sum(d1$population) == 100)
-
-inc_col <- "red"
-pop_col <- "blue"
-
-theme_set(
-  theme_minimal(base_family = "Roboto") +
-    theme(
-      panel.grid.minor = element_blank(),
-      plot.subtitle = element_markdown(),
-      plot.caption = element_markdown(colour = "grey50"),
-      plot.title = element_markdown(family = "Sarala")
-    )
-)
 
 
 #-------------dual axis bar and line chart-----------------
@@ -64,7 +69,7 @@ p1 <- d1 |>
   labs(x = "",
        y = "Percentage of poulation",
        title = "Contemporary understanding of income inequality in France in the time of Louis XV",
-       subtitle = "Factoral income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
+       subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
        caption = "Quesnay's original data, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*, and plot style adapted from Milanovic's.") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.major = element_blank(),
@@ -91,7 +96,7 @@ p2 <- d1 |>
   labs(y = "Income relative to the mean (1.0)",
      x = "Percentage of population",
      title = "Contemporary understanding of income inequality in France in the time of Louis XV",
-     subtitle = "Factoral income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
+     subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
      caption = "Quesnay's original data, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),
         axis.line = element_line(colour = "grey80"))
