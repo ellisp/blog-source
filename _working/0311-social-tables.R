@@ -92,7 +92,7 @@ p2 <- d1 |>
   geom_text_repel(colour = "steelblue", seed = 123, hjust = 0) +
   annotate("text", x = 30, y = 1.1, label = "Average income", colour = "grey80") +
   scale_x_continuous(breaks = c(0, d1$population), limits = c(0, 50), expand = c(0,0 )) +
-  scale_y_continuous(breaks = c(0, 1, d1$income), limits = c(0, 3), expand = c(0,0 )) +
+  scale_y_continuous(breaks = c(1, d1$income), limits = c(0, 3), expand = c(0,0 )) +
   labs(y = "Income relative to the mean (1.0)",
      x = "Percentage of population",
      title = "Contemporary understanding of income inequality in France in the time of Louis XV",
@@ -103,4 +103,139 @@ p2 <- d1 |>
 
 svg_png(p2, "../img/0311-quesnay-scatter", w = 10, h = 6)
 
-  
+#==============Adam Smith's time 1759==========
+
+# Allen, Robert C. “Class Structure and Inequality during the Industrial
+# Revolution: Lessons from England’s Social Tables, 1688-1867.” The Economic
+# History Review 72, no. 1 (2019): 88–125.
+
+#page 105 of Allen for % ofpopulation but I am using Milanovic's labels from his Figure 2.1
+# page 106 for income in pounds
+
+d2 <- tribble(~population, ~income, ~class,
+              1.5, 452.78, "Landed aristocracy",
+              4.2, 145.37,  "Capitalists",
+              9.4, 27.17, "Shop owners",
+              18.9,  21.57, "Peasants",
+              56.4, 13.58, "Workers",
+              9.6, 3.62  , "Paupers"
+              ) |> 
+  mutate(year = 1759)
+
+avg_inc <- 23.14
+# note, not the same as:
+mean(d2$income)
+
+
+bry <- round(d2$income)[c(1:3, 6)]
+brx <- c(0, round(d2$population, 1))[c(1:6)]
+
+p3 <- d2 |> 
+  ggplot(aes(x = population, y = income, label = class)) +
+  geom_point(size = 2) +
+  geom_text_repel(colour = "steelblue", seed = 123, hjust = 0) +
+  scale_x_continuous(breaks = brx, limits = c(0, 65), expand = c(0, 0)) +
+  scale_y_continuous(breaks = bry, limits = c(0, 800), expand = c(0, 0)) +
+  labs(y = "Income in pounds",
+       x = "Percentage of population",
+       title = "Modern understanding of income inequality in England and Wales in 1759",
+       subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index between 45 and 51.",
+       caption = "“Class Structure and Inequality during the Industrial
+Revolution: Lessons from England’s Social Tables, 1688-1867.”<br>*The Economic
+History Review 72*, no. 1 (2019): 88–125, reproduced in Figure 2.1 of Milanovic's *Visions of Inequality*.") +
+  theme(panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "grey80"))
+
+svg_png(p3, "../img/0311-smith-scatter", w = 10, h = 6)
+
+
+p4 <- d2 |> 
+  ggplot(aes(x = population, y = income, label = class)) +
+  geom_point(size = 2) +
+  geom_text_repel(colour = "steelblue", seed = 123, hjust = 0) +
+  scale_x_continuous(breaks = brx, limits = c(0, 65), expand = c(0, 0)) +
+  scale_y_log10(breaks = round(d2$income),  limits = c(1, 800), expand = c(0, 0)) +
+  labs(y = "Income in pounds (log scale)",
+       x = "Percentage of population",
+       title = "Modern understanding of income inequality in England and Wales in 1759",
+       subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index between 45 and 51.",
+       caption = "“Class Structure and Inequality during the Industrial
+Revolution: Lessons from England’s Social Tables, 1688-1867.”<br>*The Economic
+History Review 72*, no. 1 (2019): 88–125, reproduced in Figure 2.1 of Milanovic's *Visions of Inequality*.") +
+  theme(panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "grey80"))
+
+svg_png(p4, "../img/0311-smith-scatter-log", w = 10, h = 6)
+
+#--------------------time of ricardo-------------
+
+d3 <- tribble(~population, ~income, ~class,
+              1.3, 756, "Landed aristocracy",
+              3.2, 525,  "Capitalists",
+              8.6, 65, "Shop owners",
+              10.8,  49, "Peasants",
+              61.1, 23, "Workers",
+              14.9, 4  , "Paupers"
+) |> 
+  mutate(year = 1801)
+
+bry <- round(d3$income)[c(1:6)]
+brx <- c(0, round(d3$population, 1))[c(1:7)]
+
+p5 <- d3 |> 
+  ggplot(aes(x = population, y = income, label = class)) +
+  geom_point(size = 2) +
+  geom_text_repel(colour = "steelblue", seed = 123, hjust = 0) +
+  scale_x_continuous(breaks = brx, limits = c(0, 65), expand = c(0, 0)) +
+  scale_y_continuous(breaks = bry, limits = c(0, 800), expand = c(0, 0)) +
+  labs(y = "Income in pounds",
+       x = "Percentage of population",
+       title = "Modern understanding of income inequality in England and Wales in 1759",
+       subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index of XXXX.",
+       caption = "Allen, R. C. *Revising England’s Social Tables Once Again* 2016, reproduced in Table 3.1 of Milanovic's *Visions of Inequality*.") +
+  theme(panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "grey80"))
+
+svg_png(p5, "../img/0311-ricardo-scatter", w = 10, h = 6)
+
+
+#-----------------------1831 France--------------
+# From Milanovic's Marx chapter
+
+
+d4 <- tribble(~employment, ~income, ~class,
+              3.4, 8.6, "Employers",
+              5.1, 3, "Large farmers",
+              1.1, 1.8, "High-level civil servants",
+              13.9, 1, "Blue-collar employees",
+              2, 0.9, "White collar employees",
+              13.4, 0.7, "Self-employed",
+              1.1, 0.6, "Low-level civil servants",
+              31.4, 0.5, "Small farmers",
+              28.5, 0.45, "Agricultural workers and servants"
+) |> 
+  mutate(year = 1831)
+
+
+
+bry <- sort(round(d4$income, 1))[c(1,3,6:9)]
+brx <- sort(c(0, round(d4$employment, 1)))[c(1:2, 3,4,5,6,8,9, 10)]
+
+p6 <- d4 |> 
+  ggplot(aes(x = employment, y = income, label = class)) +
+  geom_hline(yintercept = 1, linetype = 2, colour = "grey80") +
+  geom_point(size = 2) +
+  geom_text_repel(colour = "steelblue", seed = 123, hjust = 0) +
+  scale_x_continuous(breaks = brx, limits = c(0, 35), expand = c(0, 0)) +
+  scale_y_continuous(breaks = bry, limits = c(0, 10), expand = c(0, 0)) +
+  labs(y = "Relative income (average = 1.0)",
+       x = "Percentage of employed persons",
+       title = "Modern understanding of income inequality in France in 1831",
+       subtitle = "Average income by earner relative to overall mean.",
+       caption = "Morrisson, Christian, and Wayne Snyder. “The Income Inequality of France in Historical Perspective.” 
+       <br>*European Review of Economic History* 4, no. 1 (2000): 59–83.
+, reproduced in Table 4.4 of Milanovic's *Visions of Inequality*.") +
+  theme(panel.grid.major = element_blank(),
+        axis.line = element_line(colour = "grey80"))
+
+svg_png(p6, "../img/0311-marx-scatter", w = 10, h = 6)
