@@ -4,7 +4,7 @@ title: Simpler drawing of Pacific choropleth maps
 date: 2023-06-17
 tag: 
    - Spatial
-   - DataVisualization
+   - Visualisation
    - Animations
    - WorkRelated
    - Pacific

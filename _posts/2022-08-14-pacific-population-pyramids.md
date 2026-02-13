@@ -3,7 +3,7 @@ layout: post
 title: Pacific island population pyramids
 date: 2022-08-14
 tag: 
-   - DataVisualization
+   - Visualisation
    - WorkRelated
    - Demography
    - Pacific

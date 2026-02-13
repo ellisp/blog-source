@@ -3,7 +3,7 @@ layout: post
 title: Pacific island choropleth map
 date: 2022-10-13
 tag: 
-   - DataVisualization
+   - Visualisation
    - WorkRelated
    - Pacific
 description: Drawing an annotated choropleth map of Pacific Island countries and territories.

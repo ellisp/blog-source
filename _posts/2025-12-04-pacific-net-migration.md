@@ -6,7 +6,7 @@ tag:
    - Demography
    - WorkRelated
    - Pacific
-   - DataVisualization
+   - Visualisation
 description: Accessing data and drawing visualisations of net migration for Pacific island countries and territories.
 image: /img/0309-six-picts-natural-immmigration-line.svg
 socialimage: https:/freerangestats.info/img/0309-six-picts-natural-immmigration-line.png

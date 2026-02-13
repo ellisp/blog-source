@@ -6,7 +6,7 @@ tag:
    - Demography
    - WorkRelated
    - Pacific
-   - DataVisualization
+   - Visualisation
 description: Accessing population data for the Pacific and drawing two visual summaries of its recent and projected growth and absolute size, as used recently in a side event before the Pacific Heads of Planning and Statistics meeting in Wellington.
 image: /img/0305-population-scatter-highlighted.svg
 socialimage: https:/freerangestats.info/img/0305-population-scatter-highlighted.png

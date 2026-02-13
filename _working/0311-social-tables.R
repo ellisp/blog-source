@@ -69,8 +69,8 @@ p1 <- d1 |>
   labs(x = "",
        y = "Percentage of poulation",
        title = "Contemporary understanding of income inequality in France in the time of Louis XV",
-       subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
-       caption = "Quesnay's original data, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*, and plot style adapted from Milanovic's.") +
+       subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763. Gini estimated to be between 49 and 55.",
+       caption = "Quesnay's original estimates, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*, and plot style adapted from Milanovic's.") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.major = element_blank(),
         axis.line.y.right = element_line(colour = inc_col),
@@ -84,7 +84,6 @@ svg_png(p1, "../img/0311-quesnay-bar", w = 10, h = 6)
         
 #---------------scatter plot--------------
 
-
 p2 <- d1 |> 
   ggplot(aes(x = population, y = income, label = class_detail)) +
   geom_hline(yintercept = 1, linetype = 2, colour = "grey80") +
@@ -93,11 +92,11 @@ p2 <- d1 |>
   annotate("text", x = 30, y = 1.1, label = "Average income", colour = "grey80") +
   scale_x_continuous(breaks = c(0, d1$population), limits = c(0, 50), expand = c(0,0 )) +
   scale_y_continuous(breaks = c(1, d1$income), limits = c(0, 3), expand = c(0,0 )) +
-  labs(y = "Income relative to the mean (1.0)",
+  labs(y = "Income relative to the mean",
      x = "Percentage of population",
      title = "Contemporary understanding of income inequality in France in the time of Louis XV",
-     subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763",
-     caption = "Quesnay's original data, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*.") +
+     subtitle = "Class-based income distribution in *La philosophie rurale* by Mirabeau and Quesnay, 1763. Gini estimated to be between 49 and 55.",
+     caption = "Quesnay's original estimates, reproduced in Table 1.1 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),
         axis.line = element_line(colour = "grey80"))
 
@@ -140,7 +139,7 @@ p3 <- d2 |>
        x = "Percentage of population",
        title = "Modern understanding of income inequality in England and Wales in 1759",
        subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index between 45 and 51.",
-       caption = "“Class Structure and Inequality during the Industrial
+       caption = "Robert Allen, “Class Structure and Inequality during the Industrial
 Revolution: Lessons from England’s Social Tables, 1688-1867.”<br>*The Economic
 History Review 72*, no. 1 (2019): 88–125, reproduced in Figure 2.1 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),
@@ -159,7 +158,7 @@ p4 <- d2 |>
        x = "Percentage of population",
        title = "Modern understanding of income inequality in England and Wales in 1759",
        subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index between 45 and 51.",
-       caption = "“Class Structure and Inequality during the Industrial
+       caption = "Robert Allen, “Class Structure and Inequality during the Industrial
 Revolution: Lessons from England’s Social Tables, 1688-1867.”<br>*The Economic
 History Review 72*, no. 1 (2019): 88–125, reproduced in Figure 2.1 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),
@@ -190,9 +189,9 @@ p5 <- d3 |>
   scale_y_continuous(breaks = bry, limits = c(0, 800), expand = c(0, 0)) +
   labs(y = "Income in pounds",
        x = "Percentage of population",
-       title = "Modern understanding of income inequality in England and Wales in 1759",
-       subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index of XXXX.",
-       caption = "Allen, R. C. *Revising England’s Social Tables Once Again* 2016, reproduced in Table 3.1 of Milanovic's *Visions of Inequality*.") +
+       title = "Modern understanding of income inequality in England and Wales in 1801",
+       subtitle = "Average income by earner in pounds per year, as estimated in 2019. Gini index of around 52.",
+       caption = "Robert Allen, *Revising England’s Social Tables Once Again* 2016, reproduced in Table 3.1 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),
         axis.line = element_line(colour = "grey80"))
 
@@ -232,7 +231,7 @@ p6 <- d4 |>
        x = "Percentage of employed persons",
        title = "Modern understanding of income inequality in France in 1831",
        subtitle = "Average income by earner relative to overall mean.",
-       caption = "Morrisson, Christian, and Wayne Snyder. “The Income Inequality of France in Historical Perspective.” 
+       caption = "Christian Morrison, and Wayne Snyder. “The Income Inequality of France in Historical Perspective.” 
        <br>*European Review of Economic History* 4, no. 1 (2000): 59–83.
 , reproduced in Table 4.4 of Milanovic's *Visions of Inequality*.") +
   theme(panel.grid.major = element_blank(),

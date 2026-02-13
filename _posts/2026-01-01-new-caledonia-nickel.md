@@ -6,7 +6,7 @@ tag:
    - Economics
    - WorkRelated
    - Pacific
-   - TimeSeries
+   - Timeseries
 description: Accessing data and drawing charts for nickel exports from New Caledonia, and world nickel prices, from 2008 to 2025. 
 image: /img/0310-both.svg
 socialimage: https:/freerangestats.info/img/0310-both.png

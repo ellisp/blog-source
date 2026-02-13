@@ -3,7 +3,7 @@ layout: post
 title: Visualising stock prices and volume
 date: 2021-02-05
 tag: 
-   - DataVisualization
+   - Visualisation
    - Finance
    - Timeseries
 description: After some experimenting with how to show stock price and volume at the same time, I conclude unsuprisingly that the charts commonly used in finance are pretty much fit for purpose, but alternative presentations have their place too.

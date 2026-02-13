@@ -3,7 +3,7 @@ layout: post
 title: Smoothing charts of Supreme Court Justice nomination results
 date: 2022-03-26
 tag: 
-   - DataVisualization
+   - Visualisation
 description: Sometimes a Twitter storm of chart-shaming is unfair, mean, and frankly misguided. I reproduce and defend a chart originally produced by FiveThirtyEight to illustrate changes over time in how nominations for US Supreme Court Justices have been voted on in the Senate.
 image: /img/0230-gam-alone-with-withdrawn.svg
 socialimage: https:/freerangestats.info/img/0230-gam-alone-with-withdrawn.png
