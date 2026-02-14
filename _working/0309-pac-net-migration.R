@@ -51,12 +51,12 @@ p0 <- pict_indicators |>
   facet_wrap(~country, ncol = 7, scales = "fixed") + 
   geom_line(colour = "grey50", linetype = 1, linewidth = 0.4) +
   geom_ribbon(aes(ymin = 0, ymax = nmr, fill = migration_direction), alpha = 0.5) +
-  scale_y_continuous(label = percent_format(scale = 1)) +
+  scale_y_continuous(label = comma_format(scale = 1)) +
   scale_fill_gradient2(low = "red", high = "blue") +
   labs(title = "Net migration impact on Pacific island countries and territories",
        subtitle = "Countries shown in sequence of least proportionately impacted to most",
        x = "",
-       y = "Net migration as a proportion of population in residence")  +
+       y = "Net migration per thousand population in residence")  +
   theme(legend.position = "none",
         axis.text.x = element_text(size = 7, colour = "grey50"),
         panel.grid.minor = element_blank())
