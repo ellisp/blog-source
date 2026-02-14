@@ -129,6 +129,7 @@ mean(d2$income)
 bry <- round(d2$income)[c(1:3, 6)]
 brx <- c(0, round(d2$population, 1))[c(1:6)]
 
+# original scale:
 p3 <- d2 |> 
   ggplot(aes(x = population, y = income, label = class)) +
   geom_point(size = 2) +
@@ -147,7 +148,7 @@ History Review 72*, no. 1 (2019): 88–125, reproduced in Figure 2.1 of Milanovi
 
 svg_png(p3, "../img/0311-smith-scatter", w = 10, h = 6)
 
-
+# log scale:
 p4 <- d2 |> 
   ggplot(aes(x = population, y = income, label = class)) +
   geom_point(size = 2) +
