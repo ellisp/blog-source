@@ -1,4 +1,45 @@
+---
+layout: post
+title: The world's biggest 'Pacific' cities
+date: 2026-02-15
+tag: 
+   - Pacific
+   - Demography
+   - WorkRelated
+description: My best hasty effort at presenting the cities around the world with the most Pacific Islanders resident. 
+image: /img/0312-pacific-cities.svg
+socialimage: https:/freerangestats.info/img/0312-pacific-cities.png
+category: R
+---
 
+This post is the third in a (somewhat interrupted) series on population issues in the Pacific, re-generating the charts I used in a keynote speech before the November 2025 meeting of the Pacific Heads of Planning and Statistics in Wellington, New Zealand. So far we have:
+* [Visual summaries of population size and growth](/blog/2025/11/30/pacific-population)
+* [Net migration](/blog/2025/12/04/pacific-net-migration)
+* World cities with the most Pacific Islanders (this post, today)
+
+We often hear that Auckland is the world's largest Polynesian city, or even the world's largest Pacific Islander city; but which is the second or third largest? 
+
+This will be a short post. The end point is this single chart:
+
+<object type="image/svg+xml" data='/img/0312-pacific-cities.svg' width='100%'><img src='/img/0312-pacific-cities.png' width='100%'></object>
+
+Port Moresby (the capital of Papua New Guinea) is the second biggest urban collection of Pacific Islanders, and in fact it isn't far behind Auckland. Next come the largest cities of Indonesian Western New Guinea. I'm not well familiar with that part of the world and I might have missed some further cities of similar size, but am confident I got the first two. Coming in at numbers 5 and 6 we have Suva in Fiji, and Papeete in French Polynesia (on the island of Tahiti). Then we see that Sydney and Brisbane in Australia probably have more Pacific Islanders than do many of the famous cities of the Pacific, such as Lae, Honiara, Noumea and Port Vila. Samoa's Apia doesn't even make it on to the chart because it's limited to the top 24 cities.
+
+I couldn't get data on French cities in the mainland 'hexagon', for which ethnicity information is difficult to obtain for deliberate decisions on the part of the statistical authorities. There are good reasons for this founded in history. But the number is probably too small to make it to the chart. Los Angeles could maybe be there if a broad enough geography is included, but the city definitions were a bit tough for me to deal with and in the end I opted to leave it out.
+
+I'm sure there's some omissions or errors here so would welcome corrections and comments, as usual. But the main point was illustrative, and aimed at pointing out the importance of some cities perhaps not often thought of as Pacific Islander urban concentrations, and I'm happy that it does that reasonably accurately.
+
+There were a few choices here, such as whether to include West Papuans, Māori (who are pretty numerous in Australian cities as well as in New Zealand) and Hawaiians (and less materially as there are less of them, Torres Strait Islanders) as Pacific Islanders. I'm pretty happy that the answer is "yes" to include all of them, for our purposes. Note that if we excluded Māori from the Auckland count, it would no longer be the world's biggest Pacific Islander city.
+
+The real difficulty, and one I'm confident my solution for which could be improved, was in getting consistent definitions of "city" and good estimates of what proportion of that city are Pacific Islanders. The latter can come from census data, but I didn't have time to go to each country's latest census and ensure a comparable number, so had to resort to Wikipedia in some cases.
+
+For example of the problem of a definition of 'city', Honolulu itself has a population of around 350,000, but the [Urban Honolulu metropolitan area](https://en.wikipedia.org/wiki/Honolulu) is around 1 million (only a small proportion of whom are Pacific Islanders). Suva's population is around 100,000; its metropolitan area brings this up to 185,000; and if you include Lami, Nasinu and Nausori (where the airport is) [this becomes 330,000](https://en.wikipedia.org/wiki/Suva). In both these cases I used the greater metropolitan area, but not Nausori, etc. for Suva. 
+
+For Australia and New Zealand I used the "Greater Capital City Statistical Areas" and "Territorial Authorities" respectively. This means I miss out on non-capital cities, like Gold Coast (population around 600,000 and around 1 per cent Pacific Islander) but I think that is ok. It means we are under-counting Wellington by the standard I used for Suva and Honolulu (Lower Hutt and Upper Hutt should probably be included, but they are their own TAs). Again, I think that is probably ok.
+
+For cities outside Australia and New Zealand I didn't have time to get definitive estimates directly from each census and relied on Wikipedia and other secondary sources. This bit is highly error-prone, and could do with a more careful approach! Overall I'm not hugely proud of the tossed-together code below, which was a real compromise between time and thoroughness. But hopefully the results are good enough for our illustrative purposes.
+
+{% highlight R lineanchors %}
 # this is a crude exploration of the question:
 # "What are the largest Pacific islander cities in the world?"
 # It is doubtless incomplete and there are a bunch of more detailed
@@ -114,9 +155,8 @@ other <- tribble(~area_name, ~value, ~country,
         ) |> 
   mutate(ethnic_name = "Pacific Peoples")
 
-#----------------analysis--------------
-
-p1 <- nz2018 |> 
+#----------------draw bar chart--------------
+nz2018 |> 
   rbind(aus2021) |> 
   rbind(other) |> 
   group_by(area_name) |> 
@@ -141,6 +181,6 @@ p1 <- nz2018 |>
   theme(axis.text.x  = element_text(angle = 45, hjust = 1),
         legend.position = c(0.8, 0.7),
         plot.caption = element_text(colour = "grey50"))
+{% endhighlight %}
 
-svg_png(p1, "../img/0312-pacific-cities", w = 10, h =6)
-
+That's all for now. Coming up we have more on population profiles, remittances data, and a summary post where I'll tie things together with the messaging I used in the actual talk. 
