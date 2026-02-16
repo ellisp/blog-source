@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The world's biggest 'Pacific' cities
-date: 2026-02-15
+date: 2026-02-16
 tag: 
    - Pacific
    - Demography
@@ -37,7 +37,9 @@ For example of the problem of a definition of 'city', Honolulu itself has a popu
 
 For Australia and New Zealand I used the "Greater Capital City Statistical Areas" and "Territorial Authorities" respectively. This means I miss out on non-capital cities, like Gold Coast (population around 600,000 and around 1 per cent Pacific Islander) but I think that is ok. It means we are under-counting Wellington by the standard I used for Suva and Honolulu (Lower Hutt and Upper Hutt should probably be included, but they are their own TAs). Again, I think that is probably ok.
 
-For cities outside Australia and New Zealand I didn't have time to get definitive estimates directly from each census and relied on Wikipedia and other secondary sources. This bit is highly error-prone, and could do with a more careful approach! Overall I'm not hugely proud of the tossed-together code below, which was a real compromise between time and thoroughness. But hopefully the results are good enough for our illustrative purposes.
+There's at least one other more controversial problem I've skimmed over and won't mention.
+
+For cities outside Australia and New Zealand I didn't have time to get definitive estimates directly from each census and relied on Wikipedia and other secondary sources. This bit is highly error-prone, and could do with a more careful approach! Overall I've got a somewhat dim view  of the tossed-together code below, which was a real compromise between time and thoroughness. But hopefully the results are good enough for our illustrative purposes! Anywhere, here's the code:
 
 {% highlight R lineanchors %}
 # this is a crude exploration of the question:
@@ -183,4 +185,4 @@ nz2018 |>
         plot.caption = element_text(colour = "grey50"))
 {% endhighlight %}
 
-That's all for now. Coming up we have more on population profiles, remittances data, and a summary post where I'll tie things together with the messaging I used in the actual talk. 
+That's all for now. Coming up we have a look at how much of Pacific Islander populations are in the "home" country and how much elsewhere (e.g. New Zealand); some more on population profiles; remittances data; and a summary post where I'll tie things together with the messaging I used in the actual talk. 
