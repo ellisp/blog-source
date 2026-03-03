@@ -52,9 +52,22 @@ nz2018 <- read_csv("raw-data/Data8317.csv") |>
   filter(grepl("City", area_name)  | area_name == "Auckland") |> 
   mutate(value = as.numeric(count)) |> 
   select(ethnic_name, area_name, value) |> 
-  mutate(country = "New Zealand")
+  mutate(country = "New Zealand") |> 
+  mutate(area_name = case_when(
+    area_name %in% c("Wellington City", "Porirua City", "Upper Hutt City", "Lower Hutt City") ~ "Greater Wellington",
+    TRUE ~ area_name
+  )) |> 
+  group_by(ethnic_name, area_name, country) |> 
+  summarise(value = sum(value)) |> 
+  ungroup()
 
-# quick reality check - print to console the biggest TAs with Pacific peoples:
+#nz2018 |> 
+#  mutate(value = as.numeric(count)) |> 
+#  filter(!grepl("Total", ethnic_name)) |> 
+#  summarise(sum(value, na.rm = TRUE))
+
+
+# quick reality check - print to console the biggest areas with Pacific peoples:
 nz2018 |> 
   group_by(area_name) |> 
   summarise(value = sum(value)) |> 
@@ -63,7 +76,8 @@ nz2018 |>
 nz2018 |> 
   select(ethnic_name, value, area_name) |> 
   spread(ethnic_name, value) |> 
-  arrange(desc(`Pacific Peoples`))
+  arrange(desc(`Pacific Peoples`)) |> 
+  summarise(sum(Maori), sum(`Pacific Peoples`))
 
 #--------------Australian census data--------------
 # Originally downloaded from australian tablebuilder,
@@ -102,8 +116,8 @@ other <- tribble(~area_name, ~value, ~country,
                  "Greater Suva", 185000, "Fiji", # not counting nausori
                  "Lautoka", 75000, "Fiji",
                  "Nasinu", 74000, "Fiji",
-                 # Only about 9% of greater honolulu identify as pacific islander:
-                 "Honolulu urban area", 0.09 * 1e6, "USA",
+                 # Only about 9% of greater honolulu identify as pacific islander, but 22% if include multi ethnci:
+                 "Honolulu urban area", 0.22 * 1e6, "USA",
                  "Greater Noumea", 0.26 * 200000, "New Caledonia",
                  "Papeete", 137000, "French Polynesia",
                  "Honiara", 80000, "Solomon Islands",
@@ -142,5 +156,5 @@ p1 <- nz2018 |>
         legend.position = c(0.8, 0.7),
         plot.caption = element_text(colour = "grey50"))
 
-svg_png(p1, "../img/0312-pacific-cities", w = 10, h =6)
+svg_png(p1, "../img/0312-pacific-cities-revised", w = 10, h =6)
 
