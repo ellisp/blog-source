@@ -42,6 +42,12 @@ d <- pop2picts |>
 d1 <- d |> 
   filter(pict %in% c("Kiribati", "Marshall Islands"))
 
+d1 |> 
+  group_by(pict, time_period) |> 
+  summarise(total = sum(obs_value)) |> 
+  spread(pict, total) |> 
+  mutate(prop = Kiribati / `Marshall Islands`)
+
 # breaks in axis for Marshall and Kiribati chart:
 x_breaks <- c(-6000, - 4000, -2000, 0, 2000, 4000, 6000)
 

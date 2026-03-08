@@ -9,7 +9,7 @@ library(glue)
 
 picts <- c(
   "Fiji", "New Caledonia", "Papua New Guinea", "Solomon Islands",                                             
-  "Guam", "Kiribati", "Marshall Islands", "Micronesia (Fed. States of)", "Nauru",
+  "Guam", "Kiribati", "Marshall Islands", "Micronesia, Fed. Sts.", "Nauru",
   "Vanuatu", "Northern Mariana Islands","Palau", "American Samoa", "Cook Islands",
   "French Polynesia", "Niue", "Samoa", "Tokelau", "Tonga", "Tuvalu", "Wallis and Futuna Islands" 
 )
@@ -27,7 +27,13 @@ remit <- WDI(indicator = c(personal = "BX.TRF.PWKR.DT.GD.ZS",
                            worker = "BX.TRF.PWKR.GD.ZS"), start = 2000) |> 
   as_tibble()
 
-# Draw bar chart:
+# which countries have we got?
+sort(unique(remit$country))
+
+# check who missing, just the 3 NZ Realm countries plus Wallis and futuna:
+picts[!picts %in% unique(remit$country)]
+
+# Data for bar chart:
 pac_data <- remit |> 
   group_by(country) |> 
   filter(!is.na(personal)) |> 
@@ -39,11 +45,12 @@ pac_data <- remit |>
   mutate(country_order = ifelse(country %in% picts, personal, 1000 - personal),
          country = fct_reorder(country, country_order)) 
 
+# draw bar chart
 bar_remit <- pac_data|> 
   ggplot(aes(x = country, y = personal, fill = is_pict)) +
   geom_col() +
   scale_y_continuous(label = percent_format(scale = 1)) +
-  scale_fill_manual(values = c("grey40", "steelblue")) +
+  scale_fill_manual(values = c("brown", "steelblue")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position  = "none",
         plot.caption = element_text(colour = "grey50")) +
