@@ -59,7 +59,8 @@ p0 <- pict_indicators |>
        y = "Net migration per thousand population in residence")  +
   theme(legend.position = "none",
         axis.text.x = element_text(size = 7, colour = "grey50"),
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank(),
+      strip.text = element_text(face = 1, size = 8))
 
 
 svg_png(p0, "../img/0309-all-picts-net-migration", w = 10, h = 5)
