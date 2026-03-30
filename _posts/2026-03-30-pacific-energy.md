@@ -1,4 +1,31 @@
+---
+layout: post
+title: Pacific island energy supply
+date: 2026-03-30
+tag: 
+   - Pacific
+   - Economics
+   - Energy
+   - WorkRelated
+description: Pacific island countries are heavily dependent on imported diesel, gas and kerosene for electricity generation and for cooking.
+image: /img/0320-pict-electricity-mix.svg
+socialimage: https:/freerangestats.info/img/0320-pict-electricity-mix
+category: R
+---
 
+With the conflict in Iran causing worldwide disruption to energy markets, I have both a work and personal interest in energy supply in Pacific islands, which led me to this blog post. Here I look at just two aspects of energy: electricity generation, and household cooking. Nothing fancy here, just accessing some data and drawing a couple of plots.
+
+## Electricity generation
+
+Here is the *source* of electricity for Pacific island countries, plus Australia and New Zealand, collated by Our World In Data from Energy Institute data that ultimately comes from government estimates:
+
+<object type="image/svg+xml" data='/img/0320-pict-electricity-mix.svg' width='100%'><img src='/img/0320-pict-electricity-mix.png' width='100%'></object>
+
+There's a pretty obvious story here: most of the Pacific is **very** dependent on "oil" (in the form of diesel) for generation of most of its electricity. There are some small steps towards renewables happening in recent years, but the vulnerability to a price or availability shock for diesel is pretty obvious.
+
+Here's the code for producing that, using the valuable `owidapi` R package to access the Our World in Data API.
+
+{% highlight R lineanchors %}
 #---------------Set up-----------------
 library(owidapi)
 library(tidyverse)
@@ -37,10 +64,6 @@ palette <- c(
   'other renewables' = "darkgreen"
 )
 
-
-
-
-
 #-------------------electricity mix-----------------
 elec_mix <- owid_get(
   chart_id = "share-elec-by-source",
@@ -65,7 +88,8 @@ elec_data <- elec_mix |>
   ungroup() |> 
   mutate(country = fct_reorder(country, prop_pc))
 
-p1 <- elec_data |> 
+# Draw chart
+elec_data |> 
   ggplot(aes(x = year, y = value, fill = variable)) +
  facet_wrap(~country, ncol = 5) +
   geom_col() +
@@ -78,10 +102,22 @@ p1 <- elec_data |>
         x = "",
         caption = "Source: Ember (2026); Energy Institute - Statistical Review of World Energy (2025). Data processed by Our World In Data.") +
    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+{% endhighlight %}
 
-svg_png(p1, "../img/0320-pict-electricity-mix", w = 10, h = 6) 
 
+## Cooking fuel
 
+OK, so electricity generation could be threatened by a lack of diesel. What about household cooking? This next chart draws on the definitive World Health Organization Household Energy Database, which models (based on what household survey data that is available) what households are using to cook:
+
+<object type="image/svg+xml" data='/img/0320-pict-cooking-fuel.svg' width='100%'><img src='/img/0320-pict-cooking-fuel.png' width='100%'></object>
+
+Again, we see a lot of reliance on petrochemical products, particularly kerosene and liquid natural gas. The latter has been promoted as a relatively clean and healthy fuel to cook with compared to burning biomass (e.g. wood, coconuts, etc).
+
+The larger Melanesian countries, with high rural populations, are those with the greatest use still of biomass for cooking. Most Pacific island countries do most of their cooking with oil or gas derived energy (remembering from the first chart, that 'electricity' often means diesel, ultimately).
+
+Here's the code to produce that chart. I used an LLM (I forget which) for the code to access the API itself, but I tested it and tweaked it to match my style, and the chart of course is all my own code. 
+
+{% highlight R lineanchors %}
 #--------------------cooking-------------------
 # The definitive source is the WHO  WHO Household Energy Database 
 # which draws on various household surveys
@@ -119,7 +155,8 @@ pic_cooking_data <-cooking_data |>
   ungroup() |> 
   mutate(country = fct_reorder(country, prop_gke))
 
-p2 <- pic_cooking_data |> 
+# Draw chart
+pic_cooking_data |> 
   ggplot(aes(y = value, x = year, fill = fuel_type)) +
   facet_wrap(~country, ncol = 5) +
   # the numbers don't add up to 100 always, due to being modelled estimates
@@ -135,5 +172,6 @@ Countries shown in increasing order of vulnerability of cooking to a petrochemic
        fill = "Fuel type:",
        y ="Proportion of households",
        caption = "Source: WHO Household Energy Database")
+{% endhighlight %}
 
-svg_png(p2, "../img/0320-pict-cooking-fuel", w = 10, h = 6) 
+That's all, just a quick one today. 
