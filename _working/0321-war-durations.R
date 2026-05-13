@@ -3,6 +3,8 @@ library(lubridate)
 library(janitor)
 library(glue)
 library(ggrepel)
+library(scales)
+library(frs)
 
 # https://correlatesofwar.org/data-sets/cow-war/
 
@@ -33,6 +35,7 @@ simple_caption <- "Source: Correlates of War, Inter-State War Data; analysis by 
 #-----------------distribution of duration------------
 summary(interstate_wars$duration)
 
+set.seed(321)
 sim_norm <- data.frame(duration = 10 ^ (rnorm(1e6, 
                                         mean = log10(interstate_wars$duration), 
                                         sd = sd(log10(interstate_wars$duration)))))
@@ -42,37 +45,45 @@ p1 <- interstate_wars |>
   geom_density() +
   geom_rug() +
   geom_density(data = sim_norm, colour = "orange") +
-  annotate("text", x= 5000, y = 0.18, label = "Simulated log-normal distribution", 
+  annotate("text", x= 1, y = 0.18, label = "Simulated log-normal distribution", 
            colour = "orange", hjust = 0) +
-  annotate("text", x= 500, y = 0.45, label = "Empirical distribution of war durations", 
+  annotate("text", x= 300, y = 0.51, label = "Empirical distribution of war durations", 
            colour = "black", hjust = 0) +
-  scale_x_log10(label = comma) +
+  # carefully chosen labels for x axis:
+  scale_x_log10(label = comma, breaks = c(range(interstate_wars$duration), 10, 100, 1000)) +
   labs(x = "Duration of wars (in days, logarithmic scale)",
        y = "Density",
        title = "Distribution of war durations, 1823 to 2003",
        subtitle = "More concentrated, less-fat tails than a log-normal distribution",
-       caption = simple_caption)
+       caption = simple_caption) +
+  # use coord to limit x axis so statistical calculations are all done on full data:
+  coord_cartesian(xlim = c(1, 8000))
   
 svg_png(p1, "../img/0321-density", w = 8, h = 5)
 
+#-------------------cumulative distribution--------------
 interstate_cumulative <- interstate_wars |> 
   arrange(duration) |> 
   mutate(cumulative_freq = 1:n() / n()) 
 
+# smoothed model of the cumulative distribution, including estimates of where
+# the Iran war is on it:
 model <- loess(cumulative_freq ~ log(duration), data = interstate_cumulative)
 current_dur <- 74 # as at 13 May 2025 - war started 28 February 2026
 current_cf <- predict(model, newdata = data.frame(duration = current_dur))
 
+# inverse model to estimate duration given a cumulative frequency, useful for
+# annotations on the chart:
 inv_model <- loess(duration ~ x, 
                    data = data.frame(duration = interstate_cumulative$duration, 
                                      x = fitted(model)))
 
-# of wars that last this long, what is the median cumulative frequence:
-conditional_median_freq <- (1 - current_cf) / 2 + current_cf
+# of wars that last this long, what is the median cumulative frequency (i.e. half-way to 1):
+conditional_median_freq <- (1 + current_cf) / 2
 # of wars with that median cumulative frequency, convert it back into a duration,
 conditional_median_dur <- predict(inv_model, data.frame(x = conditional_median_freq))
 
-
+# Draw chart of cumulative distribution:
 p2 <- interstate_cumulative |> 
   ggplot(aes(x = duration, y = cumulative_freq)) +
   geom_smooth(method = "loess", colour = "grey80") +
@@ -94,14 +105,20 @@ on at least {current_dur} days")) +
        subtitle = glue("Comparison to wars from 1823 to 2003. The median war that lasts {current_dur} days goes on to last {round(conditional_median_dur)} days."),
        caption = simple_caption)
 
-svg_png(p2, "../img/0321-cumulative-density", w = 8, h = 5)
+svg_png(p2, "../img/0321-cumulative-distribution", w = 8, h = 5)
 
+# some prediction intervals, conditional on getting to 74 days:
+probs <- c(0.05, 0.1, 0.5, 0.8, 0.9, 0.95)
+more_freqs <- probs * (1 - current_cf) + current_cf
+conditional_dur <- predict(inv_model, data.frame(x = more_freqs))
+tibble(probability = probs, duration = conditional_dur)
+# so 80% of wars that reach 74 days will have a total duration between 95 and 1,752 days
 
 #------------------Compare duration and number of deaths----------------
 p3 <- interstate_wars |> 
   ggplot(aes(x = duration, y = bat_death, label = war_name)) +
   geom_point(aes(colour = start_year), size = 3.5) +
-  geom_text_repel(colour = "grey50", size = 2) +
+  geom_text_repel(colour = "grey50", size = 2, seed = 123) +
   scale_y_log10(label = comma) +
   scale_x_log10(label = comma) +
   scale_colour_viridis_c() +
@@ -121,7 +138,7 @@ p4 <- interstate_wars |>
   ggplot(aes(x = earliest_start, y = duration)) +
   geom_hline(yintercept = current_dur, colour = "red") +
   geom_point(aes(size = bat_death), shape = 1) +
-  geom_text_repel(aes(label = war_name), colour = "steelblue", size = 3) +
+  geom_text_repel(aes(label = war_name), colour = "steelblue", size = 3, seed = 123) +
   annotate("text", x= as.Date("1820-01-01"), y = current_dur + 8, hjust = 0,
            label = "Duration of 2026 US-Israel-Iran war so far", colour = "red") +
   scale_y_log10(label = comma) +

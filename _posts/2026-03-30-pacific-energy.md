@@ -9,7 +9,7 @@ tag:
    - WorkRelated
 description: Pacific island countries are heavily dependent on imported diesel, gas and kerosene for electricity generation and for cooking.
 image: /img/0320-pict-electricity-mix.svg
-socialimage: https:/freerangestats.info/img/0320-pict-electricity-mix
+socialimage: https:/freerangestats.info/img/0320-pict-electricity-mix.png
 category: R
 ---
 
