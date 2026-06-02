@@ -7,12 +7,20 @@ library(rsdmx)
 
 
 #----------Pacific population data for use later--------------------
-pict_pops <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.FJ+NC+PG+SB+VU+GU+KI+MH+FM+NR+MP+PW+AS+CK+PF+NU+PN+WS+TK+TO+TV+WF.MIDYEARPOPEST._T._T?dimensionAtObservation=AllDimensions") |> 
-  as_tibble() |> 
-  clean_names() |> 
-  filter(time_period == 2025) |> 
-  mutate(iso3c = countrycode(geo_pict, origin = "iso2c", destination = "iso3c")) |> 
-  select(population = obs_value, iso3c) 
+if(file.exists("pict_pops.rda")){
+  load("pict_pops.rda")
+} else {
+  pict_pops <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/SPC,DF_POP_PROJ,3.0/A.FJ+NC+PG+SB+VU+GU+KI+MH+FM+NR+MP+PW+AS+CK+PF+NU+PN+WS+TK+TO+TV+WF.MIDYEARPOPEST._T._T?startPeriod=2025&endPeriod=2025&dimensionAtObservation=AllDimensions") |> 
+    as_tibble() |> 
+    clean_names() |> 
+    filter(time_period == 2025) |> 
+    mutate(iso3c = countrycode(geo_pict, origin = "iso2c", destination = "iso3c")) |> 
+    select(population = obs_value, iso3c) 
+
+  save(pict_pops, file ="pict_pops.rda")
+}
+
+
 #-------------SDGs data------------
 
 # download from the Global Database screen of the SDGs database,
@@ -20,20 +28,20 @@ pict_pops <- readSDMX("https://stats-sdmx-disseminate.pacificdata.org/rest/data/
 # select all indicators, all countries, all periods. Size of zip file is about 250MB
 # and it contains an Excel workbook (with one 'data' sheet) for each of the 17 SDGs.
 
-if(!exists("Goal17.xlsx")){
+if(!file.exists("Goal17.xlsx")){
   unzip("../data/20250925043752329_petere@spc.int.zip")
 }
 
-fns <- paste0("Goal", 1:17, ".xlsx")
-
-# A lot of the columns are nearly all empty and have critical info on dimensions (eg Sex, Severity of price levels)
-# but we don't need them if we just want to count number of distinct Indicator-TimePeriod observations that have a 
-# non-NA Value
-
 if(file.exists("raw_sdgs.rda")){
-  load(raw_sdgs)
+  load("raw_sdgs.rda")
 } else {
-  # this takes a long time:
+  fns <- paste0("Goal", 1:17, ".xlsx")
+
+  # A lot of the columns are nearly all empty and have critical info on dimensions (eg Sex, Severity of price levels)
+  # but we don't need them if we just want to count number of distinct Indicator-TimePeriod observations that have a 
+  # non-NA Value
+
+  # this step takes a long time:
   raw_sdgs <- fns |> 
     lapply(read_excel, sheet = "data", range = cell_cols("A:I")) |> 
     bind_rows()
@@ -47,7 +55,18 @@ goals <- tibble(Goal = 1:17, goal_text = c("No poverty", "Zero hunger", "Good he
           "Sustainable cities and communities", "Responsible consumption and production", "Climate action",
           "Life below water", "Life on land", "Peace, justice and strong institutions", "Partnerships for the goals"))
 
-indicator_lookup <- distinct(raw_sdgs, Indicator, SeriesDescription)
+indicator_lookup <- distinct(raw_sdgs, Indicator, SeriesDescription) |> 
+  # many indicator codes have multiple descriptions so we try to tidy them up a bit for generla purposes
+  mutate(short_desc= str_replace(SeriesDescription, "\\(.*\\)", "")) |> 
+  mutate(string_length = str_length(short_desc)) |> 
+  filter(string_length > 0) |> 
+  group_by(Indicator) |> 
+  arrange(string_length) |> 
+  slice(1) |> 
+  ungroup() |> 
+  distinct(Indicator, short_desc)
+
+# count(indicator_lookup, Indicator, sort = TRUE)
 
 picts <- c("Papua New Guinea", "Solomon Islands", "Vanuatu", "Fiji", "New Caledonia",
             "Tonga", "Samoa", "Cook Islands", "French Polynesia", "Tuvalu", "Niue", "Tokelau", "Pitcairn", "American Samoa", "Wallis and Futuna Islands",
@@ -61,7 +80,7 @@ shared_sovereignty <- c("New Caledonia", "Cook Islands", "French Polynesia", "Ni
             "Guam", "Northern Mariana Islands")
 
 
-# Indicators that were chosen as priorities for the Pacific
+# Indicators that were chosen as priorities for the Pacific, published in a red book
 pict_priorities <- c("
   1.1.1 1.2.1 1.2.2 1.3.1 1.4.1
   2.1.1 2.2.1 2.2.2 2.3.2 2.3.1 2.5.1 2.a.1
@@ -268,7 +287,8 @@ svg_png(p3, "../img/0306-pop-v-sdg-data", w = 9, h = 6)
 #--------------------heat map of indicators by PICT-----------------
 library(ggforce)
 
-# split this into at least 2 plots
+# split this into at least 2 plots if want to be usable. But in practice this is never
+# going to be a good presentation plot so I won't put the effort into polishing it
 
 p4 <- d_countries |> 
   filter(is_pict_priority) |> 
@@ -291,3 +311,41 @@ p4 <- d_countries |>
         legend.position = "bottom")
 
 svg_png(p4, "../img/0304-heatmap-picts", w = 25, h = 8)
+
+
+
+#--------------------top and bottom 10 indicators for the Pacific------------------
+
+
+inds1 <- d_countries |> 
+  filter(is_pict_priority) |> 
+  count(Goal, iso3c, Indicator, is_pict) |> 
+  group_by(Goal) |> 
+  complete(iso3c, Indicator, fill = list(n = 0)) |> 
+  left_join(goals, by = "Goal") |> 
+  mutate(goal_text = factor(str_wrap(goal_text, 20), levels = str_wrap(goals$goal_text, 20))) |> 
+  mutate(prop_of_max = n / max(n)) |> 
+  filter(is_pict) |> 
+  ungroup()
+
+inds2 <- inds1 |> 
+  group_by(Indicator) |> 
+  summarise(avg = mean(prop_of_max)) |> 
+  arrange(avg) |> 
+  mutate(low_to_high = 1:n()) |> 
+  mutate(high_to_low = n():1) |> 
+  filter(low_to_high %in% 1:10 | high_to_low %in% 10:1 | avg == 1) |> 
+  left_join(indicator_lookup, by = "Indicator") |> 
+  mutate(short_desc = str_wrap(short_desc, 80),
+         short_desc = fct_reorder(short_desc, avg))
+
+
+# this isn't working. something wrong with my thinking for all of this individual indicator stuff.
+p5 <- inds2 |> 
+  left_join(inds1, by = "Indicator") |>   
+  ggplot(aes(y = short_desc)) +
+  geom_point(aes(x = prop_of_max)) +
+    geom_point(aes(x = avg), colour = "red")
+
+
+svg_png(p5, "../img/0306-hi-low-indicators", w = 10, h = 7)

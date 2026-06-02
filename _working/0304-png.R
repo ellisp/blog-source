@@ -181,6 +181,11 @@ p3 <- pop_anu |>
 
 svg_png(p3, "../img/0304-population", w = 8.5, h = 4.8)
 
+(10.7 / 5.2) ^ (1/25)
+(10.7 / 7.25) ^ (1/14)
+
+log(2) / log(1.03)
+
 #----------------other variables in PNG ED------
 
 pv <- unique(pnged$Variable)

@@ -116,54 +116,12 @@ for(y in 1950:2050){
 
 }
 
-# next step requires imagemagick to be installed. Takes about 30 seconds.
+  # next step requires imagemagick to be installed. Takes about 30 seconds.
 wd <- setwd("tmp_pyramids")
 system('magick -loop -50 -delay 10 *.png "0291-pac_pyramids.gif"')
 setwd(wd)
 
 # move to where the blog expects it
-file.rename("tmp_pyramids/0291-pac_pyramids.gif", 
-            "../img/0291-pac_pyramids.gif")
+# file.rename("tmp_pyramids/0291-pac_pyramids.gif", 
+#             "../img/0291-pac_pyramids.gif")
 
-
-#=============changes in population projections============
-# won't use this in the blog for now until can do one that is fully 
-# reproducible
-# these have been downloaded in previous blog posts
-indicators22  <- read_csv("data-pop-proj-2022/WPP2022_Demographic_Indicators_Medium.csv")|> 
-  filter(Variant == "Medium") |> 
-  select(Location, Time, TPopulation1July) |> 
-  mutate(wpp_year = "2022")
-         
-indicators24 <- read_csv("wpp2024.csv") |> 
-  filter(Variant == "Medium") |> 
-  select(Location, Time, TPopulation1July) |> 
-  mutate(wpp_year = "2024")
-
-indicators_both <- bind_rows(indicators22, indicators24)
-
-picts <- c("Papua New Guinea", "Solomon Islands", "Vanuatu", "Fiji",
-               "Kiribati", "Samoa", "Tonga", "Marshall Islands",
-           "Micronesia (Fed. States of)")
-
-p2 <- indicators_both |> 
-  filter(Location %in% picts) |> 
-  mutate(Location = fct_reorder(Location, -TPopulation1July, .na_rm = TRUE)) |> 
-  ggplot(aes(x = Time, y = TPopulation1July, colour = wpp_year)) +
-  facet_wrap(~Location, scales = "free_y") +
-  annotate("rect", xmin = 2024, xmax = Inf, ymin = -Inf, ymax = Inf,
-           fill = "grey80", alpha = 0.2) +
-  geom_line() +
-  scale_y_continuous(label = comma) +
-  scale_colour_manual(values = spc_cols(1:2)) +
-  theme(legend.position = "right") +
-  labs(x = "",
-       colour = "Year of\nprojection",
-       y = "Population on 1 July ('000s)",
-       title = "UN World Population Prospects", 
-       subtitle = "Projection made in 2024 compared to that made in 2022")
-
-png("../img/0291-selected-picts-forecasts.png", width = 4500, height = 2300, 
-    res = 600, type = "cairo-png")
-print(p2)
-dev.off()
