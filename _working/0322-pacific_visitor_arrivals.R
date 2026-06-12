@@ -129,8 +129,8 @@ summary(fit_ts)
 # log transfofrm, SARIMA (3 1 1)(0 1 1)
 # 6 outliers in the covid months even after taking the xreg in account.
 
-components <- series(fit_ts, c("seats.trend", "seats.seasonal", "seats.irregular"))
-plot(components)
+tscomponents <- series(fit_ts, c("seats.trend", "seats.seasonal", "seats.irregular"))
+plot(tscomponents)
 final(fit_ts)
 
 plot(final(fit_ts))
@@ -142,3 +142,20 @@ summary(m)
 # note transform: log, Easter included as a regressor, one outlier
 
 
+#----------fable version-------
+fit_fb <- samoa_arrivals |> 
+  model(X_13ARIMA_SEATS(
+    arrivals ~ xreg(covid_reg)
+  ))
+
+report(fit_fb)
+summary(fit_ts)
+# two models are identical eg log transform, same SARIMA parameters, etc
+
+plot(components(fit_fb)$trend, tscomponents[, 1])
+
+plot(components(fit_fb)$season_adjust, final(fit_ts))
+
+fit_fb |> 
+  components() |> 
+  autoplot()
