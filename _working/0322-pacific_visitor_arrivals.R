@@ -9,6 +9,7 @@ library(seasonal)
 library(tsibble)
 library(fable)
 library(feasts)
+library(ggtext)
 
 extract_date <- function(messy_date){
   tibble(path = messy_date) |>
@@ -84,8 +85,12 @@ View(pdf_tbl)
 # at a time from Table 1 of the Excel tables. The May 2023 Excel
 # file goes back to 2017 January (although the rows are hidden)
 
-
-x <- read_excel("samoa_pdfs/May_23.xlsx", sheet = "Table 1", 
+fn <- "May_23.xlsx"
+if(!file.exists(fn)){
+  download.file("https://sbs.gov.ws/images/sbs-documents/social/Arrival/2023/May_23.xlsx",
+                destfile = fn, mode = "wb")
+}
+x <- read_excel(fn, sheet = "Table 1", 
                  range = "D48:D130",
                  col_names = "arrivals") |> 
   drop_na() |> 
@@ -101,40 +106,43 @@ samoa_arrivals <- pdf_tbl |>
   mutate(date_month = yearmonth(date)) |> 
   as_tsibble(index = date_month)
 
-# Create Easter regressor as a ts object 
-easter_reg <- genhol(easter, start = -4, end = 4,
-                     frequency = 12)
-
-samoa_arrivals$easter <- as.numeric(window(easter_reg, 
-                           start = c(2017, 1), 
-                           end = c(2026, 4)))
-
 covid_reg <- ts(
   as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
     seq(as.Date("2020-04-01"), as.Date("2022-07-01"), by = "month")),
   start     = c(2017, 1),
   frequency = 12
 )
+
+war_reg <- ts(
+  as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
+    seq(as.Date("2026-03-01"), as.Date("2026-07-01"), by = "month")),
+  start     = c(2017, 1),
+  frequency = 12
+)
 #-----------------------analysis----------------
+the_caption = "Source: Samoa Bureau of Statistics"
+
+p1 <- ggplot(samoa_arrivals, aes(x = date, y = arrivals)) +
+  geom_line() +
+  scale_y_continuous(label = comma) +
+  labs(x = "",
+       y = "Visitor arrivals",
+      title = "Visitor arrivals per month to Samoa",
+    subtitle = "Unadjusted originals",
+  caption = the_caption)
+
+svg_png(p1, "../img/0322-original", w = 10, h = 5)
 
 sa_ts <- ts(samoa_arrivals$arrivals, frequency = 12, start = c(2017, 1))
 
-tail(samoa_arrivals)
 
-ggplot(samoa_arrivals, aes(x = date, y = arrivals)) +
-  geom_line()
+fit_ts_war <- seas(sa_ts, xreg = cbind(covid_reg, war_reg))
+summary(fit_ts_war)
 
 fit_ts <- seas(sa_ts, xreg = covid_reg)
 summary(fit_ts)
 # log transfofrm, SARIMA (3 1 1)(0 1 1)
 # 6 outliers in the covid months even after taking the xreg in account.
-
-tscomponents <- series(fit_ts, c("seats.trend", "seats.seasonal", "seats.irregular"))
-plot(tscomponents)
-final(fit_ts)
-
-plot(final(fit_ts))
-coef(fit_ts)
 
 # Another examplefor comparison
 m <- seas(AirPassengers)
@@ -152,10 +160,35 @@ report(fit_fb)
 summary(fit_ts)
 # two models are identical eg log transform, same SARIMA parameters, etc
 
-plot(components(fit_fb)$trend, tscomponents[, 1])
+plot(components(fit_fb)$trend, tscomponents[, 3])
+abline(0, 1)
+# identical
 
 plot(components(fit_fb)$season_adjust, final(fit_ts))
+abline(0, 1)
+# identical
 
 fit_fb |> 
   components() |> 
-  autoplot()
+  autoplot() |> 
+  svg_png("../img/0322-autoplot", w = 10, h = 6)
+
+p_final <- fit_fb |> 
+  components() |> 
+  ggplot(aes(x = date_month, y = season_adjust)) +
+  geom_line() +
+  geom_line(aes(y = trend), colour = "steelblue", linetype = 2) + 
+#  geom_point(aes(y = arrivals)) +
+  annotate("text", x = as.Date("2020-6-01"), y = 7000, hjust = 0, size = 2.8, colour = "steelblue", 
+           label = str_wrap("'Trend' is of arrivals after adjusting for Covid, so less relevant in these years.", 30)) +
+  annotate("text", x = as.Date("2024-6-01"), y = 16000, hjust = 0, size = 2.8, colour = "steelblue", 
+           label = str_wrap("After recovering from Covid, the trend has been slow growth with a fair bit of noise, but no obvious impact yet from the Iran-related fuel crisis.", 45)) +
+  scale_y_continuous(label = comma) +
+  labs(x = "",
+       y ="Visitor arrivals",
+      title = "Visitor arrivals per month to Samoa",
+      subtitle = "Seasonally adjusted <span style='color:steelblue'>and trend</span>",
+    caption = "Source: data from Samoa Bureau of Statistics. Seasonal adjustment by freerangestats.info.") +
+  theme(plot.subtitle = element_markdown())
+
+svg_png(p_final, "../img/0322-final-presentation", w = 10, h = 5)
