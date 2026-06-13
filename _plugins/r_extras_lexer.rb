@@ -1,27 +1,32 @@
-# _plugins/r_tidyverse_lexer.rb
+# _plugins/r_extras_lexer.rb
 #
-# A Rouge lexer for R with tidyverse (and related) vocabulary highlighted.
+# A Rouge lexer for R with tidyverse + time-series / modelling vocabulary highlighted.
 # Drop this file into your Jekyll site's _plugins/ directory.
 #
-# Usage: standard ```r fenced blocks are picked up automatically because
-# this subclass registers itself under the same 'r' tag as the base lexer.
+# IMPORTANT:
+# - Remove/rename any other custom R lexers that also register `tag 'r'`
+#   (e.g. r_tidyverse_lexer.rb), otherwise only one may take effect.
+# - This lexer highlights selected package vocabulary as Name::Function.
 #
-# Strategy: use Rouge's `prepend :root do ... end` DSL (same pattern as the
-# built-in CPP and JSX lexers) to insert rules that fire *before* the base
-# R lexer's generic identifier rule, so tidyverse names get Name::Function
-# rather than plain Name.
-#
-# Packages covered:
+# Covered packages:
 #   dplyr, tidyr, purrr, tibble, readr, stringr, forcats, lubridate,
-#   ggplot2 (geoms/stats/scales/themes/guides), rlang, tidyselect, glue
+#   ggplot2, janitor, rlang, glue,
+#   forecast, stats, mgcv, boot, ggrepel, seasonal, fable, tsibble
+#
+# Notes:
+# - Pipe operators like %>% are highlighted as Operator.
+# - Short mgcv helpers s(), te(), ti(), t2() are only highlighted when
+#   followed by "(" to avoid false positives.
+# - Most function names are also only highlighted when followed by "(".
+#   This avoids over-highlighting variable names like `time` or `forecast`.
 
 require 'rouge'
 
 module Rouge
   module Lexers
-    class RTidyverse < R
+    class RCombined < R
       title     'R'
-      desc      'R with tidyverse vocabulary highlighted'
+      desc      'R with tidyverse, forecasting, time-series, and modelling vocabulary highlighted'
       tag       'r'
       aliases   'R', 'rscript'
       filenames '*.r', '*.R'
@@ -194,7 +199,7 @@ module Rouge
         geom_point geom_line geom_bar geom_col geom_histogram geom_density
         geom_boxplot geom_violin geom_jitter geom_dotplot
         geom_smooth geom_abline geom_hline geom_vline geom_segment geom_curve
-        geom_ribbon geom_area geom_polygon geom_map
+        geom_ribbon geom_area geom_polygon geom_map geom_rug
         geom_tile geom_raster geom_rect
         geom_text geom_label
         geom_contour geom_contour_filled geom_density_2d geom_density_2d_filled
@@ -244,6 +249,13 @@ module Rouge
       ].freeze
 
       # ------------------------------------------------------------------
+      # janitor
+      # ------------------------------------------------------------------
+      JANITOR = %w[
+        clean_names
+      ].freeze
+
+      # ------------------------------------------------------------------
       # rlang / tidy eval
       # ------------------------------------------------------------------
       RLANG = %w[
@@ -271,29 +283,147 @@ module Rouge
         glue glue_data glue_collapse glue_sql glue_data_sql glue_safe
       ].freeze
 
-      # Combined word list (deduplicated)
-      TIDYVERSE_WORDS = (
-        DPLYR + TIDYR + PURRR + TIBBLE + READR +
-        STRINGR + FORCATS + LUBRIDATE + GGPLOT2 + RLANG + GLUE
-      ).uniq.freeze
-
-      # Pipe operators — matched as Operator tokens
-      PIPE_OPS = [
-        '%>%',   # magrittr pipe
-        '%T>%',  # magrittr tee pipe
-        '%<>%',  # magrittr assignment pipe
-        '%$%',   # magrittr exposition pipe
-        # Note: |> (native pipe) is already handled by the base R lexer as Operator
+      # ------------------------------------------------------------------
+      # forecast
+      # ------------------------------------------------------------------
+      FORECAST = %w[
+        forecast
+        auto.arima Arima arimaorder
+        ets bats tbats
+        nnetar tslm thetaf croston
+        meanf naive snaive rwf
+        msts fourier seasonplot
+        checkresiduals accuracy residuals
+        ndiffs nsdiffs
+        BoxCox InvBoxCox BoxCox.lambda
+        dm.test
       ].freeze
 
-      TIDYVERSE_RE = /\b(#{Regexp.union(TIDYVERSE_WORDS)})\b/
-      PIPE_RE      = Regexp.union(PIPE_OPS.map { |op| Regexp.new(Regexp.escape(op)) })
+      # ------------------------------------------------------------------
+      # stats
+      # curated subset
+      # ------------------------------------------------------------------
+      STATS = %w[
+        ts window start end frequency deltat time cycle lag
+        aggregate ts.intersect ts.union
+        stl decompose spec.ar
+        acf pacf ccf
+        arima arima.sim makeARIMA
+        HoltWinters
+        lm glm nls loess
+        predict fitted residuals coef vcov
+        model.frame model.matrix terms formula update
+        tsdiag
+        optim optimize nlm
+        spline smooth.spline approx approxfun
+        density ecdf
+        dist hclust kmeans
+        cor cov var sd median quantile IQR mad
+        rnorm dnorm pnorm qnorm
+        runif dunif punif qunif
+        rpois dpois ppois qpois
+        rgamma dgamma pgamma qgamma
+        rbinom dbinom pbinom qbinom
+        rexp dexp pexp qexp
+        t.test wilcox.test ks.test chisq.test fisher.test
+        shapiro.test binom.test prop.test cor.test
+        anova aov TukeyHSD
+        p.adjust p.adjust.methods
+        poly smooth embed
+      ].freeze
 
-      # `prepend :state do ... end` is the correct Rouge DSL for inserting
-      # rules at the top of an inherited state — used by CPP, JSX, TSX etc.
+      # ------------------------------------------------------------------
+      # mgcv
+      # ------------------------------------------------------------------
+      MGCV = %w[
+        gam bam gamm
+        gam.check choose.k concurvity
+        vis.gam plot.gam predict.gam anova.gam
+        smoothCon linear.functional.terms
+      ].freeze
+
+      MGCV_SHORT = %w[
+        s te ti t2
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # boot
+      # ------------------------------------------------------------------
+      BOOT = %w[
+        boot boot.ci tsboot censboot
+        cv.glm jack.after.boot boot.array
+        envelope empinf
+        tilt.boot saddle
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # ggrepel
+      # ------------------------------------------------------------------
+      GGREPEL = %w[
+        geom_text_repel geom_label_repel
+        position_nudge_repel
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # seasonal
+      # ------------------------------------------------------------------
+      SEASONAL = %w[
+        seas final series out static update
+        monthplot yearplot view identify
+        inspect udg
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # fable
+      # ------------------------------------------------------------------
+      FABLE = %w[
+        ARIMA ETS TSLM NNETAR THETA CROSTON
+        decomposition_model combination_model
+        forecast accuracy generate hilo unpack_hilo
+        components gg_tsresiduals
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # tsibble
+      # ------------------------------------------------------------------
+      TSIBBLE = %w[
+        tsibble as_tsibble is_tsibble
+        build_tsibble update_tsibble
+        index key key_vars index_var
+        index_by group_by_key
+        filter_index
+        interval has_gaps scan_gaps count_gaps fill_gaps
+        is_regular is_ordered
+        yearweek yearmonth yearquarter
+        new_data stretch_tsibble
+      ].freeze
+
+      # ------------------------------------------------------------------
+      # Combined lists
+      # ------------------------------------------------------------------
+      ALL_WORDS = (
+        DPLYR + TIDYR + PURRR + TIBBLE + READR + STRINGR + FORCATS +
+        LUBRIDATE + GGPLOT2 + JANITOR + RLANG + GLUE +
+        FORECAST + STATS + MGCV + BOOT + GGREPEL + SEASONAL +
+        FABLE + TSIBBLE
+      ).uniq.freeze
+
+      # Pipe operators
+      PIPE_OPS = [
+        '%>%',
+        '%T>%',
+        '%<>%',
+        '%$%'
+      ].freeze
+
+      PIPE_RE       = Regexp.union(PIPE_OPS.map { |op| Regexp.new(Regexp.escape(op)) })
+      MGCV_SHORT_RE = /\b(#{Regexp.union(MGCV_SHORT)})\b(?=\s*\()/
+      FUNCTION_RE   = /\b(#{Regexp.union(ALL_WORDS)})\b(?=\s*\()/
+
       prepend :root do
-        rule PIPE_RE,      Operator
-        rule TIDYVERSE_RE, Name::Function
+        rule PIPE_RE, Operator
+        rule MGCV_SHORT_RE, Name::Function
+        rule FUNCTION_RE, Name::Function
       end
     end
   end
