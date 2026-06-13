@@ -10,6 +10,7 @@ library(tsibble)
 library(fable)
 library(feasts)
 library(ggtext)
+library(scales)
 
 extract_date <- function(messy_date){
   tibble(path = messy_date) |>
@@ -42,6 +43,7 @@ extract_date(test)
 # For the more recent years no Excel tables are published, so need
 # to use the PDFs and extract total from there
 
+pdf_dir <- "samoa_pdfs"
 tbl <- tibble(local_path = list.files(pdf_dir, pattern = ".pdf$", full.names = TRUE))
 
 parse_pdf_visitors <- function(path) {
@@ -63,11 +65,8 @@ parse_pdf_visitors <- function(path) {
   NA_integer_
 }
 
-found <- tbl |> filter(file.exists(local_path))
-if (nrow(found) == 0) {
-  message("  [INFO] No local PDFs found in '", pdf_dir, "/'. Returning empty.")
-  return(tibble())
-}
+found <- tbl |> 
+  filter(file.exists(local_path))
 
 message("  Parsing ", nrow(found), " local PDFs...")
 pdf_tbl <- found |>
@@ -77,8 +76,6 @@ pdf_tbl <- found |>
   })) |>
   filter(!is.na(arrivals)) |>
   mutate(date = extract_date(local_path))
-
-View(pdf_tbl)
 
 #-----------------Excel versions------------
 # For May 2023 and earlier we can get the data for multiple months
@@ -106,6 +103,7 @@ samoa_arrivals <- pdf_tbl |>
   mutate(date_month = yearmonth(date)) |> 
   as_tsibble(index = date_month)
 
+# Covid time series indicator to use as a regressor
 covid_reg <- ts(
   as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
     seq(as.Date("2020-04-01"), as.Date("2022-07-01"), by = "month")),
@@ -113,6 +111,7 @@ covid_reg <- ts(
   frequency = 12
 )
 
+# Iran war time series indicator
 war_reg <- ts(
   as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
     seq(as.Date("2026-03-01"), as.Date("2026-07-01"), by = "month")),
@@ -160,13 +159,25 @@ report(fit_fb)
 summary(fit_ts)
 # two models are identical eg log transform, same SARIMA parameters, etc
 
-plot(components(fit_fb)$trend, tscomponents[, 3])
-abline(0, 1)
-# identical
 
-plot(components(fit_fb)$season_adjust, final(fit_ts))
-abline(0, 1)
-# identical
+plot_comp <- function(){
+  par(mfrow = c(1, 2), bty = "l")
+  plot(components(fit_fb)$trend, trend(fit_ts), main = "Comparison of trend",
+        xlab = "Fit with fabletools::model(X_13ARIMA_SEATS...",
+        ylab = "Fit with seasonal::seas")
+  abline(0, 1)
+  grid()
+  # identical
+
+  plot(components(fit_fb)$season_adjust, final(fit_ts), main = "Comparison of seasonally adjusted",
+        xlab = "Fit with fabletools::model(X_13ARIMA_SEATS...",
+        ylab = "Fit with seasonal::seas")
+  abline(0, 1)
+  grid()
+  # identical
+}
+
+svg_png(plot_comp, "../img/0322-comparisons", w = 9, h = 5)
 
 fit_fb |> 
   components() |> 
