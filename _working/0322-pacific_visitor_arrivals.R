@@ -12,6 +12,7 @@ library(feasts)
 library(ggtext)
 library(scales)
 
+#' Extract date from messy filenames
 extract_date <- function(messy_date){
   tibble(path = messy_date) |>
   mutate(
@@ -39,9 +40,11 @@ test <- c("samoa_pdfs/April_25.pdf", "samoa_pdfs/Feb_25.pdf", "samoa_pdfs/Feb_26
 
 extract_date(test)
 
-#-------------------PDFs------------------
+#-------------------PDFs for recent data------------------
 # For the more recent years no Excel tables are published, so need
 # to use the PDFs and extract total from there
+# These had to be downloaded by hand - nothing I tried was able to automate
+# that.
 
 pdf_dir <- "samoa_pdfs"
 tbl <- tibble(local_path = list.files(pdf_dir, pattern = ".pdf$", full.names = TRUE))
@@ -54,8 +57,7 @@ parse_pdf_visitors <- function(path) {
   if (is.null(txt)) return(NA_integer_)
   full_text <- paste(txt, collapse = "\n")
   patterns <- c(
-    "totaling[^0-9(]{0,10}\\(?([0-9,]+)\\)?",
-    "totalling[^0-9]{0,10}([0-9,]+)"
+    "stood at [^0-9(]{0,10}\\(?([0-9,]+)\\)?"
   )
   for (pat in patterns) {
     m <- str_match(full_text, pat)[, 2]
@@ -65,19 +67,21 @@ parse_pdf_visitors <- function(path) {
   NA_integer_
 }
 
+# path <- found[1, ]$local_path
+
 found <- tbl |> 
   filter(file.exists(local_path))
 
 message("  Parsing ", nrow(found), " local PDFs...")
 pdf_tbl <- found |>
-  mutate(arrivals = map_int(local_path, \(p) {
+  mutate(visitors = map_int(local_path, \(p) {
     message("  ", basename(p))
     parse_pdf_visitors(p)
   })) |>
-  filter(!is.na(arrivals)) |>
+  filter(!is.na(visitors)) |>
   mutate(date = extract_date(local_path))
 
-#-----------------Excel versions------------
+#-----------------Excel versions for older data------------
 # For May 2023 and earlier we can get the data for multiple months
 # at a time from Table 1 of the Excel tables. The May 2023 Excel
 # file goes back to 2017 January (although the rows are hidden)
@@ -89,24 +93,44 @@ if(!file.exists(fn)){
 }
 x <- read_excel(fn, sheet = "Table 1", 
                  range = "D48:D130",
-                 col_names = "arrivals") |> 
+                 col_names = "visitors") |> 
   drop_na() |> 
-  pull(arrivals)
+  pull(visitors)
 
-historical <- tibble(arrivals = x, 
+historical <- tibble(visitors = x, 
                date = seq(as.Date("2017-01-01"), as.Date("2023-05-01"), by = "month"))
 
-samoa_arrivals <- pdf_tbl |> 
-  select(date, arrivals) |>
+#-----------combine and test-----------------------
+samoa_visitors <- pdf_tbl |> 
+  select(date, visitors) |>
   bind_rows(historical) |> 
   arrange(date) |> 
   mutate(date_month = yearmonth(date)) |> 
   as_tsibble(index = date_month)
 
+
+# Test - some hand picked test cases, 3 from PDFs and 3 from the Excel
+samoa_test <- tribble(~date, ~correct_visitors,
+                      "2023-08-01", 16471,
+                      "2024-04-01", 12644,
+                      "2024-08-01", 17248,
+                      "2018-02-01", 7413,
+                      "2020-12-01", 195,
+                      "2022-06-01", 866) |> 
+  mutate(date = as.Date(date))
+
+stopifnot(
+  samoa_test |> 
+    anti_join(samoa_visitors, by = c("date", "correct_visitors" = "visitors")) |> 
+    nrow() == 0
+)
+
+#----------------x regressor variables-----------------
+
 # Covid time series indicator to use as a regressor
 covid_reg <- ts(
   as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
-    seq(as.Date("2020-04-01"), as.Date("2022-07-01"), by = "month")),
+    seq(as.Date("2020-04-01"), as.Date("2022-09-01"), by = "month")),
   start     = c(2017, 1),
   frequency = 12
 )
@@ -121,7 +145,7 @@ war_reg <- ts(
 #-----------------------analysis----------------
 the_caption = "Source: Samoa Bureau of Statistics"
 
-p1 <- ggplot(samoa_arrivals, aes(x = date, y = arrivals)) +
+p1 <- ggplot(samoa_visitors, aes(x = date, y = visitors)) +
   geom_line() +
   scale_y_continuous(label = comma) +
   labs(x = "",
@@ -132,7 +156,7 @@ p1 <- ggplot(samoa_arrivals, aes(x = date, y = arrivals)) +
 
 svg_png(p1, "../img/0322-original", w = 10, h = 5)
 
-sa_ts <- ts(samoa_arrivals$arrivals, frequency = 12, start = c(2017, 1))
+sa_ts <- ts(samoa_visitors$visitors, frequency = 12, start = c(2017, 1))
 
 
 fit_ts_war <- seas(sa_ts, xreg = cbind(covid_reg, war_reg))
@@ -140,7 +164,7 @@ summary(fit_ts_war)
 
 fit_ts <- seas(sa_ts, xreg = covid_reg)
 summary(fit_ts)
-# log transfofrm, SARIMA (3 1 1)(0 1 1)
+# log transform, SARIMA (3 1 1)(0 1 1)
 # 6 outliers in the covid months even after taking the xreg in account.
 
 # Another examplefor comparison
@@ -150,9 +174,9 @@ summary(m)
 
 
 #----------fable version-------
-fit_fb <- samoa_arrivals |> 
+fit_fb <- samoa_visitors |> 
   model(X_13ARIMA_SEATS(
-    arrivals ~ xreg(covid_reg)
+    visitors ~ xreg(covid_reg)
   ))
 
 report(fit_fb)
@@ -189,9 +213,9 @@ p_final <- fit_fb |>
   ggplot(aes(x = date_month, y = season_adjust)) +
   geom_line() +
   geom_line(aes(y = trend), colour = "steelblue", linetype = 2) + 
-#  geom_point(aes(y = arrivals)) +
+#  geom_point(aes(y = visitors)) +
   annotate("text", x = as.Date("2020-6-01"), y = 7000, hjust = 0, size = 2.8, colour = "steelblue", 
-           label = str_wrap("'Trend' is of arrivals after adjusting for Covid, so less relevant in these years.", 30)) +
+           label = str_wrap("'Trend' is of visitor arrivals after adjusting for Covid, so less relevant in these years.", 30)) +
   annotate("text", x = as.Date("2024-6-01"), y = 16000, hjust = 0, size = 2.8, colour = "steelblue", 
            label = str_wrap("After recovering from Covid, the trend has been slow growth with a fair bit of noise, but no obvious impact yet from the Iran-related fuel crisis.", 45)) +
   scale_y_continuous(label = comma) +
