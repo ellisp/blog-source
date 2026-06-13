@@ -249,10 +249,10 @@ module Rouge
       ].freeze
 
       # ------------------------------------------------------------------
-      # janitor
+      # misc
       # ------------------------------------------------------------------
-      JANITOR = %w[
-        clean_names
+      MISC = %w[
+        clean_names data.frame
       ].freeze
 
       # ------------------------------------------------------------------
@@ -403,7 +403,7 @@ module Rouge
       # ------------------------------------------------------------------
       ALL_WORDS = (
         DPLYR + TIDYR + PURRR + TIBBLE + READR + STRINGR + FORCATS +
-        LUBRIDATE + GGPLOT2 + JANITOR + RLANG + GLUE +
+        LUBRIDATE + GGPLOT2 + MISC + RLANG + GLUE +
         FORECAST + STATS + MGCV + BOOT + GGREPEL + SEASONAL +
         FABLE + TSIBBLE
       ).uniq.freeze
