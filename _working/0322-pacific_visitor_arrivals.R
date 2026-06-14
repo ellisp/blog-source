@@ -44,7 +44,8 @@ extract_date(test)
 # For the more recent years no Excel tables are published, so need
 # to use the PDFs and extract total from there
 # These had to be downloaded by hand - nothing I tried was able to automate
-# that.
+# that. Download from https://www.sbs.gov.ws/migration/ and save
+# in a subfolder /samoa_pdfs/.
 
 pdf_dir <- "samoa_pdfs"
 tbl <- tibble(local_path = list.files(pdf_dir, pattern = ".pdf$", full.names = TRUE))
@@ -109,11 +110,12 @@ samoa_visitors <- pdf_tbl |>
   as_tsibble(index = date_month)
 
 
-# Test - some hand picked test cases, 3 from PDFs and 3 from the Excel
+# Test - some hand picked test cases, 4 from PDFs and 3 from the Excel
 samoa_test <- tribble(~date, ~correct_visitors,
                       "2023-08-01", 16471,
                       "2024-04-01", 12644,
                       "2024-08-01", 17248,
+                      "2026-04-01", 14188,
                       "2018-02-01", 7413,
                       "2020-12-01", 195,
                       "2022-06-01", 866) |> 
@@ -130,7 +132,7 @@ stopifnot(
 # Covid time series indicator to use as a regressor
 covid_reg <- ts(
   as.numeric(seq(as.Date("2017-01-01"), as.Date("2029-04-01"), by = "month") %in%
-    seq(as.Date("2020-04-01"), as.Date("2022-09-01"), by = "month")),
+    seq(as.Date("2020-04-01"), as.Date("2022-07-01"), by = "month")),
   start     = c(2017, 1),
   frequency = 12
 )
@@ -164,7 +166,7 @@ summary(fit_ts_war)
 
 fit_ts <- seas(sa_ts, xreg = covid_reg)
 summary(fit_ts)
-# log transform, SARIMA (3 1 1)(0 1 1)
+# log transform, SARIMA (1 1 0)(0 1 1)
 # 6 outliers in the covid months even after taking the xreg in account.
 
 # Another examplefor comparison
@@ -208,21 +210,26 @@ fit_fb |>
   autoplot() |> 
   svg_png("../img/0322-autoplot", w = 10, h = 6)
 
-p_final <- fit_fb |> 
+comp_data <- fit_fb |> 
   components() |> 
+  # the 'trend' that comes straight from the decomposition does
+  # not adjust ofr the Covid coefficient and looks pretty weird
+  # so it is more intuitive to present it after adjustment for
+  # Covid, which we need to calculate by multiplying (because of
+  # the log transform that SEATS used autoamtically):
+  mutate(covid = as.numeric(covid_reg)[1:nrow(samoa_visitors)],
+         trend_adj = trend * exp(covid * coef(fit_ts)[1])) 
+
+p_final <- comp_data|> 
   ggplot(aes(x = date_month, y = season_adjust)) +
-  geom_line() +
-  geom_line(aes(y = trend), colour = "steelblue", linetype = 2) + 
-#  geom_point(aes(y = visitors)) +
-  annotate("text", x = as.Date("2020-6-01"), y = 7000, hjust = 0, size = 2.8, colour = "steelblue", 
-           label = str_wrap("'Trend' is of visitor arrivals after adjusting for Covid, so less relevant in these years.", 30)) +
-  annotate("text", x = as.Date("2024-6-01"), y = 16000, hjust = 0, size = 2.8, colour = "steelblue", 
-           label = str_wrap("After recovering from Covid, the trend has been slow growth with a fair bit of noise, but no obvious impact yet from the Iran-related fuel crisis.", 45)) +
+  geom_line(linewidth = 1.3) +
+  geom_line(aes(y = trend_adj), colour = "steelblue", alpha = 0.9, linewidth = 1.2) + 
+  geom_point(aes(y = visitors), colour = "grey70") +
   scale_y_continuous(label = comma) +
   labs(x = "",
        y ="Visitor arrivals",
       title = "Visitor arrivals per month to Samoa",
-      subtitle = "Seasonally adjusted <span style='color:steelblue'>and trend</span>",
+      subtitle = "<span style='color:grey60'>Original</span>, seasonally adjusted <span style='color:steelblue'>and trend (adjusted for Covid period).</span>",
     caption = "Source: data from Samoa Bureau of Statistics. Seasonal adjustment by freerangestats.info.") +
   theme(plot.subtitle = element_markdown())
 

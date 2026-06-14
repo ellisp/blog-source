@@ -242,7 +242,7 @@ module Rouge
         guides guide_legend guide_colourbar guide_colorbar
         guide_bins guide_coloursteps guide_none
         annotation_custom annotation_logticks annotation_map annotation_raster
-        annotate
+        annotate autoplot
         position_dodge position_dodge2 position_jitter position_jitterdodge
         position_nudge position_stack position_fill position_identity
         ggsave last_plot expansion
