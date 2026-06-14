@@ -3,10 +3,10 @@ layout: post
 title: Seasonal adjustment
 date: 2026-06-14
 tag: 
-   - TimeSeries
+   - Timeseries
    - Tourism
    - WorkRelated
-description: Seasonal adjustment is easy but getting hold of data can be hard. In this case I wrangle Samoa's monthly visitor arrivals data from 2017 to present and then use the seas and fable R packages to seasonally adjust it and ask if there is an impact from Iran war fuel crisis (there isn't).
+description: Seasonal adjustment is easy but getting hold of data can be hard. In this case I wrangle Samoa's monthly visitor arrivals data from 2017 to present and then use the seas and fable R packages to seasonally adjust it and ask if there is an impact from Iran war fuel crisis (there isn't evidence of one yet).
 image: /img/0322-final-presentation.svg
 socialimage: https:/freerangestats.info/img/0322-final-presentation.png
 category: R
@@ -286,7 +286,7 @@ Box-Ljung (no autocorr.): 26.65   Shapiro (normality): 0.9908
 
 Here we see that the number of week days in a month and the moving Easter holiday are indeed in the final model, without me having to have asked for them to be checked. Easter has a positive impact on this air passengers series (1949 to 1960), and the number of week days in a month has a smaller negative impact.
 
-So I refit the model without the war regressor and get an essentially identical result:
+So after that Easter-checking digression, I refit the model for my Samoa visitor arrivals without the war regressor and get an essentially identical result:
 
 ```
 > fit_ts <- seas(sa_ts, xreg = covid_reg)
@@ -370,14 +370,14 @@ comp_data|>
   scale_y_continuous(label = comma) +
   labs(x = "",
        y ="Visitor arrivals",
-      title = "Visitor arrivals per month to Samoa",
-      subtitle = "<span style='color:grey60'>Original</span>, seasonally adjusted <span style='color:steelblue'>and trend (adjusted for Covid period).</span>",
-    caption = "Source: data from Samoa Bureau of Statistics. Seasonal adjustment by freerangestats.info.") +
+       title = "Visitor arrivals per month to Samoa",
+       subtitle = "<span style='color:grey60'>Original</span>, seasonally adjusted <span style='color:steelblue'>and trend (adjusted for Covid period).</span>",
+       caption = "Source: data from Samoa Bureau of Statistics. Seasonal adjustment by freerangestats.info.") +
   theme(plot.subtitle = element_markdown())
 {% endhighlight %}
 
-What insight do we have? Well, not a lot really, other than the blindingly obvious trends of the devastation to the industry of Covid and the slow and noisy growth trend since then. We are at least well placed to make commentary on the impact of the fuel crisis on tourism, and can say that there isn't any evident yet. If and when we do see the impact, we'll be able to talk about in terms of trends and random variation, after having removed the seasonal element. So that's useful.
+After all that, what insight do we have? Well, not a lot really, other than the blindingly obvious trends of the devastation to the industry of Covid and the slow and noisy growth trend since then. We are at least well placed to make commentary on the impact of the fuel crisis on tourism, and can say that there isn't any evident yet. If and when we do see the impact, we'll be able to talk about in terms of trends and random variation, after having removed the seasonal element. So that's useful.
 
-Well, that's all. Perhaps I'll get around in a later post to adding the other Pacific island countries with monthly tourism data&mdashFiji, Vanuatu, Cook Islands, French Polynesia being the key ones I'm aware of.
+Well, that's all. Perhaps I'll get around in a later post to adding the other Pacific island countries with monthly tourism data&mdash;Fiji, Vanuatu, Cook Islands, French Polynesia being the key ones I'm aware of.
 
 

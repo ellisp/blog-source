@@ -252,7 +252,12 @@ module Rouge
       # misc
       # ------------------------------------------------------------------
       MISC = %w[
-        clean_names data.frame
+        clean_names data.frame nrow summary download.file unzip print assign 
+        fread stat_seas stat_stl library file.exists st_read table 
+        svytable svydesign colnames rownames nrow ncol mosaic 
+        kable kable_styling match.arg lapply sapply as.data.frame
+        do.call rbind cbind set.seed
+        dagify geom_dag_edges geom_dag_node geom_dag_text
       ].freeze
 
       # ------------------------------------------------------------------
@@ -380,7 +385,7 @@ module Rouge
         ARIMA ETS TSLM NNETAR THETA CROSTON
         decomposition_model combination_model
         forecast accuracy generate hilo unpack_hilo
-        components gg_tsresiduals
+        components gg_tsresiduals model report xreg
       ].freeze
 
       # ------------------------------------------------------------------
