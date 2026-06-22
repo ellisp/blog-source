@@ -45,7 +45,7 @@ pm_table |>
   pull(pm)
 
 #--------------Draw plots-------------
-the_title <- "Prime Ministers of the United Kingdom, 1721 to 2026"
+the_title <- "Prime ministers of the United Kingdom, 1721 to 2026"
 
 p1 <- pm_table |> 
   ggplot(aes(y = pm, yend = pm)) +
@@ -67,13 +67,13 @@ p1 <- pm_table |>
         panel.border = element_blank(), 
         axis.ticks.y = element_blank())
 
-svg_png(p1, "../img/0323-gannt", w = 10, h = 6)
+svg_png(p1, "../img/0323-gantt", w = 10, h = 6)
 
 
 p2 <- pm_table |> 
   ggplot(aes(x = duration)) +
-  geom_density() +
-  geom_rug() +
+  geom_density(colour = "steelblue") +
+  geom_rug(colour = "steelblue") +
   scale_x_continuous(label = comma) +
   labs(x = "Duration in days",
        title = the_title)
@@ -83,8 +83,8 @@ svg_png(p2, "../img/0323-density", w = 10, h = 6)
 
 p3 <- pm_table |> 
   ggplot(aes(x = start, y = duration)) +
-  geom_smooth(method = "gam") +
-  geom_point() +
+  geom_smooth(method = "gam", colour = "white") +
+  geom_point(colour = "steelblue") +
   scale_y_sqrt(breaks = c(0.5, 1, 1:4 * 2) * 1000, label = comma) +
   labs(x = "Starting date of premiership",
        y = "Duration in days",
@@ -94,25 +94,24 @@ svg_png(p3, "../img/0323-over-time", w = 10, h = 6)
 
 
 cumulative_pms <- pm_table |> 
-  mutate(start_year = year(start)) |> 
-  count(start_year) |> 
-  full_join(tibble(start_year = 1721:2026)) |> 
-  mutate(n = replace_na(n, 0)) |> 
-  arrange(start_year) |> 
-  mutate(rolling_starts = slide_sum(n, before = 9),
-         rolling_pms = ifelse(start_year > 1730, 
-                              rolling_starts + 1, 
-                              rolling_starts)) 
-
+  full_join(tibble(start = seq(from = min(pm_table$start), 
+                               to = max(pm_table$end), 
+                               by = "1 day"))) |> 
+  arrange(start) |> 
+  mutate(starting_pms = if_else(is.na(pm), 0 , 1),
+         rolling_pms = pmax(1, slide_sum(starting_pms, before = 3653)))
 
 
 p4 <- cumulative_pms |> 
-  ggplot(aes(x = start_year, y = rolling_pms)) +
-  geom_line(colour = "grey80") +
-  geom_point(size = 0.8) +
+  ggplot(aes(x = start, y = rolling_pms)) +
+  geom_line(colour = "steelblue") +
   scale_y_continuous(breaks = 0:max(cumulative_pms$rolling_pms)) +
   labs(x = "",
        y = "Number of prime ministers in past 10 years",
-       title = the_title)
+       title = the_title,
+       subtitle = "Peak prime ministers per decade was in the 1830s")
 
 svg_png(p4, "../img/0323-rolling-pms", w = 10, h = 6)
+
+arrange(cumulative_pms, desc(rolling_pms))
+
