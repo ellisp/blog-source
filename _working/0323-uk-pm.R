@@ -3,6 +3,7 @@ library(tidyverse)
 library(janitor)
 library(slider) # for rolling sum
 library(scales)
+library(ggrepel)
 
 url <- "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
 
@@ -85,10 +86,13 @@ p3 <- pm_table |>
   ggplot(aes(x = start, y = duration)) +
   geom_smooth(method = "gam", colour = "white") +
   geom_point(colour = "steelblue") +
+  geom_text_repel(data = filter(pm_table, duration < 120 | duration > 3000), 
+                   aes(label = pm), size = 2.8) +
   scale_y_sqrt(breaks = c(0.5, 1, 1:4 * 2) * 1000, label = comma) +
   labs(x = "Starting date of premiership",
        y = "Duration in days",
-       title = the_title)
+       title = the_title,
+      subtitle = "Durations shown are of individual periods in office, not lifetime totals.")
 
 svg_png(p3, "../img/0323-over-time", w = 10, h = 6)
 
