@@ -4,6 +4,12 @@ library(janitor)
 library(slider) # for rolling sum
 library(scales)
 library(ggrepel)
+library(kableExtra)
+
+
+
+#-----------------Import and process data------------------------
+
 
 url <- "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_the_United_Kingdom"
 
@@ -19,12 +25,13 @@ pm_table <- page |>
     start = term_of_office,
     end = term_of_office_2
   ) |> 
+  # drop second line of column titles:
   slice(-1) |> 
   # find the PMs' names - everything up to the first [
   mutate(pm = str_extract(pm , ".*?\\["),
          pm = str_replace(pm, "\\[", ""),
         ) |> 
-  # strip all the ootnotes and stuff from the dates
+  # strip all the footnotes and stuff from the dates:
   mutate(across(everything(), ~ str_remove_all(.x, "\\[.*?\\]"))) |>  # remove [1] refs
   mutate(across(everything(), str_squish)) |> 
   mutate(start = as.Date(start, format = "%d %B %Y"),
@@ -39,14 +46,37 @@ pm_table <- page |>
   mutate(last_end = max(end)) |> 
   ungroup()
  
-pm_table
+#------------summary highlights----------
 
-pm_table |> 
-  distinct(pm) |> 
-  pull(pm)
+# prime ministers number of terms and total duration:
+pm_summary <- pm_table |> 
+  rename(`Prime minister` = pm) |> 
+  group_by(`Prime minister`) |> 
+  summarise(Terms = length(`Prime minister`),
+            `Earliest start` = min(start),
+            `Latest finish` = max(end),
+            `Total duration` = sum(duration)) |> 
+  arrange(desc(Terms), `Earliest start`) 
+
+# Prime ministers with more than one term:
+pm_summary |> 
+  filter(Terms > 1) |> 
+  kable() |> 
+  kable_styling() |> 
+  writeClipboard()
+
+# Longest serving prime ministers:
+pm_summary |> 
+  arrange(desc(`Total duration`)) |> 
+  slice(1:10) |> 
+  kable() |> 
+  kable_styling() |> 
+  writeClipboard()
+
+
 
 #--------------Draw plots-------------
-the_title <- "Prime ministers of the United Kingdom, 1721 to 2026"
+the_title <- "Prime ministers of the United Kingdom and its predecessors, 1721 to 2026"
 
 p1 <- pm_table |> 
   ggplot(aes(y = pm, yend = pm)) +
@@ -87,7 +117,7 @@ p3 <- pm_table |>
   geom_smooth(method = "gam", colour = "white") +
   geom_point(colour = "steelblue") +
   geom_text_repel(data = filter(pm_table, duration < 120 | duration > 3000), 
-                   aes(label = pm), size = 2.8) +
+                   aes(label = pm), size = 2.8, seed = 123) +
   scale_y_sqrt(breaks = c(0.5, 1, 1:4 * 2) * 1000, label = comma) +
   labs(x = "Starting date of premiership",
        y = "Duration in days",
@@ -103,7 +133,18 @@ cumulative_pms <- pm_table |>
                                by = "1 day"))) |> 
   arrange(start) |> 
   mutate(starting_pms = if_else(is.na(pm), 0 , 1),
-         rolling_pms = pmax(1, slide_sum(starting_pms, before = 3653)))
+         rolling_pms = slide_sum(starting_pms, before = 3653),
+         # I'm not sure I've got this right yet, but the idea is that in any given day,
+         # the number of PMs in thepast 10 years is however many started in those 10 years,
+         # plus 1 PM that you came into the period with. The exception being the time
+         # of the very first prime minister, for which time you only have the rolling sum
+         # of PMs that started:
+         rolling_pms = if_else(start < (pm_table[1, ]$start + 3654), 
+                               rolling_pms, 
+                               rolling_pms + 1))
+
+# When was the peak number of PMs in the last decade:
+arrange(cumulative_pms, desc(rolling_pms))
 
 
 p4 <- cumulative_pms |> 
@@ -116,6 +157,4 @@ p4 <- cumulative_pms |>
        subtitle = "Peak prime ministers per decade was in the 1830s")
 
 svg_png(p4, "../img/0323-rolling-pms", w = 10, h = 6)
-
-arrange(cumulative_pms, desc(rolling_pms))
 
