@@ -5,7 +5,9 @@ date: 2026-06-28
 tag: 
    - Timeseries
    - Economics
-   -
+   - Australia
+   - History
+   - Visualisation
 description: I draw some charts of GDP per capita growth from 1900 to 2023, for various countries, using data from the excellent Maddison Project in economic history at the Groningen Growth and Development Centre.
 image: /img/0326-India.svg
 socialimage: https:/freerangestats.info/img/0326-India.png
