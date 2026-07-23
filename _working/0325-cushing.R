@@ -20,7 +20,7 @@ cushing <- read_excel("cushing.xls", sheet = "Data 1", skip = 2) |>
       # basically horizontal)
       mutate(label = ifelse(is.na(lead(value)) | 
                             abs(value - lead(value)) > 500, 
-                            comma(value), ""),
+                            comma(value / 1000, accuracy = 0.1, suffix = "m"), ""),
       # We also want the label to disappear if the value is really close to
       # 20,000, which is going to be a clearly labelled line anyway so would
       # just be unnecessary clutter.
