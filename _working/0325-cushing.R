@@ -48,6 +48,6 @@ p <- cushing |>
          y = "Million barrels",
          title = "Stocks of crude oil at Cushing, Oklahoma",
          subtitle = "Cushing is the main US crude oil storage and pipeline hub, and the delivery point for the West Texas Intermediary (WTI) oil benchmark.",
-         caption = glue("Source: US Energy Information Administration (EIA) https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=W_EPC0_SAX_YCUOK_MBBL&f=W. Accessed {Sys.Date()}."))
+         caption = glue("Source: US Energy Information Administration (EIA). Accessed {format(Sys.Date(), '%d %B %Y')}."))
 
 svg_png(p, "../img/0325-cushing-latest", w = 10, h = 5)
