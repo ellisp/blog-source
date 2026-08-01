@@ -54,7 +54,7 @@ p1 <- us_stocks |>
   ggplot(aes(x = date, y = value / 1000)) +
   war_rect +
   facet_wrap(~variable, scales = "free_y") +
-  geom_line() +
+  geom_line(colour = "blue") +
   expand_limits(y = 0) +
   scale_y_continuous(label = comma) +
   labs(
