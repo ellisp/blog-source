@@ -27,11 +27,7 @@ eia_caption <- glue("Source: Energy Information Administration (EIA). Accessed {
 # an annotation rectangle we can use in multiple charts
 war_rect <- annotate(
   "rect",
-  # war did not actually start on 14 Feb, but as the dates are all first
-  # of the month, to make the rectangle below start half way between Feb
-  # and March values we have to use a mid Feb date as left side of the
-  # rectangel:
-  xmin = as.Date("2026-02-14"),
+  xmin = as.Date("2026-02-28"),
   xmax = Inf,
   ymin = -Inf,
   ymax = Inf,
@@ -65,7 +61,7 @@ p1 <- us_stocks |>
     caption = eia_caption
   )
 
-svg_png(p1, "../img/0327-facet-us-stocks", w = 10, h = 7)
+svg_png(p1, "../img/0327-facet-us-stocks-latest", w = 10, h = 7)
 
 
 refinery_throughput <- 17.3 # as at 24 July, operating at 97% of US capacity. Daily refinery use.
@@ -113,7 +109,7 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
       "text",
       x = min_date + lab_x_diff,
       y = plausible_stress + 50,
-      label = "Illustrative high stress threshold:\n30 days of refinery cover",
+      label = "Illustrative stress threshold:\n30 days of refinery cover",
       colour = "darkred",
       hjust = 0
     ) +
@@ -121,7 +117,7 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
       "text",
       x = min_date + lab_x_diff,
       y = plausible_high_stress - 30,
-      label = "Illustrative very high stress threshold:\n24 days of refinery cover",
+      label = "Illustrative high stress threshold:\n24 days of refinery cover",
       colour = "red",
       hjust = 0,
       vjust = 1
@@ -167,7 +163,7 @@ Decline since peak on 3 April 2026 is at {abs(round(crude_growth_summary$differe
   #  print(p2)
   #  dev.off()
 
-  frs::svg_png(p2, glue("../img/0327-us-crude-from{min_date}"), w = 10, h = 7)
+  frs::svg_png(p2, glue("../img/0327-us-crude-from{min_date}-latest"), w = 10, h = 7)
 }
 
 plot_us_stocks("2000-01-01")
