@@ -91,9 +91,10 @@ p1 <- cpi_total |>
     shape = 19,
     size = 3
   ) +
-  geom_label_repel(
+  geom_text_repel(
     data = cpi_growth,
     direction = "y",
+    min.segment.length = Inf,
     nudge_x = +40,
     aes(
       label = percent(growth_since_war, accuracy = 0.1),
