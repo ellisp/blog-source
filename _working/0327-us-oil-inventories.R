@@ -24,17 +24,6 @@ us_stocks <- read_excel(fn, sheet = "Data 1", skip = 2) |>
 
 eia_caption <- glue("Source: Energy Information Administration (EIA). Accessed {format(Sys.Date(), '%d %B %Y')}")
 
-# an annotation rectangle we can use in multiple charts
-war_rect <- annotate(
-  "rect",
-  xmin = as.Date("2026-02-28"),
-  xmax = Inf,
-  ymin = -Inf,
-  ymax = Inf,
-  alpha = 0.5,
-  fill = "grey80"
-)
-
 # Facet plot of total crude, SPR crude, diesel and gasoline stocks
 p1 <- us_stocks |>
   mutate(com_crude = crude - crude_spr) |>
@@ -61,8 +50,7 @@ p1 <- us_stocks |>
     caption = eia_caption
   )
 
-svg_png(p1, "../img/0327-facet-us-stocks-latest", w = 10, h = 7)
-
+svg_png(p1, "../fuel-crisis/facet-us-stocks-latest", w = 10, h = 7)
 
 refinery_throughput <- 17.3 # as at 24 July, operating at 97% of US capacity. Daily refinery use.
 plausible_stress <- 30 * refinery_throughput
@@ -107,7 +95,7 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
     geom_hline(yintercept = plausible_high_stress, colour = "red") +
     annotate(
       "text",
-      x = min_date + lab_x_diff,
+      x = as.Date(min_date + lab_x_diff),
       y = plausible_stress + 50,
       label = "Illustrative stress threshold:\n30 days of refinery cover",
       colour = "darkred",
@@ -115,7 +103,7 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
     ) +
     annotate(
       "text",
-      x = min_date + lab_x_diff,
+      x = as.Date(min_date + lab_x_diff),
       y = plausible_high_stress - 30,
       label = "Illustrative high stress threshold:\n24 days of refinery cover",
       colour = "red",
@@ -124,7 +112,7 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
     ) +
     annotate(
       "text",
-      x = max(us_stocks$date) - 5e6,
+      x = as.Date(max(us_stocks$date) - 5e6),
       y = lv,
       label = glue(
         "{round(lv)} million barrels;\n{round(lv / refinery_throughput)} days of cover"
@@ -155,15 +143,7 @@ Decline since peak on 3 April 2026 is at {abs(round(crude_growth_summary$differe
     ) +
     theme(axis.line.y = element_line(colour = "grey50"))
 
-  #  svglite(
-  #    glue("all-us-crude-from{min_date}.svg"),
-  #    width = 10,
-  #    height = 7
-  #  )
-  #  print(p2)
-  #  dev.off()
-
-  frs::svg_png(p2, glue("../img/0327-us-crude-from{min_date}-latest"), w = 10, h = 7)
+  frs::svg_png(p2, glue("../fuel-crisis/us-crude-from{min_date}-latest"), w = 10, h = 7)
 }
 
 plot_us_stocks("2000-01-01")

@@ -108,4 +108,4 @@ p1 <- cpi_total |>
   ) +
   theme(panel.grid.minor = element_blank(), legend.position = "right")
 
-svg_png(p1, "../img/0328-cpi-picts-latest", w = 10, h = 4.2)
+svg_png(p1, "../fuel-crisis/cpi-picts-latest", w = 10, h = 4.2)
