@@ -59,8 +59,19 @@ nz <- read.csv("nz-petrol-prices.csv") |>
 #------------------USA---------------------
 # See https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_nus_w.htm
 
-download.file("https://www.eia.gov/dnav/pet/xls/PET_PRI_GND_DCUS_NUS_W.xls",
-              destfile = "usa-petrol-prices.xls", mode = "wb")
+stale_usa <- TRUE
+if(file.exists("usa-petrol-prices.xls")){
+  tmp <- read_excel("usa-petrol-prices.xls", sheet = "Data 1", skip = 2)
+  if(as.numeric(Sys.Date() - max(as.Date(tmp$Date))) < 7){
+    stale_usa <- FALSE
+  }
+}
+
+
+if(stale_usa){
+  download.file("https://www.eia.gov/dnav/pet/xls/PET_PRI_GND_DCUS_NUS_W.xls",
+                destfile = "usa-petrol-prices.xls", mode = "wb")
+}
 
 usa <- read_excel("usa-petrol-prices.xls", sheet = "Data 1", skip = 2) |> 
   mutate(Date = as.Date(Date)) |> 
@@ -106,7 +117,7 @@ p1 <- p0 +
   
 
 
-p2 <- p0 %+% filter(combined_petrol, date >= "2026-01-01") +
+p2 <- p0 + filter(combined_petrol, date >= "2026-01-01") +
   geom_point() +
   labs(title = "Retail petrol and diesel prices 2026, <span style='color:#0000FF;'>**New Zealand**</span> vs <span style='color:red;'>**USA**</span>, (USD/gallon).") +
   scale_x_date(
