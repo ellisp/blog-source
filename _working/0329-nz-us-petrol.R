@@ -155,3 +155,6 @@ p2 <- p0 +
 
 svg_png(p1, "../img/0329-nz-us-petrol-from-2004", w = 10, h = 6)
 svg_png(p2, "../img/0329-nz-us-petrol-from-2026", w = 10, h = 6)
+
+svg_png(p1, "../fuel-crisis/nz-us-petrol-from-2004", w = 10, h = 6)
+svg_png(p2, "../fuel-crisis/nz-us-petrol-from-2026", w = 10, h = 6)

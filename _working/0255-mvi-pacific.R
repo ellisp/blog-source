@@ -7,6 +7,7 @@ library(ggraph)
 library(RColorBrewer)
 library(glue)
 
+# Note this doesn't work any more but you can download it by hand
 if(!file.exists("mvi_results.xlsx")){
   download.file("https://www.un.org/ohrlls/sites/www.un.org.ohrlls/files/files/mvi_results.xlsx", 
                 destfile  ="mvi_results.xlsx", mode = "wb")

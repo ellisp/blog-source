@@ -45,6 +45,20 @@ Some experts wrote in the first few months of the war that if the facility at Cu
 
 Here is [the link to my post about this chart of the Cushing facility, and the code to create it](/blog/2026/07/09/cushing).
 
+## Petrol prices
+
+At the moment I am monitoring these only in New Zealand and USA, basically because of the convenience of the data.
+
+First, here is a big picture view:
+
+<object type="image/svg+xml" data='/fuel-crisis/nz-us-petrol-from-2004.svg' width='100%'><img src='/fuel-crisis/nz-us-petrol-from-2004.png' width='100%'></object>
+
+And here is a zoom-in to just 2026:
+
+<object type="image/svg+xml" data='/fuel-crisis/nz-us-petrol-from-2026.svg' width='100%'><img src='/fuel-crisis/nz-us-petrol-from-2026.png' width='100%'></object>
+
+---
+
 ## Other impacts
 
 Still to come
