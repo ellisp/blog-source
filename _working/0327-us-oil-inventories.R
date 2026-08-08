@@ -35,6 +35,7 @@ p1 <- us_stocks |>
     `Distillate (mostly diesel)` = diesel
   ) |>
   gather(variable, value, -date) |>
+  drop_na() |> 
   mutate(variable = fct_reorder(variable, value)) |>
   ggplot(aes(x = date, y = value / 1000)) +
   war_rect +
