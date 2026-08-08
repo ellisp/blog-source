@@ -1,3 +1,55 @@
+---
+layout: post
+title: NZ and US petrol ('gasoline') and diesel prices
+date: 2026-08-08
+tag: 
+   - Timeseries
+   - Energy
+   - Visualisation
+   - WorkRelated
+description: A chart of petrol ('gasoline') prices in the USA and New Zealand since 2004 to now. Petrol is more expensive in New Zealand than the USA&mdash;around US$7 per gallon in fact.
+image: /img/0329-nz-us-petrol-from-2004.svg
+socialimage: https:/freerangestats.info/img/0329-nz-us-petrol-from-2004.png
+category: R
+---
+
+This is another short, simple blog post building a chart I am going to be updating regularly as part of monitoring the impact of the slow-burn fuel crisis caused by the USA war with Iran.
+
+I have a page on this website with [a few charts on the fuel crisis](/fuel-crisis/index.html).
+
+## Petrol (or gasoline) and diesel prices
+
+Here's today's new chart. 
+
+<object type="image/svg+xml" data='/img/0329-nz-us-petrol-from-2004.svg' width='100%'><img src='/img/0329-nz-us-petrol-from-2004.png' width='100%'></object>
+
+For those interested, here are some of the key features I thought through and are deliberately part of the polish here
+
+* Both New Zealand and US prices on the same basis for direct comparability (and to shock USians with how much the rest of the world pays for gasoline).
+* Mapping colour to country and using the facets for fuel type, rather than vice versa; doing it this way makes it easier to compare country-to-country (rather than fuel-to-fuel, which I found less interesting).
+* Using colour in the title (thanks to `ggtext` by Claus O. Wilke and Brenton M. Wiernik) rather than a legend or direct labelling of the lines&mdash;very strong clutter-reduction technique in this context, I think.
+* Annotations, in carefully chosen grey italics, to indicate the key events/periods of interest and answer the obvious questions that anyone looking at the chart (including me, this morning) would have eg "what happened in XXX?"
+* Colours for countries chosen to suggest their flags.
+* Make sure the audience understands the peculiar tax situation for diesel in New Zealand (diesel and electric vehicles pay a road user charge per distance travelled, not fuel consumed, which isn't included in these prices).
+* I considered, and eventually decided against, forcing the vertical axis scale to go down to zero. Still a bit unsure about this one, I see pros and cons of both options.
+
+I've also got a zoomed in version of the chart looking at just 2026. This is actually quite a bit less interesting. I like the big sweep of the past twenty years shown in the main chart, and the way we can link price changes to major events.
+
+<object type="image/svg+xml" data='/img/0329-nz-us-petrol-from-2026.svg' width='100%'><img src='/img/0329-nz-us-petrol-from-2026.png' width='100%'></object>
+
+## Data sources and code
+
+So there's nothing particularly complex in the code. I needed three data sources:
+
+* New Zealand fuel prices, provided by the Ministry of Business, Innovation and Employment
+* USA fuel prices provided by the Energy Information Administration
+* NZD / USD exchange rate, which I have taken from FRED, the St Louis Federal Reserve data service.
+
+There were choices to make about exactly which series to match up and show, but not too difficult and I think I chose right.
+
+There's also a bit of fiddling around to not download the data files every time the script is run, but only when the data is to some degree stale. The prices series are weekly so there's no point hitting the provider's server for yet another copy of the file when the last published observation was six days or less ago.
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(janitor)
 library(readxl)
@@ -94,7 +146,6 @@ combined_petrol <- usa |>
   mutate(fuel = fct_relevel(fuel, "Regular Petrol"))
 
 #-----------------plot drawing---------------
-
 annotations <- tibble(
   date = as.Date(c(
     "2008-01-01",
@@ -156,9 +207,8 @@ p2 <- p0 +
     date_labels = "%B"
   )
 
+print(p1)
+print(p2)
+{% endhighlight %}
 
-svg_png(p1, "../img/0329-nz-us-petrol-from-2004", w = 10, h = 6)
-svg_png(p2, "../img/0329-nz-us-petrol-from-2026", w = 10, h = 6)
-
-svg_png(p1, "../fuel-crisis/nz-us-petrol-from-2004", w = 10, h = 6)
-svg_png(p2, "../fuel-crisis/nz-us-petrol-from-2026", w = 10, h = 6)
+That's all for today.
