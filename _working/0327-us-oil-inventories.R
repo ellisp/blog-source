@@ -45,7 +45,7 @@ p1 <- us_stocks |>
   scale_y_continuous(label = comma) +
   labs(
     x = "",
-    y = "Thousands of barrels",
+    y = "Millions of barrels",
     title = "US stocks of crude oil, gasoline, and distillate fuel oil (effectively diesel)",
     subtitle = "Showing both total crude oil stocks (crude) and those in the Strategic Petroleum Reserve (crude_spr)",
     caption = eia_caption
