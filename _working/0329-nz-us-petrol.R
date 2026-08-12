@@ -91,7 +91,8 @@ combined_petrol <- usa |>
   rbind(nz) |>
   filter(date >= min(nz$date)) |>
   filter(fuel != "Premium Petrol") |>
-  mutate(fuel = fct_relevel(fuel, "Regular Petrol"))
+  mutate(fuel = fct_relevel(fuel, "Regular Petrol")) |> 
+  drop_na()
 
 #-----------------plot drawing---------------
 

@@ -100,7 +100,8 @@ p1 <- cpi_total |>
       label = percent(growth_since_war, accuracy = 0.1),
       y = last_value
     ),
-    show.legend = FALSE
+    show.legend = FALSE,
+    seed = 123
   ) +
   common_labels +
   labs(
