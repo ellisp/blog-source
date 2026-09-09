@@ -59,7 +59,7 @@ common_labels <-
     x = "",
     y = "Index (February 2026 = 100)",
     title = "Overall inflation",
-    caption = glue("Data compiled by SPC on the Pacific Data Hub; accessed {format(Sys.Date(), '%d %B %Y')}.")
+    caption = glue("Data compiled by SPC on the Pacific Data Hub; latest data {format(max(cpi_total$month), '%B %Y')}.")
   )
 
 

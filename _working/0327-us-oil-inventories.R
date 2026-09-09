@@ -22,7 +22,7 @@ us_stocks <- read_excel(fn, sheet = "Data 1", skip = 2) |>
 
 #------------------plotting------------------
 
-eia_caption <- glue("Source: Energy Information Administration (EIA). Accessed {format(Sys.Date(), '%d %B %Y')}")
+eia_caption <- glue("Source: Energy Information Administration (EIA). Latest data {format(max(us_stocks$date), '%d %B %Y')}.")
 
 # Facet plot of total crude, SPR crude, diesel and gasoline stocks
 p1 <- us_stocks |>
