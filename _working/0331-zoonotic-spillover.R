@@ -1,5 +1,7 @@
 library(tidyverse)
 library(janitor)
+library(scales)
+# Paper at https://cms.ginkgo.bio/assets/biosecurity/pdfs/bmj-historical-trends.pdf
 
 # Concentric is the biosecurity and public health arm of Ginkgo Bioworks, a US
 # biotechnology company. It has worked with organisations including the USDA,
@@ -10,7 +12,7 @@ library(janitor)
 # spillover events are becoming more frequent;
 # spillover events are becoming more severe.
 
-# this data is only ell known, larger spillover events
+# this data is only known, larger spillover events
 url <- "https://raw.githubusercontent.com/concentricbyginkgo/zoonotic_spillover_trend/master/data/spillover_data.csv"
 
 spillover <- read_csv(url, show_col_types = FALSE) |>
@@ -23,6 +25,7 @@ spillover |>
   facet_wrap(~pathogen) +
   geom_point() +
   scale_y_sqrt()
+# Note Nipah virus only discovered in 1998
 
 spillover_annual <- spillover |>
   group_by(event_start_year) |>
@@ -47,7 +50,8 @@ spillover_annual |>
     caption = "Source: Concentric, Ginkgo Bioworks",
     colour = ""
   )
-# what if these was redone as deaths as a proportion of the growing world population?
+# what if these was redone as deaths as a proportion of the growing world
+# population? ie deaths per billion people.
 
 
 spillover_annual |>
@@ -55,7 +59,7 @@ spillover_annual |>
   geom_smooth(method = "gam", colour = "black") +
   geom_point(aes(colour = as.logical(deaths == 0), size = deaths)) +
   labs(
-    y = "Reported deaths (sqrt-transformed scale)",
+    y = "Reported events",
     colour = "",
     caption = "Source: Concentric, Ginkgo Bioworks"
   )
@@ -69,3 +73,9 @@ spillover_annual |>
 # "the historical record of documented high-consequence zoonotic outbreaks shows an upward trend"
 # than in
 # "the true rate of zoonotic spillover has been demonstrated to be increasing."
+
+# the analysis that would immediately be wanted is a pathogen-level model (for
+# example a mixed-effects Poisson or negative-binomial model with
+# pathogen-specific trends) and a sensitivity analysis excluding Zaire
+# ebolavirus. Those results would be much more informative than the pooled trend
+# alone.

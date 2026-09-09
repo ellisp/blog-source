@@ -39,7 +39,7 @@ if (stale_fx) {
 nz <- read.csv("nz-petrol-prices.csv") |>
   as_tibble() |>
   clean_names() |>
-  mutate(date = as.Date(date)) |>
+  mutate(date = as.Date(date, format = "%d/%m/%Y")) |>
   filter(variable == "Adjusted retail price") |>
   left_join(nzd_usd, by = c("date" = "observation_date")) |>
   arrange(date) |>

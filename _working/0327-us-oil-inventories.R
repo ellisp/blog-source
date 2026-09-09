@@ -53,7 +53,7 @@ p1 <- us_stocks |>
 
 svg_png(p1, "../fuel-crisis/facet-us-stocks-latest", w = 10, h = 7)
 
-refinery_throughput <- 17.3 # as at 24 July, operating at 97% of US capacity. Daily refinery use.
+refinery_throughput <- 17.661 # as at 3 September. Daily refinery use. TODO - get this number programmatically
 plausible_stress <- 30 * refinery_throughput
 plausible_high_stress <- 24 * refinery_throughput
 
