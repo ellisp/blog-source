@@ -1,3 +1,30 @@
+---
+layout: post
+title: Sample size needed for central limit theory to kick in
+date: 2026-09-16
+tag: 
+   - Simulations
+   - Distributions
+description: It takes a larger sample size than you might hope for the mean of a sample to have a distribution that's close enough to 'normal' for common inference methods to work.
+image: /img/0332-ad-stat.svg
+socialimage: https:/freerangestats.info/img/0332-ad-stat.png
+category: R
+---
+
+
+
+
+<object type="image/svg+xml" data='/img/0332-ad-stat.svg' width='100%'><img src='/img/0332-ad-stat.png' width='100%'></object>
+
+
+<object type="image/svg+xml" data='/img/0332-coverage.svg' width='100%'><img src='/img/0332-coverage.png' width='100%'></object>
+
+
+<object type="image/svg+xml" data='/img/0332-coverage-trunc.svg' width='100%'><img src='/img/0332-coverage-trunc.png' width='100%'></object>
+
+
+
+{% highlight R lineanchors %}
 library(nortest)
 library(tidyverse)
 library(actuar)
@@ -5,6 +32,8 @@ library(glue)
 library(scales)
 
 set.seed(123)
+
+#--------------Function to do the simulations---------------
 
 reps <- 10000
 sim_clt <- function(x, n = 30, reps = reps, replace = TRUE, plot = TRUE, conf = 0.95){
@@ -29,6 +58,7 @@ sim_clt <- function(x, n = 30, reps = reps, replace = TRUE, plot = TRUE, conf = 
   ))
 }
 
+#--------------define distributions and run simulations---------------
 
 N <- 1e6
 ns <- c(5:30, 50, 100, 300, 1000, 2000, 5000, 10000, 20000, 40000)
@@ -59,6 +89,8 @@ all_sims <- lapply(names(pop_dists), function(lbl) {
   )
 }) |> bind_rows()
 
+#-----------------------draw charts--------------
+
 normal_band <- all_sims |> 
   filter(pop_dist == "rnorm(N)") |> 
   pull(ad_stat) |> 
@@ -66,8 +98,8 @@ normal_band <- all_sims |>
 
 p1 <- all_sims |> 
   mutate(pop_dist = fct_reorder(pop_dist, ad_stat)) |> 
-  ggplot(aes(x = n, y = ad_stat)) +
-  facet_wrap(~pop_dist, nrow = 2) +
+  ggplot(aes(x = n, y = ad_stat))+
+  facet_wrap(~pop_dist, nrow = 2)+
   annotate("rect", xmin = min(ns), xmax = Inf, ymin = normal_band[1], ymax = normal_band[2], alpha = 0.5, fill = "orange")+
   geom_point()+
   scale_x_log10(label = comma, breaks = ns[ns >=30 | ns %in% c(5, 10, 20)]) +
@@ -80,8 +112,7 @@ p1 <- all_sims |>
        subtitle = glue("Points represent average from {comma(reps)} simulations of given sample size. Shaded area covers 95% of values from a normal distribution."),
        title = "Increasing sample size and growing effectiveness of the central limit theorem - Anderson-Darling statistic")
 
-svg_png(p1, "../img/0332-ad-stat", w = 10, h = 6)
-
+print(p1)
 
 
 p2 <- all_sims |> 
@@ -91,7 +122,7 @@ p2 <- all_sims |>
   annotate("rect", xmin = min(ns), xmax = Inf, ymin = 0.95, ymax = 1, alpha = 0.5, fill = "orange")+
   geom_point() +
   scale_x_log10(label = comma, breaks = ns[ns >=30 | ns %in% c(5, 10, 20)]) +
-  scale_y_continuous(label = percent)+
+  scale_y_continuous(label = percent) +
   theme(panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, hjust = 1),
         strip.text = element_text(face = "plain", size = 9)) +
@@ -100,10 +131,16 @@ p2 <- all_sims |>
        subtitle = glue("Points represent average from {comma(reps)} simulations of given sample size. Shaded area shows 95% and higher, as desired."),
        title = "Increasing sample size and growing effectiveness of the central limit theorem - confidence interval coverage")
 
-svg_png(p2, "../img/0332-coverage", w = 10, h = 6)
+print(p2)
 
 p3 <- p2 +
   labs(y = "Coverage of a 95% confidence interval based on t distribution\nY axis truncated to only start at 80%; some points excluded because of that.") +
   coord_cartesian(ylim = c(0.8, 1))
 
-svg_png(p3, "../img/0332-coverage-trunc", w = 10, h = 6)
+print(p3)
+
+
+
+{% endhighlight %}
+
+
