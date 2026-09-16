@@ -232,7 +232,7 @@ p2 <- all_sims |>
   ) +
   labs(
     x = "Sample size",
-    y = "Coverage of a 95% confidence interval based on t distribution",
+    y = "Proportion of times a 95% confidence interval contains the true mean",
     subtitle = glue(
       "Points represent average from {comma(today_reps)} simulations of given sample size. Shaded area shows 95% and higher, as desired."
     ),
@@ -243,7 +243,7 @@ print(p2)
 
 p3 <- p2 +
   labs(
-    y = "Coverage of a 95% confidence interval based on t distribution\nY axis truncated to only start at 80%; some points excluded because of that."
+    y = "Proportion of times a 95% confidence interval contains the true mean\nY axis truncated to only start at 80%; some points excluded because of that."
   ) +
   coord_cartesian(ylim = c(0.8, 1))
 

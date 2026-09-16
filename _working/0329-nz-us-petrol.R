@@ -39,7 +39,10 @@ if (stale_fx) {
 nz <- read.csv("nz-petrol-prices.csv") |>
   as_tibble() |>
   clean_names() |>
-  mutate(date = as.Date(date)) |>
+  mutate(
+    date = parse_date_time(date, orders = c("dmy", "ymd")),
+    date = as.Date(date)
+  ) |>
   filter(variable == "Adjusted retail price") |>
   left_join(nzd_usd, by = c("date" = "observation_date")) |>
   arrange(date) |>
@@ -91,7 +94,7 @@ combined_petrol <- usa |>
   rbind(nz) |>
   filter(date >= min(nz$date)) |>
   filter(fuel != "Premium Petrol") |>
-  mutate(fuel = fct_relevel(fuel, "Regular Petrol")) |> 
+  mutate(fuel = fct_relevel(fuel, "Regular Petrol")) |>
   drop_na()
 
 #-----------------plot drawing---------------
@@ -118,7 +121,6 @@ annotations <- tibble(
   mutate(fuel = factor(fuel, levels = levels(combined_petrol$fuel)))
 
 
-
 # Base definition of chart, used in both versions:
 p0 <- combined_petrol |>
   ggplot(aes(x = date, y = value_usd_gallon, colour = country)) +
@@ -132,7 +134,9 @@ p0 <- combined_petrol |>
     y = "Price (USD per gallon)",
     title = "Retail petrol and diesel prices 2004-2026, <span style='color:#0000FF;'>**New Zealand**</span> vs <span style='color:red;'>**USA**</span>, (USD/gallon).",
     subtitle = "New Zealand prices include petrol excise, GST and other taxes but exclude diesel fuel excise.",
-    caption = glue("Source: New Zealand MBIE, USA EIA. Latest data {format(max(combined_petrol$date), '%d %B %Y')}.")
+    caption = glue(
+      "Source: New Zealand MBIE, USA EIA. Latest data {format(max(combined_petrol$date), '%d %B %Y')}."
+    )
   ) +
   theme(legend.position = "none", plot.title = element_markdown())
 
