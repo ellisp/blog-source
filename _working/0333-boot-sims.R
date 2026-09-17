@@ -85,15 +85,18 @@ if (run_sims) {
 
   save(results, file = glue("0333-boot-results-{Sys.Date()}.rda"))
 } else {
-  lf <- sort(list.files(pattern = "0333-boot-results.*\\.rda$"), desc = TRUE)
+  lf <- sort(
+    list.files(pattern = "0333-boot-results.*\\.rda$"),
+    decreasing = TRUE
+  )
   load(lf[1])
 }
 
 
-pop_labs <- c("log normal", "log normal(2)", "exponential(2)")
-results |>
+pop_labs <- c("log normal(0,1)", "log normal(0,2)", "exponential(2)")
+p <- results |>
   mutate(lab = pop_labs[pop]) |>
-  mutate(lab = fct_reorder(lab, coverage_boot)) |> 
+  mutate(lab = fct_reorder(lab, coverage_boot)) |>
   ggplot(aes(x = coverage_clt, y = coverage_boot, colour = lab)) +
   geom_abline(slope = 1, intercept = 0, colour = "grey50") +
   geom_point(size = 2) +
@@ -108,6 +111,8 @@ results |>
     subtitle = "Labelled numbers indicate sample sizes. Diagonal line shows equal performance.",
     colour = "Population distribution:"
   )
+
+svg_png(p, "../img/0333-sims-results", w = 9, h = 6)
 
 # Claude advises: The percentile interval is only accurate when the bootstrap
 # distribution of the statistic is symmetric (or can be made so by a monotone
