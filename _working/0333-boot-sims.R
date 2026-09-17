@@ -4,6 +4,9 @@ library(glue)
 library(scales)
 library(boot)
 
+# set the below to TRUE if running for the first time
+run_sims <- FALSE
+
 set.seed(123)
 
 today_reps <- 1000
@@ -62,24 +65,49 @@ pops <- list(
 
 ns <- c(10, 30, 200, 1000)
 
-results <- expand_grid(pop = 1:3, n = ns) |>
-  mutate(coverage_clt = NA, coverage_boot = NA)
+if (run_sims) {
+  results <- expand_grid(pop = 1:3, n = ns) |>
+    mutate(coverage_clt = NA, coverage_boot = NA)
 
-# this - obviously when you think about what it's doing - will take a long time
-# (hours) to run. It's embarassingly parallel so could consider parallelising it
-# easily enough, but there is a lot of demands on memory so for my laptop is
-# probably not going to be worth trying this as the machine wouldn't be able to
-# do multiple goes of the 3000 rep bootstrap, 1000 rep simulation from a 1e6
-# population at once.
-for (i in 1:nrow(results)) {
-  cat(i)
-  param <- results[i, ]
-  tmp <- sim_clt(pops[[param$pop]], n = param$n)
-  results[i, ]$coverage_clt <- tmp$coverage_clt
-  results[i, ]$coverage_boot <- tmp$coverage_boot
+  # this - obviously when you think about what it's doing - will take a long time
+  # (~2 hours) to run. It's embarassingly parallel so could consider parallelising
+  # it easily enough, but there is a lot of demands on memory so for my laptop is
+  # probably not going to be worth trying this as the machine wouldn't be able to
+  # do multiple goes of the 3000 rep bootstrap, 1000 rep simulation from a 1e6
+  # population at once.
+  for (i in 1:nrow(results)) {
+    cat(i)
+    param <- results[i, ]
+    tmp <- sim_clt(pops[[param$pop]], n = param$n)
+    results[i, ]$coverage_clt <- tmp$coverage_clt
+    results[i, ]$coverage_boot <- tmp$coverage_boot
+  }
+
+  save(results, file = glue("0333-boot-results-{Sys.Date()}.rda"))
+} else {
+  lf <- sort(list.files(pattern = "0333-boot-results.*\\.rda$"), desc = TRUE)
+  load(lf[1])
 }
 
-save(results, file = glue("0333-boot-results-{Sys.Date()}.rda"))
+
+pop_labs <- c("log normal", "log normal(2)", "exponential(2)")
+results |>
+  mutate(lab = pop_labs[pop]) |>
+  mutate(lab = fct_reorder(lab, coverage_boot)) |> 
+  ggplot(aes(x = coverage_clt, y = coverage_boot, colour = lab)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey50") +
+  geom_point(size = 2) +
+  geom_text_repel(aes(label = comma(n)), seed = 123, alpha = 0.5) +
+  coord_equal() +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = percent) +
+  labs(
+    x = "Confidence interval from asymptotic normality includes the mean",
+    y = "Confidence interval from BCa bootstrap includes the mean",
+    title = "Bootstrap outperforms asymptotic normality assumption with smaller n.",
+    subtitle = "Labelled numbers indicate sample sizes. Diagonal line shows equal performance.",
+    colour = "Population distribution:"
+  )
 
 # Claude advises: The percentile interval is only accurate when the bootstrap
 # distribution of the statistic is symmetric (or can be made so by a monotone
