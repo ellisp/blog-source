@@ -1,3 +1,31 @@
+---
+layout: post
+title: Bootstrap v traditional asymptotic normal assumptions
+date: 2026-09-20
+tag: 
+   - Simulations
+   - Distributions
+description: Bias-corrected and adjusted bootstrap does an ok job at confidence intervals of the mean  from some example skewed distributions. Better than does relying on the traditional methods of just assuming normality from the central limit theorem. But for particularly awkward distributions, sample sizes are still needed in the thousands to get coverage that resembles the claimed coverage.
+image: /img/0333-sims-results.svg
+socialimage: https:/freerangestats.info/img/0333-sims-results.png
+category: R
+---
+
+Today's just a very short sequel to [last week's post](/blog/2026/09/16/clt-simulations), where I had a look at some very skewed distributions to test the idea that sample sizes sometimes need to be in the tens of thousands for the sample mean to have a normal distribution. Turns out they do.
+
+I had a bit of unfinished business at the back of my mind, which was "would a [bootstrap](https://en.wikipedia.org/wiki/Bootstrapping_(statistics)) confidence interval do any better?". Hence today's new set of simulations.
+
+I compared the coverage of a 95% confidence interval for the mean constructed the traditional way&mdash;like they teach it in basic stats courses&mdash;from a few heavily skewed distributions. I also constructed a 95% confidence interval using the bias-corrected and adjusted bootstrap method, which I believe is the best candidate to work in a wide variety of bias and skew situations.
+
+To skip to the chase, here's the results. Turns out that a) the bootstrap does indeed do considerably better than just relying on the central limit theorem, particularly with smaller sample sizes; and b) it's still got coverage a lot less than the 95% we wanted:
+
+<object type="image/svg+xml" data='/img/0333-sims-results.svg' width='100%'><img src='/img/0333-sims-results.png' width='100%'></object>
+
+No surprise here; from what I understand of the history, this is pretty much exactly what the BCa bootstrap was developed for. So we're on it's home ground, and it does (relatively) well. But those actual coverage numbers are still well below 95%, for both methods.
+
+Here's the code that did that. It's very similar to the one from a few days ago.
+
+{% highlight R lineanchors %}
 library(tidyverse)
 library(actuar)
 library(glue)
@@ -124,18 +152,10 @@ Labelled numbers indicate sample sizes. Diagonal line shows equal performance.",
     colour = "Population distribution:"
   )
 
-svg_png(p, "../img/0333-sims-results", w = 9, h = 6)
+ print(p)
+{% endhighlight %}
 
-# Claude advises: The percentile interval is only accurate when the bootstrap
-# distribution of the statistic is symmetric (or can be made so by a monotone
-# transformation). With n = 30 draws from a heavily right-skewed population, the
-# bootstrap distribution of the mean is itself skewed, so the percentile
-# interval inherits that bias — coverage tends to be asymmetric and generally
-# below nominal, in the same direction the CLT-based interval already fails.
+I still haven't looked at the point&mdash;raised by Professor Harrell himself after my last post&mdash;of the assymetry of these confidence intervals, which causes a whole new set of problems. I think I've run out of oomph for looking at that, but it is actually an important point to remember. Maybe some time later.
 
-# BCa adjusts the percentile cutoffs using a bias-correction term (how far the
-# bootstrap median of the statistic sits from the original estimate) and an
-# acceleration term (estimated via jackknife, capturing how the standard error
-# changes across the range of the statistic — i.e., skewness). That's exactly
-# the failure mode being probed here, so it should show a real improvement over
-# percentile at n = 30 from a lognormal-type population.
+That's it for today really. I still think the bootstrap is a close to magic as you get in frequentist statistics, and I thoroughly recommend it. It's good stuff. But when you've got a sample size of 10, 30, 200&mdash;sometimes even when you've got 1,000, 10,000 or 50,000&mdash;there's just limits to what you can do.
+
