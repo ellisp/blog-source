@@ -3,3 +3,5 @@ library-and-themes.R
 .Rprofile
 .git/
 secrets.R
+
+fuel-crisis/jodi.xlsx
