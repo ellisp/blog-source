@@ -193,7 +193,7 @@ p4 <- crude_stocks |>
     caption = the_caption,
     y = "Total crude oil (millions of barrels)",
     x = "",
-    title = "Total crude oil by missingness status of countres",
+    title = "Total crude oil by missingness status of countries",
     fill = "Countries missing any data:"
   )
 
@@ -237,7 +237,7 @@ p5 <- crude_stocks |>
     x = glue(
       "{length(good_countries)} countries in total have data for all months in this period."
     ),
-    title = "World stocks of crude oil",
+    title = "Crude oil stocks of consistently reporting countries worldwide",
     y = "Millions of barrels",
     subtitle = glue(
       "Excluding countries with any missing data (eg China, Russia, India, Venezuela).

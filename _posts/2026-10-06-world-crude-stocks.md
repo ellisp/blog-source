@@ -5,25 +5,25 @@ date: 2026-10-06
 tag: 
    - Energy
    - DataFromTheWeb
-description: How much crude oil does the world have in its ready-to-use stocks? Data is collected by the Joint Organizations Data Initiative (JODI) but rarely presented as a total due to missingness and other issues.
+description: How much crude oil does the world have in its ready-to-use stocks? Data is collected by the Joint Organizations Data Initiative (JODI) but rarely presented as a total due to missingness and other issues. I do my best in showing at least the stocks of consistently reporting countries, which includes most but not all of the major countries we're be interested in.
 image: /img/0334-world-crude-stocks.svg
 socialimage: https:/freerangestats.info/img/0334-world-crude-stocks.png
 category: R
 ---
 
-How much crude oil does the world have available? Inquiring minds want to know but it is surprisingly difficult to get a single number. We hear more about relative levels "less than at any point since XXXX" and changes "has dropped X million barrels in the last month" than estimates of the absolute level. Either the International Energy Association (IEA) keeps this behind its firewall, or doesn't have confidence in the number; probably a bit of both.
+How much crude oil does the world have available? Inquiring minds want to know but it is surprisingly difficult to get a single number. We hear more about relative levels "less than at any point since XXXX" and changes "has dropped X million barrels in the last month" than estimates of the absolute level. The International Energy Agency (IEA) publishes a lot of information on inventory levels and changes, but consolidated global stock estimates are, as far as I can see, not publicly available.
 
 However, the Joint Organizations Data Initiative (JODI) does publish monthly country level estimates, reported to it voluntarily by countries. JODI partners are the APEC Energy Working Group, Eurostat, GECF, IEA, the Latin American and Caribbean Energy Organization (OLACDE), OPEC and the UN Statistical Division. It's a very reputable set of partners! And JODI's data are available to download.
 
-Only 38 countries have data for every month JODI collects data, but this includes the USA, Japan, UK, the key European countries, and a few other big holders like Saudi Arabia, South Korea, Taiwan and Nigeria. The key omissions include, unfortunately but unsurprisingly, Russia, Venezuela and China. The data are also a bit old&mdash;latest data relating to July 2026 as at the time of writing, 6 October 2026, so a lag of 2-3 months. But it's much better than nothing.
+Only 38 countries have data for every month JODI collects data, but this includes the USA, Japan, UK, the key European countries, and a few other big holders like Saudi Arabia, South Korea, Taiwan and Nigeria. The key omissions include, unfortunately but unsurprisingly, China, Russia, and Venezuela.. The data are also a bit old&mdash;latest data relating to July 2026 as at the time of writing, 6 October 2026, so a lag of 2-3 months. But it's much better than nothing.
 
-The point of today's post is to get me the chart below, showing the best picture we can of the stocks of crude oil of the countries that do report those stocks, compared to a rough notional figure of 85 million barrels per day of total usage:
+The point of today's post is to get me the chart below, showing the best picture we can of the stocks of crude oil of the countries that do report those stocks, compared to a rough estimate of 85 million barrels per day of global crude refinery throughput:
 
 <object type="image/svg+xml" data='/img/0334-world-crude-stocks.svg' width='100%'><img src='/img/0334-world-crude-stocks.png' width='100%'></object>
 
 That chart is now part of my [fuel crisis monitoring page](/fuel-crisis/index.html) which gets updated at least weekly.
 
-The overall story is that we indeed have less crude oil in storage than at any time since these records began in the early 2000s; but it's still around 20 days of refinery cover. And at the rate that it's going down, it will take nearly two years to get down to just 10 days of refinery cover. Actually, I'd expect market panic to set in at around 15 days of cover, but I'm being conservative here because I'm interested in the point where the world really "runs out".
+The overall story is that we indeed have less crude oil in storage than at any time since these records began in the early 2000s; but it's still around 20 days of refinery cover. And at the rate that it's going down, it will take nearly two years to get down to just 10 days of refinery cover. Actually, I'd expect market panic to set in at around 15 days of cover, but I'm being conservative here because I'm interested in the point where the world really has run out of any buffer against supply disruptions.
 
 OK, the rest of the blog is mostly about just how I got that data, made some choices about excluding some countries, and drew the final chart.
 
@@ -77,10 +77,10 @@ jodi_hist <- bind_rows(jodi_hist_l) |>
 # for guide on what everything is
 # CLOSTLV is closing stocks
 # CRUDEOIL is just crude
-# TOTCRUDE also includes NGL and refinery feedstocks, additives and other hydrocarbons
+# TOTCRUDE also includes NGL and refinery feedstocks, additives and other hydrocarbons and has a lot more missing data.
 {% endhighlight %}
 
-Now that I've got the data, I want to understand the missingness. At one point I contemplating imputing the missing values of various countries, and hence I made a big wide version of the data with the idea that I might nodel crude stocks based on movement in some of the other numerous variables in the data. I eventually abandoned this when I realised how little meaningful infomration there was on eg China and Russia to do this meaningfully. But I can still use the `jodi_wide` data set created below for most of my plots:
+Now that I've got the data, I want to understand the missingness. At one point I contemplated imputing the missing values of various countries, and hence I made a big wide version of the data with the idea that I might model crude stocks based on movement in some of the other numerous variables in the data. I eventually abandoned this when I realised how little meaningful information there was on eg China and Russia to do this meaningfully. But I can still use the `jodi_wide` data set created below for most of my plots:
 
 {% highlight R lineanchors %}
 #-----------explore which countries missing---------------------
@@ -133,7 +133,7 @@ jodi_wide |>
   )
 {% endhighlight %}
 
-Here's that first epxloratory plot, a line chart of all the countries. The big one here is the USA; I've not shown the legend because it would take up too much space.
+Here's that first exploratory plot, a line chart of all the countries. The big one here is the USA; I've not shown the legend because it would take up too much space.
 
 <object type="image/svg+xml" data='/img/0334-line-all-countries.svg' width='100%'><img src='/img/0334-line-all-countries.png' width='100%'></object>
 
@@ -281,16 +281,16 @@ crude_stocks |>
     caption = the_caption,
     y = "Total crude oil (millions of barrels)",
     x = "",
-    title = "Total crude oil by missingness status of countres",
+    title = "Total crude oil by missingness status of countries",
     fill = "Countries missing any data:"
   )
 {% endhighlight %}
 
 
-Finally, the code to draw the actual presentation plot:
+Finally, the code to draw the actual presentation plot. A key magic number here is the world refinery usage of crude oil at 85 million barrels per day; this is the approximate "crude runs" value from [a recent IEA Oil Market Report](https://iea.blob.core.windows.net/assets/6e8bf347-c9af-4549-a3ac-07e5361813e9/-13AUG2025_OilMarketReport.pdf). Note that this is less than the commonly cited values of around 105 million barrels per day, which includes NGLs, biofuels, and other liquid fuels. The 85m per day value is the appropriate one for me to use when looking at the CRUDEOIL series in my original JODI data; noting that they also have a TOTCRUDE series that would relate to the 105m per day figure, but which has a lot more missing data and is arguably not really what I'm most interested in anyway.
 
 {% highlight R lineanchors %}
-# note the commonly used figure of 105 is for TOTCRUDE, not just CRUDEOIl (which is more ike 85)
+# note the commonly used figure of 105 is for TOTCRUDE, not just CRUDEOIl (which is more like 85)
 world_use_per_day <- 85
 
 # Summary for calculation of how long until only 10 days of cover:
@@ -327,7 +327,7 @@ crude_stocks |>
     x = glue(
       "{length(good_countries)} countries in total have data for all months in this period."
     ),
-    title = "World stocks of crude oil",
+    title = "Crude oil stocks of consistently reporting countries worldwide",
     y = "Millions of barrels",
     subtitle = glue(
       "Excluding countries with any missing data (eg China, Russia, India, Venezuela).
