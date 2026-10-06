@@ -4,14 +4,15 @@ library(janitor)
 library(mice)
 library(countrycode)
 
-update_2026 <- FALSE
-
+update_2026 <- TRUE
+the_caption <- "Source: JODI-OIL World Database"
 # TODO - do proper imputation of the missing values rather than just
 # using fill = downup.
 
 #-----------------Downloads----------------
 
 if (update_2026) {
+  dir.create("fuel-crisis", showWarnings = FALSE)
   # Download current year. This will get more complete month by month.
   df <- here("fuel-crisis/jodi-2026.csv")
   url <- "https://www.jodidata.org/_resources/files/downloads/oil-data/annual-csv/primary/primaryyear2026.csv"
@@ -48,17 +49,6 @@ jodi_hist <- bind_rows(jodi_hist_l) |>
 # CRUDEOIL is just crude
 # TOTCRUDE also includes NGL and refinery feedstocks, additives and other hydrocarbons
 
-# Warning - china is not in the data. See:
-jodi_hist |>
-  filter(
-    energy_product == "CRUDEOIL" &
-      flow_breakdown == "CLOSTLV" &
-      unit_measure == "KBBL"
-  ) |>
-  filter(ref_area %in% c("CN", "RU") & !is.na(as.numeric(obs_value))) |>
-  arrange(time_period) |>
-  select(time_period, obs_value, ref_area)
-
 #-----------explore which countries missing---------------------
 jodi_wide <- jodi_hist |>
   #  filter(energy_product == "CRUDEOIL") |>
@@ -84,12 +74,20 @@ jodi_wide <- jodi_hist |>
     date_n = as.numeric(date)
   )
 
-jodi_wide |>
+p1 <- jodi_wide |>
   ggplot(aes(x = date, y = crude / 1000, colour = ref_area)) +
   geom_line() +
   theme(legend.position = "none") +
   scale_y_continuous(label = comma) +
-  labs(x = "", y = "Millions of barrels", title = "Stocks of crude oil")
+  labs(
+    x = "",
+    y = "Millions of barrels",
+    caption = the_caption,
+    title = "Stocks of crude oil",
+    subtitle = "Coloured by country; legend not shown."
+  )
+
+svg_png(p1, "../img/0334-line-all-countries", w = 9, h = 5)
 
 possible_obs <- length(unique(jodi_wide$time_period))
 
@@ -109,11 +107,11 @@ country_sum <- jodi_wide |>
 
 # 20 countries that never have any observations for Crude:
 never_crude <- filter(country_sum, is.na(problem))
-print(never_crude)
+print(never_crude$country)
 # Particular obvious problems, likely to be significant: China, Hong Kong,
 # Bangladesh, Singapore, Vietnam, Yemen, Malaysia
 
-country_sum |>
+p2 <- country_sum |>
   ggplot(aes(
     x = crude_total,
     y = missing_obs,
@@ -124,11 +122,16 @@ country_sum |>
   scale_x_log10(label = comma) +
   labs(
     x = "Average crude stocks (thousands of barrels)",
-    y = "Number of months missing an observation"
-  )
+    y = "Number of months missing an observation",
+    caption = the_caption,
+    title = "Size of crude stocks by number of missing observations"
+  ) +
+  theme(legend.position = "none")
+
+svg_png(p2, "../img/0334-scatter-missing", w = 9, h = 5)
 
 # The nine biggest problem countries in terms of partly missing data
-jodi_wide |>
+p3 <- jodi_wide |>
   #  filter(ref_area %in% filter(country_sum, some_missing)$ref_area) |>
   filter(ref_area %in% filter(country_sum, problem)$ref_area) |>
   mutate(country = fct_reorder(country, crude)) |>
@@ -140,9 +143,11 @@ jodi_wide |>
   labs(
     x = "",
     y = "Millions of barrels",
-    title = "Crude oil stocks of countries missing at least one data point"
+    title = "Crude oil stocks of countries missing at least one data point",
+    caption = the_caption
   )
 
+svg_png(p3, "../img/0334-facet-big-missing", w = 10, h = 5)
 
 #----------------Summarise and draw chart------------
 
@@ -156,10 +161,18 @@ crude_stocks <- jodi_wide |>
   ) |>
   ungroup()
 
-crude_stocks |>
+p4 <- crude_stocks |>
   ggplot(aes(x = date, y = total_crude_mbbl, fill = some_missing)) +
-  geom_area()
+  geom_area() +
+  labs(
+    caption = the_caption,
+    y = "Total crude oil (millions of barrels)",
+    x = "",
+    title = "Total crude oil by missingness status of countres",
+    fill = "Countries missing any data:"
+  )
 
+svg_png(p4, "../img/0334-missing-area", w = 9, h = 5)
 
 # note the commonly used figure of 105 is for TOTCRUDE, not just CRUDEOIl (which is more ike 85)
 world_use_per_day <- 85
@@ -179,7 +192,7 @@ war_summary <- crude_stocks |>
   )
 
 # draw chart:
-p <- crude_stocks |>
+p5 <- crude_stocks |>
   filter(!some_missing) |>
   ggplot(aes(x = date, y = total_crude_mbbl)) +
   geom_line(colour = "blue") +
@@ -202,7 +215,8 @@ p <- crude_stocks |>
       "Excluding countries with any missing data (eg China, Russia, India, Venezuela).
 If the rate of decline since March 2026 continued, crude inventories would fall to 10 days of cover in {round(war_summary$ten_days_left / 7)} weeks."
     ),
-    caption = "Source: JODI-OIL World Database"
+    caption = the_caption
   )
 
-svg_png(p, here("fuel-crisis/world-crude-stocks"), w = 8.3, h = 4)
+svg_png(p5, "../img/0334-world-crude-stocks", w = 8.3, h = 4)
+svg_png(p5, here("fuel-crisis/world-crude-stocks"), w = 8.3, h = 4)
