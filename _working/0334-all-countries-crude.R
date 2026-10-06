@@ -1,13 +1,12 @@
 library(tidyverse)
 library(glue)
 library(janitor)
-library(mice)
 library(countrycode)
 
+# Set to FALSE if you don't want to download the latest 2026 data. Will need to
+# update all this workflow once we get to 2027 data.
 update_2026 <- TRUE
-the_caption <- "Source: JODI-OIL World Database"
-# TODO - do proper imputation of the missing values rather than just
-# using fill = downup.
+redraw_charts <- FALSE
 
 #-----------------Downloads----------------
 
@@ -74,6 +73,17 @@ jodi_wide <- jodi_hist |>
     date_n = as.numeric(date)
   )
 
+last_date <- jodi_wide |>
+  filter(!is.na(crude)) |>
+  summarise(ld = max(date)) |>
+  mutate(ld = format(ld, "%B %Y")) |>
+  pull(ld)
+
+the_caption <- glue(
+  "Source: JODI-OIL World Database. Most recent data is for {last_date}."
+)
+
+
 p1 <- jodi_wide |>
   ggplot(aes(x = date, y = crude / 1000, colour = ref_area)) +
   geom_line() +
@@ -87,7 +97,9 @@ p1 <- jodi_wide |>
     subtitle = "Coloured by country; legend not shown."
   )
 
-svg_png(p1, "../img/0334-line-all-countries", w = 9, h = 5)
+if (redraw_charts) {
+  svg_png(p1, "../img/0334-line-all-countries", w = 9, h = 5)
+}
 
 possible_obs <- length(unique(jodi_wide$time_period))
 
@@ -97,13 +109,23 @@ country_sum <- jodi_wide |>
     crude_total = mean(crude, na.rm = TRUE),
     missing_obs = sum(is.na(crude))
   ) |>
+  ungroup() |>
   # particular problem if a country has any missing observations and averages
   # 10 million barrels or more of stock:
   mutate(
-    some_missing = as.logical(missing_obs > 0 & missing_obs < possible_obs),
+    all_there = as.logical(missing_obs == 0),
+    some_missing = as.logical(
+      missing_obs > 0 & missing_obs < possible_obs & !is.na(crude_total)
+    ),
     problem = as.logical(crude_total > 10000 & missing_obs > 0)
   ) |>
   arrange(desc(crude_total))
+
+good_countries <- country_sum |>
+  filter(all_there) |>
+  pull(country)
+
+good_countries
 
 # 20 countries that never have any observations for Crude:
 never_crude <- filter(country_sum, is.na(problem))
@@ -128,7 +150,9 @@ p2 <- country_sum |>
   ) +
   theme(legend.position = "none")
 
-svg_png(p2, "../img/0334-scatter-missing", w = 9, h = 5)
+if (redraw_charts) {
+  svg_png(p2, "../img/0334-scatter-missing", w = 9, h = 5)
+}
 
 # The nine biggest problem countries in terms of partly missing data
 p3 <- jodi_wide |>
@@ -147,8 +171,9 @@ p3 <- jodi_wide |>
     caption = the_caption
   )
 
-svg_png(p3, "../img/0334-facet-big-missing", w = 10, h = 5)
-
+if (redraw_charts) {
+  svg_png(p3, "../img/0334-facet-big-missing", w = 10, h = 5)
+}
 #----------------Summarise and draw chart------------
 
 # Crude oil stocks (excludes NGL etc because often missing data):
@@ -172,8 +197,9 @@ p4 <- crude_stocks |>
     fill = "Countries missing any data:"
   )
 
-svg_png(p4, "../img/0334-missing-area", w = 9, h = 5)
-
+if (redraw_charts) {
+  svg_png(p4, "../img/0334-missing-area", w = 9, h = 5)
+}
 # note the commonly used figure of 105 is for TOTCRUDE, not just CRUDEOIl (which is more ike 85)
 world_use_per_day <- 85
 
@@ -208,7 +234,9 @@ p5 <- crude_stocks |>
     )
   ) +
   labs(
-    x = "",
+    x = glue(
+      "{length(good_countries)} countries in total have data for all months in this period."
+    ),
     title = "World stocks of crude oil",
     y = "Millions of barrels",
     subtitle = glue(
@@ -218,5 +246,7 @@ If the rate of decline since March 2026 continued, crude inventories would fall 
     caption = the_caption
   )
 
-svg_png(p5, "../img/0334-world-crude-stocks", w = 8.3, h = 4)
+if (redraw_charts) {
+  svg_png(p5, "../img/0334-world-crude-stocks", w = 8.3, h = 4)
+}
 svg_png(p5, here("fuel-crisis/world-crude-stocks"), w = 8.3, h = 4)

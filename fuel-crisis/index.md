@@ -19,6 +19,14 @@ Blog post on the data source and code isn't yet available.
 
 ---
 
+## World crude oil stocks
+
+This is my best estimate of world crude oil stocks based on the 40 or so countries that are consistently reporting their levels to the Joint Organizations Data Initiative:
+
+<object type="image/svg+xml" data='/fuel-crisis/world-crude-stocks.svg' width='100%'><img src='/fuel-crisis/world-crude-stocks.png' width='100%'></object>
+
+This excludes some key countries&mdash;China, Russia, Venezuela and India in particular&mdash;but is still a decent picture of total world stocks. We (collectively) have about 20 days of refinery cover as at October 2026. I've arbitrarily drawn a "world runs out" line at 10 days of cover. I think panic would set in well before that 10 days though.
+
 ## USA oil stocks
 	
 This plot of total crude oil in the USA is updated weekly from the US Energy Information Agency and is a good indicator (I think) of "just how bad is this really". Long before it reaches the red line there should be market and political chaos, but I suspect the system will physically keep going.
