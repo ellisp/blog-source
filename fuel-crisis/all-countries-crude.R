@@ -1,17 +1,21 @@
 library(tidyverse)
 library(glue)
 library(janitor)
+library(mice)
+
+update_2026 <- FALSE
 
 # TODO - do proper imputation of the missing values rather than just
 # using fill = downup.
 
 #-----------------Downloads----------------
 
-# Download current year. This will get more complete month by month.
-df <- here("fuel-crisis/jodi-2026.csv")
-url <- "https://www.jodidata.org/_resources/files/downloads/oil-data/annual-csv/primary/primaryyear2026.csv"
-download.file(url, destfile = df)
-
+if(update_2026){
+  # Download current year. This will get more complete month by month.
+  df <- here("fuel-crisis/jodi-2026.csv")
+  url <- "https://www.jodidata.org/_resources/files/downloads/oil-data/annual-csv/primary/primaryyear2026.csv"
+  download.file(url, destfile = df)
+}
 
 
 # Download historical data; only needed to be done once
@@ -50,32 +54,48 @@ jodi_hist |>
   arrange(time_period) |> 
   select(time_period, obs_value, ref_area)
 
-#----------------Summarise and draw chart------------
-crude_stocks_country <- jodi_hist |> 
-  # just to be sure China is systematically excluded:
-  filter(ref_area != "CN") |> 
-  mutate(obs_value = as.numeric(obs_value),
-         date = ym(time_period)) |>
-  filter(energy_product == "CRUDEOIL" &
-           flow_breakdown == "CLOSTLV" &
-           unit_measure == "KBBL") |> 
-  filter(!is.na(obs_value)) 
+#-----------imputation
+jodi_wide <- jodi_hist |> 
+#  filter(energy_product == "CRUDEOIL") |> 
+  mutate(dimensions = paste(energy_product, flow_breakdown, unit_measure, sep = "|")) |>
+  mutate(obs_value = as.numeric(obs_value)) |> 
+  select(ref_area, time_period, dimensions, obs_value) |> 
+  drop_na() |> 
+  spread(dimensions, obs_value, fill = NA) |> 
+  rename(y = `CRUDEOIL|CLOSTLV|KBBL`) |> 
+  mutate(ref_area = fct_relevel(ref_area, "US"),
+         date = ym(time_period),
+         date_n = as.numeric(date))
 
-countries_2026 <- crude_stocks_country |> 
-  filter(year(date) == max(year(date))) |> 
-  distinct(ref_area)
+never_crude <- jodi_wide |> 
+  group_by(ref_area) |> 
+  summarise(n = n(),
+            valid = sum(!is.na(y))) |> 
+  filter(valid == 0) |> 
+  pull(ref_area)
+
+jodi_wide <- jodi_wide |> 
+  filter(!ref_area %in% never_crude)
+
+apply(jodi_wide, 2, function(x){mean(is.na(x))})
+
+sum(is.na(jodi_wide$`CRUDEOIL|CLOSTLV|KBBL`))
+
+library(mgcv)
+mod <- gam(y ~ ref_area + s(date_n), data = jodi_wide)
+summary(mod)
+
+jodi_wide <- jodi_wide |> 
+  mutate(pred = predict(mod, newdata = select(jodi_wide, ref_area, date_n)),
+         best = ifelse(is.na(y), pred, y))
+
+#----------------Summarise and draw chart------------
+
 
 # Crude oil stocks (excludes NGL etc because often missing data):
-crude_stocks <- crude_stocks_country |>
-  # restrict to only currently reporting countries:
-  inner_join(countries_2026, by = "ref_area") |>
-  # fill in countries missing value with their most recent one:
-  complete(ref_area, date) |> 
-  group_by(ref_area) |> 
-  arrange(date) |> 
-  fill(obs_value, .direction = "downup") |> 
+crude_stocks <- jodi_wide |>
   group_by(date) |> 
-  summarise(total_crude_mbbl = sum(obs_value) / 1000,
+  summarise(total_crude_mbbl = sum(best) / 1000,
             reporting_countries = length(unique(ref_area)))
 
 range(crude_stocks$reporting_countries)
