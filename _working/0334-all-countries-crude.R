@@ -17,7 +17,8 @@ df <- here("fuel-crisis/jodi-2026.csv")
 latest_data_date <- read.csv(df) |> 
   as_tibble() |> 
   mutate(date = ym(TIME_PERIOD)) |> 
-  summarise(ld = max(date))
+  summarise(ld = max(date)) |> 
+  pull(ld)
 
 update_2026 <- latest_jodi_date > latest_data_date
 redraw_charts <- FALSE
@@ -172,7 +173,7 @@ if (redraw_charts) {
 p3 <- jodi_wide |>
   #  filter(ref_area %in% filter(country_sum, some_missing)$ref_area) |>
   filter(ref_area %in% filter(country_sum, problem)$ref_area) |>
-  mutate(country = fct_reorder(country, crude)) |>
+  mutate(country = fct_reorder(country, crude, .na_rm = TRUE)) |>
   ggplot(aes(x = date, y = crude / 1000)) +
   facet_wrap(~country, scales = "free_y") +
   geom_line(colour = "steelblue") +
