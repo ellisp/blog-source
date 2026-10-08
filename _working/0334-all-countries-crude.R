@@ -2,18 +2,32 @@ library(tidyverse)
 library(glue)
 library(janitor)
 library(countrycode)
+library(readxl)
 
 # Set to FALSE if you don't want to download the latest 2026 data. Will need to
 # update all this workflow once we get to 2027 data.
-update_2026 <- TRUE
+url1 <- "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_data_availability_by_country.xlsx?iid=181"
+download.file(url1, destfile = "jodi-updates.xlsx", mode = "wb")
+
+latest_jodi_date <- read_excel("jodi-updates.xlsx") |> 
+  summarise(ld = as.Date(max(date))) |> 
+  pull(ld)
+df <- here("fuel-crisis/jodi-2026.csv")
+
+latest_data_date <- read.csv(df) |> 
+  as_tibble() |> 
+  mutate(date = ym(TIME_PERIOD)) |> 
+  summarise(ld = max(date))
+
+update_2026 <- latest_jodi_date > latest_data_date
 redraw_charts <- FALSE
 
+rm(df, url1, latest_jodi_date, latest_data_date)
 #-----------------Downloads----------------
 
 if (update_2026) {
   dir.create("fuel-crisis", showWarnings = FALSE)
   # Download current year. This will get more complete month by month.
-  df <- here("fuel-crisis/jodi-2026.csv")
   url <- "https://www.jodidata.org/_resources/files/downloads/oil-data/annual-csv/primary/primaryyear2026.csv"
   download.file(url, destfile = df)
 }
@@ -249,4 +263,6 @@ If the rate of decline since March 2026 continued, crude inventories would fall 
 if (redraw_charts) {
   svg_png(p5, "../img/0334-world-crude-stocks", w = 8.3, h = 4)
 }
+
+# This one chart we always redraw:
 svg_png(p5, here("fuel-crisis/world-crude-stocks"), w = 8.3, h = 4)
