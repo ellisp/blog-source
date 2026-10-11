@@ -6,10 +6,11 @@ library(readxl)
 
 # Set to FALSE if you don't want to download the latest 2026 data. Will need to
 # update all this workflow once we get to 2027 data.
+jdf <- here("fuel-crisis/jodi-updates.xlsx")
 url1 <- "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_data_availability_by_country.xlsx?iid=181"
-download.file(url1, destfile = "jodi-updates.xlsx", mode = "wb")
+download.file(url1, destfile = jdf, mode = "wb")
 
-latest_jodi_date <- read_excel("jodi-updates.xlsx") |> 
+latest_jodi_date <- read_excel(jdf) |> 
   summarise(ld = as.Date(max(date))) |> 
   pull(ld)
 df <- here("fuel-crisis/jodi-2026.csv")
@@ -24,6 +25,8 @@ update_2026 <- latest_jodi_date > latest_data_date
 redraw_charts <- FALSE
 
 rm(df, url1, latest_jodi_date, latest_data_date)
+unlink(jdf)
+
 #-----------------Downloads----------------
 
 if (update_2026) {
@@ -69,7 +72,7 @@ jodi_wide <- jodi_hist |>
   mutate(
     dimensions = paste(energy_product, flow_breakdown, unit_measure, sep = "|")
   ) |>
-  mutate(obs_value = as.numeric(obs_value)) |>
+  mutate(obs_value = suppressWarnings(as.numeric(obs_value))) |>
   select(ref_area, time_period, dimensions, obs_value) |>
   drop_na() |>
   spread(dimensions, obs_value, fill = NA) |>
