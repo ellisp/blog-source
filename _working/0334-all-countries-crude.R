@@ -24,16 +24,20 @@ latest_data_date <- read.csv(df) |>
 update_2026 <- latest_jodi_date > latest_data_date
 redraw_charts <- FALSE
 
-rm(df, url1, latest_jodi_date, latest_data_date)
-unlink(jdf)
 
 #-----------------Downloads----------------
 
 if (update_2026) {
   dir.create("fuel-crisis", showWarnings = FALSE)
+
+  message(glue("Updating world crude data to include data from {latest_jodi_date}"))
+
   # Download current year. This will get more complete month by month.
   url <- "https://www.jodidata.org/_resources/files/downloads/oil-data/annual-csv/primary/primaryyear2026.csv"
   download.file(url, destfile = df)
+} else {
+  message(glue("No need to update world crude data given latest is {latest_data_date}"))
+
 }
 
 
@@ -47,6 +51,10 @@ if (!file.exists(here("fuel-crisis/jodi-2025.csv"))) {
     download.file(url, destfile = df)
   }
 }
+
+rm(df, url1, latest_jodi_date, latest_data_date)
+unlink(jdf)
+
 
 #----------------Import data------------------
 
@@ -143,11 +151,9 @@ good_countries <- country_sum |>
   filter(all_there) |>
   pull(country)
 
-good_countries
-
 # 20 countries that never have any observations for Crude:
 never_crude <- filter(country_sum, is.na(problem))
-print(never_crude$country)
+
 # Particular obvious problems, likely to be significant: China, Hong Kong,
 # Bangladesh, Singapore, Vietnam, Yemen, Malaysia
 

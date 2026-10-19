@@ -113,8 +113,8 @@ plot_us_stocks <- function(min_date = "2020-01-01", lab_x_diff = NULL) {
     ) +
     annotate(
       "text",
-      x = as.Date(max(us_stocks$date) - 5e6),
-      y = lv,
+      x = as.Date(max(us_stocks$date) - 0e6),
+      y = lv - 10,
       label = glue(
         "{round(lv)} million barrels;\n{round(lv / refinery_throughput)} days of cover"
       ),

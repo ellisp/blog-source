@@ -133,7 +133,7 @@ p0 <- combined_petrol |>
     colour = "",
     y = "Price (USD per gallon)",
     title = "Retail petrol and diesel prices 2004-2026, <span style='color:#0000FF;'>**New Zealand**</span> vs <span style='color:red;'>**USA**</span>, (USD/gallon).",
-    subtitle = "New Zealand prices include petrol excise, GST and other taxes but exclude diesel fuel excise.",
+    subtitle = "New Zealand prices include petrol excise, GST and other taxes but exclude diesel road user charges.",
     caption = glue(
       "Source: New Zealand MBIE, USA EIA. Latest data {format(max(combined_petrol$date), '%d %B %Y')}."
     )
