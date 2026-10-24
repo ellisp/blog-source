@@ -8,7 +8,7 @@ library(glue)
 library(RColorBrewer)
 
 # total oil use per day, needed
-original_total <- 100
+global_oil_consumption  <- 100
 original_gulf_exports <- 20
 prewar_oil_price <- 72.5
 
@@ -22,15 +22,15 @@ d <- expand_grid(
     export = exports
 ) |>
     mutate(
-        lost_oil = (original_gulf_exports - export) / original_total,
+        lost_oil = (original_gulf_exports - export) / global_oil_consumption ,
         price_rise = lost_oil / elasticity * 100
     )
 
-the_caption <- the_caption <- str_wrap(
-    paste(
-        "Illustrative calculation assuming global oil consumption of",
-        "100 million barrels per day and pre-war Gulf exports of",
-        "20 million barrels per day.",
+the_caption <- str_wrap(
+    glue(
+        "Illustrative calculation assuming global oil consumption of ",
+        "{global_oil_consumption } million barrels per day and pre-war Gulf exports of ",
+        "{original_gulf_exports} million barrels per day. ",
         "Re-worked by freerangestats.info based on original analysis by Haver Analytics."
     ),
     115
@@ -54,7 +54,7 @@ persp_plot <- function() {
         y = elasticities,
         z = prices_matrix,
         col = reds,
-        xlab = "\nOil exported from Gulf",
+        xlab = "\nOil exported from the Gulf",
         ylab = "\n\nPrice elasticity of demand",
         zlab = "\nRise in oil prices (%)",
         main = the_title,
@@ -101,7 +101,7 @@ p1 <- d |>
             "Illustrative price increase for crude oil depends on the price elasticity of demand and the amount of oil that is exported from the Gulf.",
             100
         ),
-        x = "Oil exported from Gulf (in million barrels per day)",
+        x = "Oil exported from the Gulf (in million barrels per day)",
         y = "Price elasticity of demand for crude oil",
         fill = "Price increase for crude oil",
         caption = the_caption
@@ -110,12 +110,12 @@ p1 <- d |>
 svg_png(p1, "../img/0335-heatmap", w = 9, h = 7)
 
 #-----------------line plot------------------
-annot_col <- "grey88"
+annot_col <- "grey12"
 
 p2 <- d |>
     mutate(
         elasticity_distance = abs(elasticity - 0.15),
-        is_centre_est = ifelse(round(elasticity, 2) == 0.15, "solid", "dashed")
+        is_midpoint = ifelse(round(elasticity, 2) == 0.15, "solid", "dashed")
     ) |>
     ggplot(aes(
         x = export,
@@ -123,7 +123,7 @@ p2 <- d |>
         group = elasticity,
         colour = elasticity_distance
     )) +
-    geom_line(aes(linetype = is_centre_est)) +
+    geom_line(aes(linetype = is_midpoint)) +
     geom_text(
         data = filter(
             d,
@@ -168,11 +168,12 @@ p2 <- d |>
     ) +
     expand_limits(x = c(0, 20)) +
     scale_colour_gradientn(
-        colours = brewer.pal(9, "YlGnBu")[2:8],
-        breaks = c(0.01, 0.05)
+        colours = brewer.pal(9, "Blues")[9:4],
+        breaks = c(0, 0.025, 0.05),
+        limits = c(0, 0.05)
     ) +
     labs(
-        x = "Oil exported from Gulf (million barrels per day)",
+        x = "Oil exported from the Gulf (million barrels per day)",
         y = "Price increase for crude oil",
         colour = "Distance from midpoint of assumed elasticity range:",
         title = the_title,
@@ -183,8 +184,8 @@ p2 <- d |>
         caption = the_caption
     ) +
     theme(
-        panel.background = element_rect(fill = "grey15"),
-        panel.grid.major = element_line(colour = "grey30"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour = "grey88"),
         panel.grid.minor = element_blank()
     )
 
