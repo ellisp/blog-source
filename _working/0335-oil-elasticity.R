@@ -10,6 +10,7 @@ library(RColorBrewer)
 # total oil use per day, needed
 original_total <- 100
 original_gulf_exports <- 20
+prewar_oil_price <- 72.5
 
 elasticities <- seq(from = 0.1, to = 0.2, length.out = 11)
 exports <- 2:original_gulf_exports
@@ -25,14 +26,23 @@ d <- expand_grid(
         price_rise = lost_oil / elasticity * 100
     )
 
-the_caption <- "Re-worked by freerangestats.info based on original analysis by Haver Analytics"
+the_caption <- the_caption <- str_wrap(
+    paste(
+        "Illustrative calculation assuming global oil consumption of",
+        "100 million barrels per day and pre-war Gulf exports of",
+        "20 million barrels per day.",
+        "Re-worked by freerangestats.info based on original analysis by Haver Analytics."
+    ),
+    115
+)
 the_title <- "Illustrative impact of Gulf export cuts on oil prices"
 #----------------Perspective plot---------------
 # this recreates the original
 
 prices_matrix <- d |>
+    arrange(export, elasticity) |>
     select(elasticity, export, price_rise) |>
-    spread(elasticity, price_rise) |>
+    pivot_wider(names_from = elasticity, values_from = price_rise) |>
     select(-export) |>
     as.matrix()
 
@@ -133,8 +143,8 @@ p2 <- d |>
     scale_y_continuous(
         label = percent_format(scale = 1),
         sec.axis = sec_axis(
-            ~ 72.5 + .725 * .,
-            name = "New  price per barrel",
+            ~ prewar_oil_price * (1 + . / 100),
+            name = "Implied crude oil price (US$/barrel)",
             label = dollar
         )
     ) +
@@ -162,12 +172,9 @@ p2 <- d |>
         breaks = c(0.01, 0.05)
     ) +
     labs(
-        x = "Oil exported from Gulf (in million barrels per day)",
+        x = "Oil exported from Gulf (million barrels per day)",
         y = "Price increase for crude oil",
-        colour = str_wrap(
-            "Deviation of assumed elasticity of demand from mid-point estimate:",
-            38
-        ),
+        colour = "Distance from midpoint elasticity assumption:",
         title = the_title,
         subtitle = str_wrap(
             "Illustrative price increase for crude oil depends on the price elasticity of demand and the amount of oil that is exported from the Gulf.",
