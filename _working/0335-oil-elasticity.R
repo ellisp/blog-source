@@ -114,14 +114,14 @@ annot_col <- "grey88"
 
 p2 <- d |>
     mutate(
-        uncertainty_elasticity = abs(elasticity - 0.15),
+        elasticity_distance = abs(elasticity - 0.15),
         is_centre_est = ifelse(round(elasticity, 2) == 0.15, "solid", "dashed")
     ) |>
     ggplot(aes(
         x = export,
         y = price_rise,
         group = elasticity,
-        colour = uncertainty_elasticity
+        colour = elasticity_distance
     )) +
     geom_line(aes(linetype = is_centre_est)) +
     geom_text(
@@ -174,7 +174,7 @@ p2 <- d |>
     labs(
         x = "Oil exported from Gulf (million barrels per day)",
         y = "Price increase for crude oil",
-        colour = "Distance from midpoint elasticity assumption:",
+        colour = "Distance from midpoint of assumed elasticity range:",
         title = the_title,
         subtitle = str_wrap(
             "Illustrative price increase for crude oil depends on the price elasticity of demand and the amount of oil that is exported from the Gulf.",
