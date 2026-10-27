@@ -7,7 +7,8 @@ library(scales)
 library(glue)
 library(RColorBrewer)
 
-# total oil use per day, needed
+#---------------Simulating data---------------------------
+
 global_oil_consumption  <- 100
 original_gulf_exports <- 20
 prewar_oil_price <- 72.5
@@ -26,6 +27,8 @@ d <- expand_grid(
         price_rise = lost_oil / elasticity * 100
     )
 
+#---------------common caption and title across all plots-------------------
+
 the_caption <- str_wrap(
     glue(
         "Illustrative calculation assuming global oil consumption of ",
@@ -37,7 +40,7 @@ the_caption <- str_wrap(
 )
 the_title <- "Illustrative impact of Gulf export cuts on oil prices"
 #----------------Perspective plot---------------
-# this recreates the original
+# this recreates the original plot by Haver Analytics
 
 prices_matrix <- d |>
     arrange(export, elasticity) |>
