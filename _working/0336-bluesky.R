@@ -4,7 +4,6 @@
 
 library(httr2)
 library(tidyverse)
-library(lubridate)
 
 # ---- settings ---------------------------------------------------------------
 actor <- "freerangestats.info" # your handle or DID
@@ -136,7 +135,7 @@ check_follower <- function(did) {
     )
 }
 
-# ---- 4. run, in chunks, saving as it goes ----------------------------------
+# ---- 4a. run, in chunks, saving as it goes ----------------------------------
 all_followers <- get_followers(actor)
 # followers <- sample_n(all_followers, 100)
 followers <- all_followers
@@ -157,10 +156,12 @@ for (i in seq_along(chunks)) {
     message("Chunk ", i, "/", length(chunks), " done")
 }
 
-# ---- 5. summarise -----------------------------------------------------------
-parse_ts <- \(x) ymd_hms(as.character(x), quiet = TRUE)
+#------------4b. get follower and followed counts------------
 
 counts <- get_profile_counts(followers$did)
+
+# ---- 5. summarise -----------------------------------------------------------
+parse_ts <- \(x) ymd_hms(as.character(x), quiet = TRUE)
 
 activity <- read_csv(cache_file, col_types = cols(.default = "c")) |>
     distinct(did, .keep_all = TRUE) |>
